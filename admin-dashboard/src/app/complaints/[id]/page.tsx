@@ -1,0 +1,274 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import Header from '@/components/Header';
+import StatusBadge from '@/components/StatusBadge';
+import Modal from '@/components/Modal';
+import { useApp } from '@/context/AppContext';
+import { getTimeAgo, formatDate, CATEGORY_CONFIG } from '@/lib/mock-data';
+import type { ComplaintStatus } from '@/types';
+
+export default function ComplaintDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const { id } = params;
+  const { complaints, workers, updateComplaintStatus, reassignComplaint, escalateComplaint } = useApp();
+  
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [reassignWorker, setReassignWorker] = useState('');
+  const [escalateReason, setEscalateReason] = useState('');
+
+  // Find complaint, checking both raw ID and URL decoded ID just in case
+  const complaint = complaints.find(c => c.id === id || c.id === decodeURIComponent(id));
+
+  // If complaint not found, you could redirect or show an error.
+  // Wait a tick for context to load if it's async (mock is sync though)
+  if (!complaint) {
+    return (
+      <div className="dashboard-content" style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+        <h2>Complaint Not Found</h2>
+        <p style={{ color: 'var(--color-neutral-600)', marginBottom: 'var(--space-4)' }}>
+          The complaint with ID {id} does not exist or has been removed.
+        </p>
+        <button className="btn btn--primary" onClick={() => router.push('/complaints')}>
+          Back to Complaints
+        </button>
+      </div>
+    );
+  }
+
+  function handleStatusChange(status: ComplaintStatus) {
+    if (!complaint) return;
+    updateComplaintStatus(complaint.id, status);
+    toast.success(`Complaint ${complaint.id} → ${status.replace(/_/g, ' ')}`);
+  }
+
+  function handleReassign() {
+    if (!complaint || !reassignWorker) return;
+    reassignComplaint(complaint.id, reassignWorker);
+    toast.success(`${complaint.id} reassigned to ${reassignWorker}`);
+    setShowReassignModal(false);
+    setReassignWorker('');
+  }
+
+  function handleEscalate() {
+    if (!complaint || !escalateReason.trim()) return;
+    escalateComplaint(complaint.id, escalateReason);
+    toast.success(`${complaint.id} escalated`);
+    setShowEscalateModal(false);
+    setEscalateReason('');
+  }
+
+  return (
+    <>
+      <Header 
+        title={`Complaint ${complaint.id}`} 
+        subtitle={`Flat ${complaint.flatId} • Logged on ${formatDate(complaint.createdAt)}`}
+      />
+
+      <div className="dashboard-content animate-fadeIn" style={{ maxWidth: '800px', margin: '0 auto', paddingTop: 'var(--space-6)' }}>
+        
+        {/* Back Button */}
+        <button 
+          className="btn btn--ghost btn--sm" 
+          onClick={() => router.push('/complaints')}
+          style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-2) var(--space-3)' }}
+        >
+          ← Back to Complaints List
+        </button>
+
+        <div className="card" style={{ padding: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+          {/* Status Row */}
+          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+            <StatusBadge status={complaint.status} />
+            <StatusBadge status={complaint.urgency} />
+            <StatusBadge status={complaint.slaStatus} />
+            {complaint.isEmergency && <StatusBadge status="emergency" />}
+            {complaint.reopenCount >= 3 && <StatusBadge status="escalated" />}
+          </div>
+
+          {/* Description */}
+          <div className="form-group" style={{ marginBottom: 'var(--space-5)' }}>
+            <label className="form-label" style={{ fontSize: 'var(--font-size-lg)' }}>Description</label>
+            <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-800)', lineHeight: 1.6, padding: 'var(--space-3)', background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-md)' }}>
+              {complaint.description}
+            </p>
+          </div>
+
+          {/* Details Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <span style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-800)', fontWeight: 500 }}>
+                {CATEGORY_CONFIG[complaint.category].icon} {CATEGORY_CONFIG[complaint.category].label}
+              </span>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Assigned Worker</label>
+              <span style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-800)', fontWeight: 500 }}>
+                {complaint.assignedWorker || 'Unassigned'}
+              </span>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Availability</label>
+              <span style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-800)', fontWeight: 500 }}>
+                {complaint.availability.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                {complaint.availability.customSlot ? ` (${complaint.availability.customSlot})` : ''}
+              </span>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Reopen Count</label>
+              <span style={{
+                fontSize: 'var(--font-size-md)',
+                fontWeight: complaint.reopenCount >= 3 ? 700 : 500,
+                color: complaint.reopenCount >= 3 ? 'var(--color-danger-600)' : 'var(--color-neutral-800)',
+              }}>
+                {complaint.reopenCount}
+                {complaint.reopenCount >= 3 && ' ⚠️ Auto-escalated'}
+              </span>
+            </div>
+          </div>
+
+          {/* Quick Status Change */}
+          {complaint.status !== 'closed' && (
+            <div style={{ marginBottom: 'var(--space-8)', padding: 'var(--space-4)', border: '1px solid var(--color-neutral-200)', borderRadius: 'var(--radius-lg)' }}>
+              <label className="form-label" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)' }}>Admin Actions: Quick Status Change</label>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                {(['queued', 'visited', 'need_tools', 'revisit_scheduled', 'awaiting_confirmation', 'closed'] as ComplaintStatus[])
+                  .filter(s => s !== complaint.status)
+                  .map(status => (
+                    <button
+                      key={status}
+                      className="btn btn--secondary btn--sm"
+                      onClick={() => handleStatusChange(status)}
+                    >
+                      Mark as {status.replace(/_/g, ' ')}
+                    </button>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+
+          {/* Detailed History Split Layout */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
+            {/* Timeline */}
+            <div>
+              <label className="form-label" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)' }}>Audit Timeline</label>
+              {complaint.timeline.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                  {[...complaint.timeline].reverse().map((entry, idx) => (
+                    <div key={idx} style={{
+                      padding: 'var(--space-4)',
+                      background: 'var(--color-neutral-50)',
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid var(--color-primary-400)',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}>
+                      <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-900)', marginBottom: 'var(--space-2)', fontWeight: 600 }}>
+                        {entry.action}
+                      </p>
+                      {entry.note && (
+                        <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-700)', marginBottom: 'var(--space-2)', fontStyle: 'italic' }}>
+                          "{entry.note}"
+                        </p>
+                      )}
+                      <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>By {entry.performedBy} ({entry.role})</span>
+                        <span>{formatDate(entry.timestamp)}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: 'var(--color-neutral-500)' }}>No timeline events recorded.</p>
+              )}
+            </div>
+
+            {/* Worker Notes */}
+            <div>
+              <label className="form-label" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)' }}>Worker Notes & Logs</label>
+              {complaint.workerNotes.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                  {complaint.workerNotes.map((note, idx) => (
+                    <div key={idx} style={{
+                      padding: 'var(--space-4)',
+                      background: 'var(--color-warning-50)',
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid var(--color-warning-400)',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}>
+                      <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-900)', marginBottom: 'var(--space-2)' }}>
+                        {note.note}
+                      </p>
+                      <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{note.workerName}</span>
+                        <span>{formatDate(note.timestamp)}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ padding: 'var(--space-4)', background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--color-neutral-500)' }}>
+                  No notes added by the assigned worker yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', gap: 'var(--space-4)', borderTop: '1px solid var(--color-neutral-200)', marginTop: 'var(--space-8)', paddingTop: 'var(--space-6)', justifyContent: 'flex-end' }}>
+            <button className="btn btn--secondary" onClick={() => setShowReassignModal(true)}>
+              Reassign Worker
+            </button>
+            <button className="btn btn--danger" onClick={() => setShowEscalateModal(true)}>
+              Force Escalate
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ────────────────────────────────────── */}
+      {/* Reassign Modal */}
+      {/* ────────────────────────────────────── */}
+      <Modal isOpen={showReassignModal} onClose={() => setShowReassignModal(false)} title="Reassign Worker" subtitle={`Complaint ${complaint.id} — Flat ${complaint.flatId}`}>
+        <div className="form-group" style={{ marginBottom: 'var(--space-5)' }}>
+          <label className="form-label">Select Worker</label>
+          <select className="form-select" value={reassignWorker} onChange={(e) => setReassignWorker(e.target.value)} style={{ width: '100%' }}>
+            <option value="">Choose a worker...</option>
+            {workers.map(w => (
+              <option key={w.id} value={w.name}>{w.name} ({w.category}) — {w.activeComplaints} active</option>
+            ))}
+          </select>
+        </div>
+        <div className="modal-footer" style={{ padding: 0, border: 'none' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => setShowReassignModal(false)}>Cancel</button>
+          <button className="btn btn--primary btn--sm" onClick={handleReassign} disabled={!reassignWorker}>Confirm Reassignment</button>
+        </div>
+      </Modal>
+
+      {/* ────────────────────────────────────── */}
+      {/* Escalate Modal */}
+      {/* ────────────────────────────────────── */}
+      <Modal isOpen={showEscalateModal} onClose={() => setShowEscalateModal(false)} title="Force Escalate Complaint" subtitle={`Complaint ${complaint.id} — Flat ${complaint.flatId}`}>
+        <div className="form-group" style={{ marginBottom: 'var(--space-5)' }}>
+          <label className="form-label">Reason for Manual Escalation</label>
+          <textarea
+            className="form-input"
+            rows={4}
+            placeholder="Describe why this complaint is being manually escalated to higher authorities..."
+            value={escalateReason}
+            onChange={(e) => setEscalateReason(e.target.value)}
+            style={{ resize: 'vertical', width: '100%' }}
+          />
+        </div>
+        <div className="modal-footer" style={{ padding: 0, border: 'none' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => setShowEscalateModal(false)}>Cancel</button>
+          <button className="btn btn--danger btn--sm" onClick={handleEscalate} disabled={!escalateReason.trim()}>Confirm Escalation</button>
+        </div>
+      </Modal>
+    </>
+  );
+}

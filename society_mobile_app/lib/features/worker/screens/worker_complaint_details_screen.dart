@@ -1,0 +1,534 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../complaints/models/complaint_model.dart';
+import '../../complaints/providers/complaints_provider.dart';
+import '../providers/worker_provider.dart';
+
+class WorkerComplaintDetailsScreen extends ConsumerWidget {
+  final String complaintId;
+
+  const WorkerComplaintDetailsScreen({super.key, required this.complaintId});
+
+  Color _getUrgencyColor(String urgency) {
+    switch (urgency.toLowerCase()) {
+      case 'emergency':
+        return AppTheme.emergencyColor;
+      case 'high':
+        return AppTheme.highPriorityColor;
+      case 'medium':
+        return AppTheme.mediumPriorityColor;
+      default:
+        return AppTheme.lowPriorityColor;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'submitted':
+      case 'queued':
+        return Colors.blue;
+      case 'visited':
+      case 'revisit_scheduled':
+        return Colors.purple;
+      case 'need_tools':
+        return AppTheme.highPriorityColor;
+      case 'awaiting_confirmation':
+        return Colors.teal;
+      case 'closed':
+        return AppTheme.lowPriorityColor;
+      case 'reopened':
+      case 'escalated':
+        return AppTheme.emergencyColor;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final authState = ref.watch(authProvider);
+    final workerName = authState.phone ?? 'Worker';
+
+    // Watch all complaints for this category
+    final category = authState.category ?? 'electrical';
+    final complaintsAsync = ref.watch(workerComplaintsStreamProvider(category));
+
+    return complaintsAsync.when(
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(body: Center(child: Text('Error: $err'))),
+      data: (complaints) {
+        // Find specific complaint
+        final complaint = complaints.firstWhere(
+          (c) => c.id == complaintId,
+          orElse: () => Complaint(
+            id: '',
+            flatId: 'Unknown',
+            category: 'electrical',
+            description: 'Complaint details could not be found.',
+            urgency: 'low',
+            status: 'unknown',
+            availability: Availability(type: 'anytime_today'),
+            createdAt: DateTime.now().toIso8601String(),
+            updatedAt: DateTime.now().toIso8601String(),
+          ),
+        );
+
+        if (complaint.id.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Details')),
+            body: const Center(child: Text('Complaint not found or has been reassigned.')),
+          );
+        }
+
+        final createdDate = DateFormat('MMMM dd, yyyy - hh:mm a').format(DateTime.parse(complaint.createdAt));
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Complaint Flat ${complaint.flatId}'),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Card
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _getUrgencyColor(complaint.urgency).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: _getUrgencyColor(complaint.urgency), width: 1.2),
+                            ),
+                            child: Text(
+                              complaint.urgency.toUpperCase(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _getUrgencyColor(complaint.urgency),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(complaint.status).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              complaint.status.replaceAll('_', ' ').toUpperCase(),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: _getStatusColor(complaint.status),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      Text('Issue Description', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text(
+                        complaint.description,
+                        style: theme.textTheme.bodyLarge?.copyWith(height: 1.4),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Availability & Date
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_filled, size: 20, color: Colors.blueAccent),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              complaint.availability.type == 'custom'
+                                  ? 'Slot: ${complaint.availability.customSlot}'
+                                  : 'Slot: ${complaint.availability.type.replaceAll('_', ' ')}',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_month, size: 20, color: Colors.grey),
+                          const SizedBox(width: 8),
+                          Text('Reported on: $createdDate', style: const TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      const Divider(),
+                      const SizedBox(height: 16),
+
+                      // Ironing Details Section
+                      if (complaint.category == 'ironing' && complaint.ironingDetails != null) ...[
+                        Text('Ironing Order Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade300),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Shirts:'),
+                                  Text('${complaint.ironingDetails!['counts']['shirts']} x ₹${complaint.ironingDetails!['rates']['shirts']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Trousers:'),
+                                  Text('${complaint.ironingDetails!['counts']['trousers']} x ₹${complaint.ironingDetails!['rates']['trousers']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Sarees:'),
+                                  Text('${complaint.ironingDetails!['counts']['sarees']} x ₹${complaint.ironingDetails!['rates']['sarees']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Others:'),
+                                  Text('${complaint.ironingDetails!['counts']['others']} x ₹${complaint.ironingDetails!['rates']['others']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Divider(),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Total Bill:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text('₹${complaint.ironingDetails!['totalCost']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (complaint.ironingDetails!['clothesReturned'] == true)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Clothes Returned ✓', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                                )
+                              else if (complaint.ironingDetails!['countConfirmedByWorker'] == true)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Ironing in Progress...', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(4)),
+                                  child: const Text('Pending Count Confirmation', style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Divider(),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Timeline
+                      Text('Progress Timeline', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 16),
+                      _buildTimeline(context, complaint.timeline),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Bottom Action Bar
+              _buildBottomActionBar(context, ref, complaint, workerName),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTimeline(BuildContext context, List<TimelineEvent> timeline) {
+    final theme = Theme.of(context);
+    if (timeline.isEmpty) {
+      return const Text('No timeline events recorded.', style: TextStyle(color: Colors.grey));
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: timeline.length,
+      itemBuilder: (context, index) {
+        final event = timeline[index];
+        final eventTime = DateFormat('MMM dd, hh:mm a').format(DateTime.parse(event.timestamp));
+        final isLast = index == timeline.length - 1;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              children: [
+                CircleAvatar(
+                  radius: 10,
+                  backgroundColor: isLast ? theme.colorScheme.primary : Colors.grey.shade400,
+                  child: const CircleAvatar(radius: 5, backgroundColor: Colors.white),
+                ),
+                if (!isLast)
+                  Container(
+                    width: 2,
+                    height: 50,
+                    color: Colors.grey.shade300,
+                  ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.action,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'By ${event.performedBy} (${event.role}) • $eventTime',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  if (event.note != null && event.note!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Note: ${event.note}',
+                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomActionBar(BuildContext context, WidgetRef ref, Complaint complaint, String workerName) {
+    final status = complaint.status;
+
+    if (status == 'closed') {
+      return Container(
+        width: double.infinity,
+        color: Colors.green.shade50,
+        padding: const EdgeInsets.all(16),
+        child: const Center(
+          child: Text(
+            'This complaint is closed.',
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
+    if (status == 'awaiting_confirmation') {
+      return Container(
+        width: double.infinity,
+        color: Colors.teal.shade50,
+        padding: const EdgeInsets.all(16),
+        child: const Center(
+          child: Text(
+            'Awaiting resident confirmation of completion.',
+            style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
+    // Default Action Buttons based on status
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          )
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Ironing specific actions override normal actions if category is ironing
+          if (complaint.category == 'ironing' && complaint.ironingDetails != null) ...[
+            if (complaint.ironingDetails!['countConfirmedByWorker'] == false)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Confirm Clothes Count & Pickup'),
+                  onPressed: () async {
+                    await ref.read(complaintServiceProvider).confirmIroningCount(complaint.id, workerName, complaint.ironingDetails!);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Picked up! Bill generated.')));
+                    }
+                  },
+                ),
+              )
+            else if (complaint.ironingDetails!['clothesReturned'] != true)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                  icon: const Icon(Icons.shopping_bag),
+                  label: const Text('Return Clothes & Post Bill'),
+                  onPressed: () async {
+                    await ref.read(complaintServiceProvider).markIroningReturnedAndCharge(
+                      complaint.id, 
+                      workerName, 
+                      complaint.ironingDetails!,
+                      complaint.flatId,
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clothes Returned! Task Closed.')));
+                    }
+                  },
+                ),
+              )
+            else
+              const SizedBox(
+                width: double.infinity,
+                child: Center(child: Text('Task Complete.', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
+              ),
+          ] else if (status == 'submitted' || status == 'queued' || status == 'reopened') ...[
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/worker-visit-update/${complaint.id}?revisit=true'),
+                    child: const Text('Schedule Visit'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // Mark Visited immediately
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Acknowledging...')),
+                      );
+                      await ref.read(complaintServiceProvider).markComplaintVisited(
+                        complaint.id,
+                        workerName,
+                        'Visited flat to inspect.',
+                      );
+                    },
+                    child: const Text('Mark Visited'),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (status == 'visited' || status == 'need_tools' || status == 'revisit_scheduled') ...[
+            // Main actions for active inspection: Need Tools, Resident Unavailable, Complete Work
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.handyman_outlined, size: 18),
+                    label: const Text('Need Tools'),
+                    onPressed: () => context.push('/worker-need-tools/${complaint.id}'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.person_off_outlined, size: 18),
+                    label: const Text('Absent'),
+                    onPressed: () async {
+                      // Confirm and Mark Resident Unavailable
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Resident Unavailable'),
+                          content: const Text('Are you sure the resident was unavailable at the flat? This will log the miss and reopen the slot.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        await ref.read(complaintServiceProvider).markResidentUnavailable(
+                          complaint.id,
+                          workerName,
+                          'Visited but resident was not present.',
+                        );
+                        if (context.mounted) {
+                          context.pop();
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.date_range_outlined, size: 18),
+                    label: const Text('Reschedule'),
+                    onPressed: () => context.push('/worker-visit-update/${complaint.id}?revisit=true'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.done_all_rounded, size: 18),
+                    label: const Text('Resolve Task'),
+                    onPressed: () => context.push('/worker-complete/${complaint.id}'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

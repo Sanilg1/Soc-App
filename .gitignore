@@ -1,0 +1,16 @@
+# Node dependencies
+node_modules/
+
+# Firebase Cache/Artifacts
+.firebase/
+firebase-debug.log
+
+# IDEs and OS files
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,210 @@
+'use client';
+
+import React from 'react';
+import Header from '@/components/Header';
+import { useApp } from '@/context/AppContext';
+
+export default function AnalyticsPage() {
+  const { complaints, workers } = useApp();
+
+  const totalComplaints = complaints.length;
+  const resolvedComplaints = complaints.filter(c => c.status === 'closed').length;
+  const resolutionRate = totalComplaints > 0 ? Math.round((resolvedComplaints / totalComplaints) * 100) : 0;
+  
+  const avgSlaCompliance = workers.length > 0 
+    ? Math.round(workers.reduce((acc, w) => acc + w.slaCompliance, 0) / workers.length)
+    : 0;
+
+  const avgResolutionTime = workers.length > 0
+    ? (workers.reduce((acc, w) => acc + w.avgResolutionHours, 0) / workers.length).toFixed(1)
+    : 0;
+
+  const electricalCount = complaints.filter(c => c.category === 'electrical').length;
+  const plumbingCount = complaints.filter(c => c.category === 'plumbing').length;
+  
+  const electricalPct = totalComplaints > 0 ? Math.round((electricalCount / totalComplaints) * 100) : 0;
+  const plumbingPct = totalComplaints > 0 ? Math.round((plumbingCount / totalComplaints) * 100) : 0;
+
+  const urgencyCounts = {
+    emergency: complaints.filter(c => c.urgency === 'emergency').length,
+    high: complaints.filter(c => c.urgency === 'high').length,
+    medium: complaints.filter(c => c.urgency === 'medium').length,
+    low: complaints.filter(c => c.urgency === 'low').length,
+  };
+
+  return (
+    <>
+      <Header title="Analytics" subtitle="Complaint trends, resolution metrics, and operational insights" />
+
+      <div className="dashboard-content animate-fadeIn">
+        {/* Stats Summary */}
+        <div className="kpi-grid">
+          <div className="kpi-card kpi-card--primary stagger-item">
+            <div className="kpi-value">{totalComplaints}</div>
+            <div className="kpi-label">Total Complaints (All Time)</div>
+            <div className="kpi-trend kpi-trend--up">Live data</div>
+          </div>
+          <div className="kpi-card kpi-card--success stagger-item">
+            <div className="kpi-value">{resolvedComplaints}</div>
+            <div className="kpi-label">Resolved</div>
+            <div className="kpi-trend kpi-trend--up">{resolutionRate}% resolution rate</div>
+          </div>
+          <div className="kpi-card kpi-card--warning stagger-item">
+            <div className="kpi-value">{avgResolutionTime}h</div>
+            <div className="kpi-label">Avg Worker Resolution Time</div>
+            <div className="kpi-trend kpi-trend--down">Based on active workers</div>
+          </div>
+          <div className="kpi-card kpi-card--info stagger-item">
+            <div className="kpi-value">{avgSlaCompliance}%</div>
+            <div className="kpi-label">Average SLA Compliance</div>
+            <div className="kpi-trend kpi-trend--up">Across all categories</div>
+          </div>
+        </div>
+
+        {/* Charts Placeholder */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
+          {/* Complaint Volume Trend */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Complaint Volume Trend</h2>
+              <select className="form-select" style={{ width: 'auto' }}>
+                <option>Last 30 Days</option>
+                <option>Last 7 Days</option>
+                <option>This Month</option>
+              </select>
+            </div>
+            <div style={{
+              height: 240,
+              background: 'linear-gradient(135deg, var(--color-primary-50), var(--color-info-50))',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              padding: 'var(--space-4)',
+              gap: '6px',
+            }}>
+              {/* Simple bar chart visualization */}
+              {[35, 28, 45, 32, 50, 38, 42, 29, 55, 40, 33, 47, 36, 44].map((val, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: 1,
+                    height: `${val * 3.5}px`,
+                    background: `linear-gradient(180deg, var(--color-primary-400), var(--color-primary-600))`,
+                    borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
+                    opacity: 0.7 + (i / 20),
+                    transition: 'height var(--transition-slow)',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Category Breakdown */}
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Category Breakdown</h2>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)', padding: 'var(--space-4) 0' }}>
+              {/* Electrical */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>⚡ Electrical</span>
+                  <span style={{ fontWeight: 700, color: 'var(--color-warning-600)' }}>{electricalCount} complaints ({electricalPct}%)</span>
+                </div>
+                <div style={{ height: 10, background: 'var(--color-neutral-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${electricalPct}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, var(--color-warning-400), var(--color-warning-500))',
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'width 1s ease-out',
+                  }} />
+                </div>
+              </div>
+              {/* Plumbing */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>🔧 Plumbing</span>
+                  <span style={{ fontWeight: 700, color: 'var(--color-info-600)' }}>{plumbingCount} complaints ({plumbingPct}%)</span>
+                </div>
+                <div style={{ height: 10, background: 'var(--color-neutral-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${plumbingPct}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, var(--color-info-400), var(--color-info-500))',
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'width 1s ease-out',
+                  }} />
+                </div>
+              </div>
+
+              {/* Urgency Breakdown */}
+              <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-neutral-200)' }}>
+                <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-neutral-500)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 'var(--space-3)' }}>
+                  By Urgency
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-3)' }}>
+                  {[
+                    { label: 'Emergency', value: urgencyCounts.emergency, color: 'var(--color-emergency-500)' },
+                    { label: 'High', value: urgencyCounts.high, color: 'var(--color-danger-500)' },
+                    { label: 'Medium', value: urgencyCounts.medium, color: 'var(--color-warning-500)' },
+                    { label: 'Low', value: urgencyCounts.low, color: 'var(--color-success-500)' },
+                  ].map((item) => (
+                    <div key={item.label} style={{ textAlign: 'center', padding: 'var(--space-3)', background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-md)' }}>
+                      <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 800, color: item.color }}>{item.value}</div>
+                      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)' }}>{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Worker Performance Comparison */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">Worker Performance</h2>
+          </div>
+          <div className="table-container" style={{ border: 'none' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Worker</th>
+                  <th>Category</th>
+                  <th>Total Resolved</th>
+                  <th>Avg Resolution Time</th>
+                  <th>SLA Compliance</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {workers.map(worker => (
+                  <tr key={worker.id}>
+                    <td className="table-cell-primary">{worker.name}</td>
+                    <td>
+                      {worker.category === 'electrical' ? '⚡ ' : '🔧 '}
+                      {worker.category.charAt(0).toUpperCase() + worker.category.slice(1)}
+                    </td>
+                    <td style={{ fontWeight: 700 }}>{worker.completedThisWeek}</td>
+                    <td>{worker.avgResolutionHours}h</td>
+                    <td>
+                      <span style={{ fontWeight: 700, color: worker.slaCompliance >= 90 ? 'var(--color-success-600)' : 'var(--color-warning-600)' }}>
+                        {worker.slaCompliance}%
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ color: worker.active ? 'var(--color-success-600)' : 'var(--color-neutral-400)' }}>
+                        {worker.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
