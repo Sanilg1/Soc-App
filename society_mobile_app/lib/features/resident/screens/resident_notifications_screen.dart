@@ -162,7 +162,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
         }
 
         notifications.add(ResidentNotification(
-          id: '${complaint.id}_${i}',
+          id: '${complaint.id}_$i',
           type: type,
           title: title,
           message: message,
@@ -232,7 +232,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: notifications.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+            separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
             itemBuilder: (context, index) {
               final notif = notifications[index];
               final color = _getNotificationColor(notif.type);

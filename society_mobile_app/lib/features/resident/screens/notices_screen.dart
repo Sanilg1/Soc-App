@@ -35,7 +35,7 @@ class NoticesScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: selectedTopic,
+                      initialValue: selectedTopic,
                       decoration: const InputDecoration(labelText: 'Topic'),
                       items: ['General', 'Maintenance', 'Events', 'Security', 'Billing']
                           .map((topic) => DropdownMenuItem(

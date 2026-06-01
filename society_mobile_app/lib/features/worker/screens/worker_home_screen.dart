@@ -129,7 +129,6 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
               filteredComplaints = scheduled;
               break;
             case TaskFilter.all:
-            default:
               filteredComplaints = complaints.where((c) => c.status != 'closed').toList();
               // Sort overall list: Critical first, then pending
               filteredComplaints.sort((a, b) {
