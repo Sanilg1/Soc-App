@@ -8,6 +8,41 @@ import { useApp } from '@/context/AppContext';
 import { getTimeAgo, CATEGORY_CONFIG } from '@/lib/mock-data';
 import type { ComplaintCategory } from '@/types';
 
+function getCategorySvg(category: string) {
+  switch (category) {
+    case 'electrical':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      );
+    case 'plumbing':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+        </svg>
+      );
+    case 'housekeeping':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      );
+    case 'ironing':
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M4 19h16M20 14.5a3 3 0 00-3-3H7a3 3 0 00-3 3V19h16v-4.5zM17 11.5V6a2 2 0 00-2-2H9a2 2 0 00-2 2v5.5" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+        </svg>
+      );
+  }
+}
+
 export default function DashboardPage() {
   const { complaints, escalations, workers } = useApp();
 
@@ -26,38 +61,69 @@ export default function DashboardPage() {
         {/* KPI Cards */}
         <div className="kpi-grid">
           <KpiCard
-            icon={<span>📋</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z" />
+                <path d="M8 6h4M8 10h4M8 14h4" />
+              </svg>
+            }
             label="Active Complaints"
             value={activeCount}
             variant="primary"
             trend={{ value: 'Real-time', direction: 'up' }}
           />
           <KpiCard
-            icon={<span>🚨</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            }
             label="Emergencies"
             value={emergencyCount}
             variant="danger"
           />
           <KpiCard
-            icon={<span>⚠️</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            }
             label="SLA Breaches"
             value={slaBreaches}
             variant="warning"
           />
           <KpiCard
-            icon={<span>🔄</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67" />
+              </svg>
+            }
             label="Reopened"
             value={reopenedCount}
             variant="info"
           />
           <KpiCard
-            icon={<span>✅</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <path d="M22 4L12 14.01l-3-3" />
+              </svg>
+            }
             label="Resolved This Week"
             value={14}
             variant="success"
           />
           <KpiCard
-            icon={<span>⏱️</span>}
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            }
             label="Avg Resolution"
             value="6.2h"
             variant="primary"
@@ -115,7 +181,7 @@ export default function DashboardPage() {
           {/* Escalation Alerts */}
           <div className="card">
             <div className="card-header">
-              <h2 className="card-title">🔴 Escalation Alerts</h2>
+              <h2 className="card-title">Escalation Alerts</h2>
               <a href="/escalations" className="btn btn--ghost btn--sm">View All →</a>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
@@ -140,7 +206,7 @@ export default function DashboardPage() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
                         <span style={{ fontWeight: 700, fontSize: 'var(--font-size-sm)', color: styleParams.color }}>
-                          {esc.type === 'emergency' ? '🚨' : esc.type === 'reopen_threshold' ? '🔄' : '⏱️'} {esc.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} — Flat {esc.flatId}
+                          {esc.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} — Flat {esc.flatId}
                         </span>
                         <span style={{ fontSize: 'var(--font-size-xs)', color: styleParams.leftBorder }}>{esc.timeElapsed}</span>
                       </div>
@@ -189,7 +255,7 @@ export default function DashboardPage() {
                     fontSize: '20px',
                     flexShrink: 0,
                   }}>
-                    {CATEGORY_CONFIG[worker.category as ComplaintCategory]?.icon || '🔧'}
+                    {getCategorySvg(worker.category)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, color: 'var(--color-neutral-900)' }}>{worker.name}</div>

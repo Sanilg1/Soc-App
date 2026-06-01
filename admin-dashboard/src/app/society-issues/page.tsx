@@ -85,7 +85,9 @@ export default function SocietyIssuesPage() {
             {active.length === 0 ? (
               <div className="card">
                 <div className="empty-state">
-                  <div className="empty-state-icon">✅</div>
+                  <div className="empty-state-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-success-400)' }}><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
                   <div className="empty-state-title">No active issues</div>
                   <div className="empty-state-message">All common areas are functioning normally</div>
                 </div>
@@ -152,7 +154,7 @@ export default function SocietyIssuesPage() {
         {resolved.length > 0 && (
           <div>
             <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-neutral-900)', marginBottom: 'var(--space-5)' }}>
-              ✅ Resolved Issues
+              Resolved Issues
             </h2>
             <div className="table-container">
               <table className="table">

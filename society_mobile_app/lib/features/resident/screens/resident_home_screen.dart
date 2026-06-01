@@ -61,7 +61,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('🔔 New notice from admin on topic: ${newNotice.topic} - ${newNotice.title}'),
+                content: Text('New notice from admin on topic: ${newNotice.topic} - ${newNotice.title}'),
                 behavior: SnackBarBehavior.floating,
                 backgroundColor: Colors.blue.shade800,
                 duration: const Duration(seconds: 5),

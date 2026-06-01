@@ -556,9 +556,9 @@ export function formatDate(dateStr: string): string {
 // ──────────────────────────────────────
 
 export const CATEGORY_CONFIG: Record<ComplaintCategory, { icon: string; label: string; gradient: string; color: string }> = {
-  electrical: { icon: '⚡', label: 'Electrical', gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: 'var(--color-warning-600)' },
-  plumbing: { icon: '🔧', label: 'Plumbing', gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)', color: 'var(--color-info-600)' },
-  housekeeping: { icon: '🧹', label: 'Housekeeping', gradient: 'linear-gradient(135deg, #34d399, #10b981)', color: 'var(--color-success-600)' },
+  electrical: { icon: '', label: 'Electrical', gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)', color: 'var(--color-warning-600)' },
+  plumbing: { icon: '', label: 'Plumbing', gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)', color: 'var(--color-info-600)' },
+  housekeeping: { icon: '', label: 'Housekeeping', gradient: 'linear-gradient(135deg, #34d399, #10b981)', color: 'var(--color-success-600)' },
 };
 
 export const WORKER_FOR_CATEGORY: Record<ComplaintCategory, string> = {

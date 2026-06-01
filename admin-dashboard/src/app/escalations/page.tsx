@@ -8,10 +8,10 @@ import { useApp } from '@/context/AppContext';
 import { getTimeAgo } from '@/lib/mock-data';
 
 const TYPE_ICONS: Record<string, string> = {
-  emergency: '🚨',
-  reopen_threshold: '🔄',
-  sla_breach: '⏱️',
-  worker_inactivity: '😴',
+  emergency: '',
+  reopen_threshold: '',
+  sla_breach: '',
+  worker_inactivity: '',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -47,13 +47,12 @@ export default function EscalationsPage() {
         {/* Active Escalations */}
         <div style={{ marginBottom: 'var(--space-8)' }}>
           <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-neutral-900)', marginBottom: 'var(--space-5)' }}>
-            🔴 Active Escalations
+            Active Escalations
           </h2>
 
           {active.length === 0 ? (
             <div className="card">
               <div className="empty-state">
-                <div className="empty-state-icon">✅</div>
                 <div className="empty-state-title">No active escalations</div>
                 <div className="empty-state-message">All escalations have been resolved</div>
               </div>
@@ -75,7 +74,6 @@ export default function EscalationsPage() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                        <span style={{ fontSize: 'var(--font-size-lg)' }}>{TYPE_ICONS[esc.type]}</span>
                         <span style={{ fontWeight: 700, fontSize: 'var(--font-size-md)', color: style.color }}>
                           {TYPE_LABELS[esc.type]}
                         </span>
@@ -118,7 +116,7 @@ export default function EscalationsPage() {
         {resolved.length > 0 && (
           <div>
             <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-neutral-900)', marginBottom: 'var(--space-5)' }}>
-              ✅ Recently Resolved
+              Recently Resolved
             </h2>
             <div className="table-container">
               <table className="table">
@@ -138,7 +136,7 @@ export default function EscalationsPage() {
                     <tr key={esc.id}>
                       <td>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                          {TYPE_ICONS[esc.type]} {TYPE_LABELS[esc.type]}
+                          {TYPE_LABELS[esc.type]}
                         </span>
                       </td>
                       <td className="table-cell-primary">{esc.complaintId}</td>

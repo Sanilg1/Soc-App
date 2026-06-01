@@ -102,7 +102,7 @@ export default function ComplaintDetailPage({ params }: { params: { id: string }
             <div className="form-group">
               <label className="form-label">Category</label>
               <span style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-neutral-800)', fontWeight: 500 }}>
-                {CATEGORY_CONFIG[complaint.category].icon} {CATEGORY_CONFIG[complaint.category].label}
+                {CATEGORY_CONFIG[complaint.category].label}
               </span>
             </div>
             <div className="form-group">
@@ -126,7 +126,7 @@ export default function ComplaintDetailPage({ params }: { params: { id: string }
                 color: complaint.reopenCount >= 3 ? 'var(--color-danger-600)' : 'var(--color-neutral-800)',
               }}>
                 {complaint.reopenCount}
-                {complaint.reopenCount >= 3 && ' ⚠️ Auto-escalated'}
+                {complaint.reopenCount >= 3 && ' (Auto-escalated)'}
               </span>
             </div>
           </div>

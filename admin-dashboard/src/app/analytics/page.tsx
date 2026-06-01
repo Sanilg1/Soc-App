@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
               {/* Electrical */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>⚡ Electrical</span>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>Electrical</span>
                   <span style={{ fontWeight: 700, color: 'var(--color-warning-600)' }}>{electricalCount} complaints ({electricalPct}%)</span>
                 </div>
                 <div style={{ height: 10, background: 'var(--color-neutral-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
               {/* Plumbing */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>🔧 Plumbing</span>
+                  <span style={{ fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>Plumbing</span>
                   <span style={{ fontWeight: 700, color: 'var(--color-info-600)' }}>{plumbingCount} complaints ({plumbingPct}%)</span>
                 </div>
                 <div style={{ height: 10, background: 'var(--color-neutral-100)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
@@ -183,7 +183,6 @@ export default function AnalyticsPage() {
                   <tr key={worker.id}>
                     <td className="table-cell-primary">{worker.name}</td>
                     <td>
-                      {worker.category === 'electrical' ? '⚡ ' : '🔧 '}
                       {worker.category.charAt(0).toUpperCase() + worker.category.slice(1)}
                     </td>
                     <td style={{ fontWeight: 700 }}>{worker.completedThisWeek}</td>

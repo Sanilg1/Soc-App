@@ -89,22 +89,22 @@ export default function SettingsPage() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="table-cell-primary">🚨 Emergency</td>
+                    <td className="table-cell-primary">Emergency</td>
                     <td>Immediate</td>
                     <td>15 minutes</td>
                   </tr>
                   <tr>
-                    <td className="table-cell-primary">🔴 High</td>
+                    <td className="table-cell-primary">High</td>
                     <td>Same day</td>
                     <td>12 hours</td>
                   </tr>
                   <tr>
-                    <td className="table-cell-primary">🟡 Medium</td>
+                    <td className="table-cell-primary">Medium</td>
                     <td>24 hours</td>
                     <td>2 days</td>
                   </tr>
                   <tr>
-                    <td className="table-cell-primary">🟢 Low</td>
+                    <td className="table-cell-primary">Low</td>
                     <td>Flexible</td>
                     <td>4 days</td>
                   </tr>

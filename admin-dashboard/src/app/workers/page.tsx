@@ -6,10 +6,45 @@ import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
 
-const CATEGORY_ICONS: Record<string, { icon: string; gradient: string }> = {
-  electrical: { icon: '⚡', gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
-  plumbing: { icon: '🔧', gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)' },
-  housekeeping: { icon: '🧹', gradient: 'linear-gradient(135deg, #34d399, #10b981)' },
+function getCategorySvg(category: string) {
+  switch (category) {
+    case 'electrical':
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      );
+    case 'plumbing':
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+        </svg>
+      );
+    case 'housekeeping':
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      );
+    case 'ironing':
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M4 19h16M20 14.5a3 3 0 00-3-3H7a3 3 0 00-3 3V19h16v-4.5zM17 11.5V6a2 2 0 00-2-2H9a2 2 0 00-2 2v5.5" />
+        </svg>
+      );
+    default:
+      return (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+        </svg>
+      );
+  }
+}
+
+const CATEGORY_ICONS: Record<string, { gradient: string }> = {
+  electrical: { gradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)' },
+  plumbing: { gradient: 'linear-gradient(135deg, #60a5fa, #3b82f6)' },
+  housekeeping: { gradient: 'linear-gradient(135deg, #34d399, #10b981)' },
 };
 
 export default function WorkersPage() {
@@ -33,7 +68,7 @@ export default function WorkersPage() {
         {/* Worker Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 'var(--space-6)', marginBottom: 'var(--space-8)' }}>
           {workers.map((worker) => {
-            const cat = CATEGORY_ICONS[worker.category] || { icon: '👷', gradient: 'linear-gradient(135deg, #9ca3af, #6b7280)' };
+            const cat = CATEGORY_ICONS[worker.category] || { gradient: 'linear-gradient(135deg, #9ca3af, #6b7280)' };
             return (
               <div key={worker.id} className="card stagger-item" style={{ padding: 'var(--space-6)', opacity: worker.active ? 1 : 0.6 }}>
                 {/* Worker Header */}
@@ -49,7 +84,7 @@ export default function WorkersPage() {
                     fontSize: '24px',
                     flexShrink: 0,
                   }}>
-                    {cat.icon}
+                    {getCategorySvg(worker.category)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 'var(--font-size-lg)', color: 'var(--color-neutral-900)' }}>

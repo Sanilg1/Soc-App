@@ -168,7 +168,7 @@ function ComplaintsPageContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                  <span style={{ fontSize: '24px' }}>🏠</span>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary-600)' }}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                   <h2 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 800, color: 'var(--color-neutral-900)', margin: 0 }}>
                     Flat {activeSearchFlatId} Profile
                   </h2>
@@ -202,7 +202,7 @@ function ComplaintsPageContent() {
             </div>
             {flatComplaints.length === 0 && (
               <div style={{ marginTop: 'var(--space-5)', padding: 'var(--space-4)', background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-md)', textAlign: 'center', color: 'var(--color-neutral-500)', fontSize: 'var(--font-size-sm)', border: '1px dashed var(--color-neutral-200)' }}>
-                📝 No complaints made by Flat {activeSearchFlatId} yet.
+                No complaints made by Flat {activeSearchFlatId} yet.
               </div>
             )}
           </div>
@@ -231,7 +231,9 @@ function ComplaintsPageContent() {
                 <tr>
                   <td colSpan={11}>
                     <div className="empty-state">
-                      <div className="empty-state-icon">📭</div>
+                      <div className="empty-state-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-neutral-300)' }}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                      </div>
                       <div className="empty-state-title">
                         {searchQuery && /^\d+$/.test(searchQuery.trim()) ? `Flat ${searchQuery.trim()}: No complaints made` : 'No complaints found'}
                       </div>
@@ -314,7 +316,7 @@ function ComplaintsPageContent() {
               <div className="form-group">
                 <label className="form-label">Category</label>
                 <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-700)' }}>
-                  {CATEGORY_CONFIG[liveSelected.category].icon} {CATEGORY_CONFIG[liveSelected.category].label}
+                  {CATEGORY_CONFIG[liveSelected.category].label}
                 </span>
               </div>
               <div className="form-group">
@@ -338,7 +340,7 @@ function ComplaintsPageContent() {
                   color: liveSelected.reopenCount >= 3 ? 'var(--color-danger-600)' : 'var(--color-neutral-700)',
                 }}>
                   {liveSelected.reopenCount}
-                  {liveSelected.reopenCount >= 3 && ' ⚠️ Auto-escalated'}
+                  {liveSelected.reopenCount >= 3 && ' (Auto-escalated)'}
                 </span>
               </div>
             </div>
@@ -483,18 +485,18 @@ function ComplaintsPageContent() {
               <div className="form-group">
                 <label className="form-label">Category *</label>
                 <select className="form-select" value={newComplaint.category} onChange={(e) => setNewComplaint(p => ({ ...p, category: e.target.value as ComplaintCategory }))} style={{ width: '100%' }}>
-                  <option value="electrical">⚡ Electrical</option>
-                  <option value="plumbing">🔧 Plumbing</option>
-                  <option value="housekeeping">🧹 Housekeeping</option>
+                  <option value="electrical">Electrical</option>
+                  <option value="plumbing">Plumbing</option>
+                  <option value="housekeeping">Housekeeping</option>
                 </select>
               </div>
               <div className="form-group">
                 <label className="form-label">Urgency *</label>
                 <select className="form-select" value={newComplaint.urgency} onChange={(e) => setNewComplaint(p => ({ ...p, urgency: e.target.value as UrgencyLevel }))} style={{ width: '100%' }}>
-                  <option value="low">🟢 Low</option>
-                  <option value="medium">🟡 Medium</option>
-                  <option value="high">🔴 High</option>
-                  <option value="emergency">🚨 Emergency</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="emergency">Emergency</option>
                 </select>
               </div>
             </div>

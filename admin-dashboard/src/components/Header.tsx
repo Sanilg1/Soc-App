@@ -41,7 +41,6 @@ export default function Header({ title, subtitle }: HeaderProps) {
     setTimeout(() => {
       setIsRefreshing(false);
       toast.success('System state updated and SLA checks executed!', {
-        icon: '🔄',
         style: {
           borderRadius: '10px',
           background: '#333',

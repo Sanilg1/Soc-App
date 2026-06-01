@@ -131,7 +131,9 @@ export default function NoticesPage() {
         ) : notices.length === 0 ? (
           <div className="card">
             <div className="empty-state">
-              <div className="empty-state-icon">📢</div>
+              <div className="empty-state-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-neutral-300)' }}><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+              </div>
               <div className="empty-state-title">No notices published yet</div>
               <div className="empty-state-message">Publish a new official announcement to notify all residents.</div>
             </div>
