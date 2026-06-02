@@ -107,6 +107,8 @@ class AuthService {
         return {'role': 'worker', 'category': 'housekeeping', 'phone': phone};
       } else if (phone.contains('9999999905')) {
         return {'role': 'worker', 'category': 'ironing', 'phone': phone};
+      } else if (phone.contains('9999999906')) {
+        return {'role': 'guard', 'phone': phone};
       }
       return {'role': 'resident', 'flatId': simulatedFlatId ?? '1302', 'phone': phone};
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
 
@@ -11,6 +12,11 @@ void main() async {
   // with stubs even when google-services.json or GoogleService-Info.plist are not yet added.
   try {
     await Firebase.initializeApp();
+    // Enable offline persistence explicitly
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
   } catch (e) {
     debugPrint('Firebase initialization failed (likely missing configuration files): $e');
   }

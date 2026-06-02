@@ -6,6 +6,9 @@ import '../../auth/providers/auth_provider.dart';
 import '../../complaints/providers/complaints_provider.dart';
 import '../../notices/providers/notice_provider.dart';
 import '../../notices/models/notice_model.dart';
+import '../../../core/providers/network_provider.dart';
+import '../../visitors/providers/visitor_provider.dart';
+import '../../../core/services/messaging_service.dart';
 
 class ResidentHomeScreen extends ConsumerStatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -40,6 +43,17 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authProvider);
+      if (authState.userId != null) {
+        ref.read(messagingServiceProvider).init(authState.userId!);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
@@ -50,6 +64,12 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
     
     // Watch notices stream
     final noticesAsync = ref.watch(noticesStreamProvider);
+
+    // Watch visitors stream
+    final visitorsAsync = ref.watch(visitorStreamProvider(flatId));
+
+    // Watch network status
+    final networkStatus = ref.watch(networkProvider);
 
     // Push notification mock listener
     ref.listen<AsyncValue<List<Notice>>>(noticesStreamProvider, (previous, next) {
@@ -85,14 +105,40 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
             icon: const Icon(Icons.person_outline_rounded),
             onPressed: () => context.push('/profile'),
           ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              ref.read(authProvider.notifier).logout();
+            },
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Header Card
+      body: Column(
+        children: [
+          if (networkStatus == NetworkStatus.offline)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.red.shade600,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.wifi_off, color: Colors.white, size: 16),
+                  SizedBox(width: 8),
+                  Text(
+                    'You are offline. Operating from cache.',
+                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Header Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -153,6 +199,70 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
               ),
             ),
             const SizedBox(height: 28),
+
+            // Section: Gate Visitors
+            visitorsAsync.when(
+              data: (visitors) {
+                final pendingVisitors = visitors.where((v) => v.status == 'pending').toList();
+                if (pendingVisitors.isEmpty) return const SizedBox.shrink();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Visitors at Gate', style: theme.textTheme.titleLarge?.copyWith(color: Colors.red.shade700)),
+                    const SizedBox(height: 12),
+                    ...pendingVisitors.map((visitor) => Card(
+                          color: Colors.red.shade50,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(visitor.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+                                      child: const Text('PENDING', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text('${visitor.company} • ${visitor.purpose}'),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+                                        onPressed: () => ref.read(visitorServiceProvider).updateVisitorStatus(visitor.id, 'denied'),
+                                        child: const Text('Deny'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                                        onPressed: () => ref.read(visitorServiceProvider).updateVisitorStatus(visitor.id, 'approved'),
+                                        child: const Text('Approve'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        )),
+                    const SizedBox(height: 24),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (e, st) => const SizedBox.shrink(),
+            ),
             
             // Section: Active Complaints
             Row(
@@ -322,6 +432,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

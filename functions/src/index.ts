@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { getMessaging } from "firebase-admin/messaging";
 
 initializeApp();
 const db = getFirestore();
@@ -443,3 +444,95 @@ export const cleanupOldComplaints = onSchedule("0 0 1 * *", async (event) => {
     await batch.commit();
   }
 });
+
+/**
+ * Triggered when a new Notification is created in Firestore.
+ * Finds the FCM token for the target user and dispatches a push notification.
+ */
+export const onNotificationCreated = onDocumentCreated("notifications/{notifId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const notif = snapshot.data();
+
+  const targetUserId = notif.targetUserId; // e.g., "resident_1302" or "worker_elec1"
+  if (!targetUserId) return;
+
+  // We need to find the FCM token.
+  // We'll query the "users" collection based on the target string format.
+  let userQuery: FirebaseFirestore.Query = db.collection("users");
+
+  if (targetUserId.startsWith("resident_")) {
+    const flatId = targetUserId.replace("resident_", "");
+    userQuery = userQuery.where("role", "==", "resident").where("flatId", "==", flatId);
+  } else if (targetUserId.startsWith("worker_")) {
+    // We can extract worker phone if needed: const workerPhone = targetUserId.replace("worker_", "");
+    // Fallback: Just query for the user document if targetUserId *is* the UID.
+  }
+
+  // If the targetUserId is just a raw UID (which might be the case for new features), try fetching it directly first.
+  let tokens: string[] = [];
+  try {
+    const directUserDoc = await db.collection("users").doc(targetUserId).get();
+    if (directUserDoc.exists && directUserDoc.data()?.fcmToken) {
+      tokens.push(directUserDoc.data()!.fcmToken);
+    }
+  } catch (e) {
+    // Ignore and fallback to query
+  }
+
+  if (tokens.length === 0 && targetUserId.startsWith("resident_")) {
+    const usersSnapshot = await userQuery.get();
+    usersSnapshot.forEach((doc) => {
+      const token = doc.data().fcmToken;
+      if (token) tokens.push(token);
+    });
+  }
+
+  if (tokens.length === 0) {
+    console.log(`No FCM token found for target ${targetUserId}`);
+    return;
+  }
+
+  // Send the push notification
+  const message = {
+    notification: {
+      title: notif.title || "New Notification",
+      body: notif.message || "",
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await getMessaging().sendMulticast(message);
+    console.log(`Successfully sent message to ${response.successCount} devices`);
+  } catch (error) {
+    console.error("Error sending FCM message:", error);
+  }
+});
+
+/**
+ * Triggered when a new Visitor is logged by the Guard.
+ * Creates a notification for the resident.
+ */
+export const onVisitorCreated = onDocumentCreated("visitors/{visitorId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const visitor = snapshot.data();
+  const visitorId = event.params.visitorId;
+  const now = new Date().toISOString();
+
+  if (visitor.status === "pending") {
+    const notifRef = db.collection("notifications").doc();
+    await notifRef.set({
+      id: notifRef.id,
+      targetUserId: `resident_${visitor.flatId}`,
+      type: "visitor_approval",
+      title: `Visitor at Gate - ${visitor.name}`,
+      message: `${visitor.name} from ${visitor.company} is at the gate for ${visitor.purpose}. Please approve or deny.`,
+      read: false,
+      visitorId,
+      createdAt: now,
+    });
+  }
+});
+

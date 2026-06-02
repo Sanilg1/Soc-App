@@ -845,3 +845,23 @@ Future expansion may include:
 ## 23.5 Admin Session Security
 - Admin authentication creates a genuine, persistent anonymous Firebase session linked securely via the dmins collection.
 - Firestore security rules rigorously enforce isAdmin() validation instead of relying on open mock rules.
+
+ #   2 4 .   A d d i t i o n s   I m p l e m e n t e d   ( P h a s e   2   /   V 1 . 2 ) 
+ 
+ # #   2 4 . 1   G a t e   /   V i s i t o r   M a n a g e m e n t   ( M y G a t e   f u n c t i o n a l i t y ) 
+ -   * * G u a r d   P e r s o n a : * *   A d d e d   a   n e w   S e c u r i t y   G u a r d   r o l e   l o g i n   ( m o c k   n u m b e r :   \ + 9 1 9 9 9 9 9 9 9 9 0 6 \ ) . 
+ -   * * V i s i t o r   E n t r y : * *   G u a r d s   h a v e   a   d e d i c a t e d   d a s h b o a r d   t o   r e c o r d   i n c o m i n g   v i s i t o r s ,   d e l i v e r y   p e r s o n n e l ,   a n d   g u e s t s ,   a s s i g n i n g   t h e m   t o   s p e c i f i c   f l a t s . 
+ -   * * R e s i d e n t   A p p r o v a l : * *   R e s i d e n t s   r e c e i v e   a   p r o m i n e n t   p e n d i n g   r e q u e s t   b a n n e r   o n   t h e i r   d a s h b o a r d   w h e r e   t h e y   c a n   t a p   * * A p p r o v e * *   o r   * * D e n y * *   f o r   v i s i t o r   e n t r y .   T h e   f a l l b a c k   f o r   a   l a c k   o f   r e s p o n s e   r e m a i n s   t h e   p h y s i c a l   i n t e r c o m . 
+ 
+ # #   2 4 . 2   O f f l i n e   M o d e   &   L o c a l   C a c h i n g 
+ -   * * N e t w o r k   R e s i l i e n c e : * *   A p p   l e v e r a g e s   F i r e s t o r e ' s   b u i l t - i n   o f f l i n e   p e r s i s t e n c e   t o   i n s t a n t l y   l o a d   d a t a   f r o m   c a c h e   w h e n   n e t w o r k   c o n n e c t i v i t y   d r o p s   ( e . g . ,   i n   e l e v a t o r s   o r   b a s e m e n t s ) . 
+ -   * * N e t w o r k   A w a r e n e s s : * *   A   g l o b a l   n e t w o r k   l i s t e n e r   d e t e c t s   o f f l i n e   s t a t u s   a n d   d i s p l a y s   a   w a r n i n g   b a n n e r   t o   t h e   u s e r .   D a t a   o p e r a t i o n s   m a d e   o f f l i n e   w i l l   a u t o m a t i c a l l y   s y n c   t o   F i r e b a s e   o n c e   c o n n e c t i v i t y   i s   r e s t o r e d . 
+ 
+ # #   2 4 . 3   R e a l - t i m e   P u s h   N o t i f i c a t i o n s   ( F C M ) 
+ -   * * F r o n t e n d   I n t e g r a t i o n : * *   T h e   \  i r e b a s e _ m e s s a g i n g \   S D K   i s   i n t e g r a t e d   t o   a u t o m a t i c a l l y   r e q u e s t   p u s h   n o t i f i c a t i o n   p e r m i s s i o n s   f r o m   u s e r s   ( i O S / A n d r o i d   1 3 + )   a n d   s e c u r e l y   c a p t u r e   d e v i c e   F C M   t o k e n s   t o   t h e   F i r e s t o r e   \ u s e r s \   c o l l e c t i o n . 
+ -   * * B a c k e n d   T r i g g e r s : * *   F i r e b a s e   C l o u d   F u n c t i o n s   a u t o m a t i c a l l y   d i s p a t c h   P u s h   N o t i f i c a t i o n s   d i r e c t l y   t o   s p e c i f i c   d e v i c e s   i n   t h e   f o l l o w i n g   s c e n a r i o s : 
+     1 .   A   G a t e   G u a r d   c r e a t e s   a   n e w   V i s i t o r   r e q u e s t   ( a l e r t s   t h e   t a r g e t e d   r e s i d e n t ) . 
+     2 .   A   W o r k e r   o r   A d m i n   u p d a t e s   t h e   s t a t u s   o f   a   c o m p l a i n t   ( a l e r t s   t h e   r e s i d e n t ) . 
+     3 .   A   n e w   c o m p l a i n t   i s   a s s i g n e d   t o   a   w o r k e r   e i t h e r   i n s t a n t l y   o r   b y   a n   A d m i n   ( a l e r t s   t h e   w o r k e r ) . 
+  
+ 

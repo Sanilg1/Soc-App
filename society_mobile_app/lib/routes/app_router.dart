@@ -27,6 +27,7 @@ import '../features/resident/screens/complaint_submitted_screen.dart';
 import '../features/resident/screens/society_issue_create_screen.dart';
 import '../features/billing/screens/resident_bills_screen.dart';
 import '../features/billing/screens/worker_dues_screen.dart';
+import '../features/guard/screens/guard_home_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -61,6 +62,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (status == AuthStatus.authenticatedWorker) {
         if (isAuthFlow || currentLoc == '/') {
           return '/worker-home';
+        }
+        return null;
+      }
+
+      if (status == AuthStatus.authenticatedGuard) {
+        if (isAuthFlow || currentLoc == '/') {
+          return '/guard-home';
         }
         return null;
       }
@@ -105,6 +113,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/worker-home',
         builder: (context, state) => const WorkerHomeScreen(),
+      ),
+      GoRoute(
+        path: '/guard-home',
+        builder: (context, state) => const GuardHomeScreen(),
       ),
       GoRoute(
         path: '/profile',

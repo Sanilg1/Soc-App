@@ -7,6 +7,7 @@ enum AuthStatus {
   authenticating,
   authenticatedResident,
   authenticatedWorker,
+  authenticatedGuard,
   unauthenticated,
   error,
 }
@@ -99,6 +100,13 @@ class AuthNotifier extends Notifier<AuthState> {
         role: role,
         phone: phone,
         category: category,
+      );
+    } else if (role == 'guard') {
+      state = AuthState(
+        status: AuthStatus.authenticatedGuard,
+        userId: uid,
+        role: role,
+        phone: phone,
       );
     } else {
       state = AuthState(
