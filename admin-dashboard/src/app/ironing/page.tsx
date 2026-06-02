@@ -19,8 +19,10 @@ export default function IroningLedgerPage() {
 
   // Form states
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
-  const [itemCounts, setItemCounts] = useState({ shirts: 0, trousers: 0, sarees: 0, others: 0 });
-  const [newRates, setNewRates] = useState<IroningRates>({ shirts: 0, trousers: 0, sarees: 0, others: 0 });
+  const [itemCounts, setItemCounts] = useState<Record<string, number>>({});
+  const [newRates, setNewRates] = useState<IroningRates>({});
+  
+  const [newClothType, setNewClothType] = useState('');
 
   // Get active ledger details
   const activeLedger = selectedFlatId ? ledgers.find(l => l.flatId === selectedFlatId) : null;
@@ -46,21 +48,25 @@ export default function IroningLedgerPage() {
 
   function openDeliveryModal(ledger: FlatLedger) {
     setSelectedFlatId(ledger.flatId);
-    setItemCounts({ shirts: 0, trousers: 0, sarees: 0, others: 0 });
+    
+    // Initialize item counts for all existing cloth types to 0
+    const initialCounts: Record<string, number> = {};
+    Object.keys(ironingRates).forEach(key => initialCounts[key] = 0);
+    setItemCounts(initialCounts);
+    
     setShowDeliveryModal(true);
   }
 
-  const calculatedTotalDeliveryCost = 
-    itemCounts.shirts * ironingRates.shirts +
-    itemCounts.trousers * ironingRates.trousers +
-    itemCounts.sarees * ironingRates.sarees +
-    itemCounts.others * ironingRates.others;
+  const calculatedTotalDeliveryCost = Object.entries(itemCounts).reduce((total, [cloth, count]) => {
+    const rate = ironingRates[cloth] || 0;
+    return total + (count * rate);
+  }, 0);
 
   function handleDeliverySubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedFlatId) return;
     
-    const totalItems = itemCounts.shirts + itemCounts.trousers + itemCounts.sarees + itemCounts.others;
+    const totalItems = Object.values(itemCounts).reduce((a, b) => a + b, 0);
     if (totalItems === 0) {
       toast.error('Please add at least one cloth item');
       return;
@@ -82,6 +88,20 @@ export default function IroningLedgerPage() {
     updateIroningRates(newRates);
     toast.success('Ironing rates updated successfully');
     setShowRatesModal(false);
+  }
+
+  function handleAddNewClothType() {
+    const type = newClothType.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (!type) return;
+    
+    if (newRates[type] !== undefined) {
+      toast.error('Cloth type already exists');
+      return;
+    }
+    
+    setNewRates(prev => ({ ...prev, [type]: 0 }));
+    setNewClothType('');
+    toast.success(`Added ${type}, please set a price`);
   }
 
   // Aggregate all transactions across ledgers to show a chronological global feed
@@ -174,22 +194,12 @@ export default function IroningLedgerPage() {
             </div>
             <div className="card" style={{ padding: 'var(--space-6)' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                  <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)' }}>Shirts / Tops</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-neutral-800)' }}>₹{ironingRates.shirts} / piece</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                  <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)' }}>Trousers / Jeans</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-neutral-800)' }}>₹{ironingRates.trousers} / piece</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 'var(--space-2)', borderBottom: '1px solid var(--color-neutral-100)' }}>
-                  <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)' }}>Sarees</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-neutral-800)' }}>₹{ironingRates.sarees} / piece</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)' }}>Others</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-neutral-800)' }}>₹{ironingRates.others} / piece</span>
-                </div>
+                {Object.entries(ironingRates).map(([clothType, rate], index, array) => (
+                  <div key={clothType} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: index === array.length - 1 ? 0 : 'var(--space-2)', borderBottom: index === array.length - 1 ? 'none' : '1px solid var(--color-neutral-100)' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--color-neutral-600)', textTransform: 'capitalize' }}>{clothType}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--color-neutral-800)' }}>₹{rate} / piece</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -291,55 +301,22 @@ export default function IroningLedgerPage() {
       >
         <form onSubmit={handleDeliverySubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div className="form-group">
-                <label className="form-label">Shirts / Tops (₹{ironingRates.shirts}/pc)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={itemCounts.shirts || ''} 
-                  onChange={(e) => setItemCounts(p => ({ ...p, shirts: Math.max(0, parseInt(e.target.value) || 0) }))}
-                  placeholder="0"
-                  min={0}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Trousers (₹{ironingRates.trousers}/pc)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={itemCounts.trousers || ''} 
-                  onChange={(e) => setItemCounts(p => ({ ...p, trousers: Math.max(0, parseInt(e.target.value) || 0) }))}
-                  placeholder="0"
-                  min={0}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div className="form-group">
-                <label className="form-label">Sarees (₹{ironingRates.sarees}/pc)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={itemCounts.sarees || ''} 
-                  onChange={(e) => setItemCounts(p => ({ ...p, sarees: Math.max(0, parseInt(e.target.value) || 0) }))}
-                  placeholder="0"
-                  min={0}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Others (₹{ironingRates.others}/pc)</label>
-                <input 
-                  type="number" 
-                  className="form-input" 
-                  value={itemCounts.others || ''} 
-                  onChange={(e) => setItemCounts(p => ({ ...p, others: Math.max(0, parseInt(e.target.value) || 0) }))}
-                  placeholder="0"
-                  min={0}
-                />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+              {Object.keys(ironingRates).map((clothType) => (
+                <div key={clothType} className="form-group">
+                  <label className="form-label" style={{ textTransform: 'capitalize' }}>
+                    {clothType} (₹{ironingRates[clothType]}/pc)
+                  </label>
+                  <input 
+                    type="number" 
+                    className="form-input" 
+                    value={itemCounts[clothType] || ''} 
+                    onChange={(e) => setItemCounts(p => ({ ...p, [clothType]: Math.max(0, parseInt(e.target.value) || 0) }))}
+                    placeholder="0"
+                    min={0}
+                  />
+                </div>
+              ))}
             </div>
 
             <div style={{ 
@@ -379,53 +356,51 @@ export default function IroningLedgerPage() {
       >
         <form onSubmit={handleRatesSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div className="form-group">
-                <label className="form-label">Shirts / Tops (₹) *</label>
-                <input 
-                  type="number" 
-                  required
-                  className="form-input" 
-                  value={newRates.shirts || ''} 
-                  onChange={(e) => setNewRates(p => ({ ...p, shirts: Math.max(1, parseFloat(e.target.value) || 0) }))}
-                  min={1}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Trousers / Jeans (₹) *</label>
-                <input 
-                  type="number" 
-                  required
-                  className="form-input" 
-                  value={newRates.trousers || ''} 
-                  onChange={(e) => setNewRates(p => ({ ...p, trousers: Math.max(1, parseFloat(e.target.value) || 0) }))}
-                  min={1}
-                />
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+              {Object.keys(newRates).map((clothType) => (
+                <div key={clothType} className="form-group">
+                  <label className="form-label" style={{ textTransform: 'capitalize', display: 'flex', justifyContent: 'space-between' }}>
+                    {clothType} (₹) *
+                    <button type="button" onClick={() => {
+                      const updated = { ...newRates };
+                      delete updated[clothType];
+                      setNewRates(updated);
+                    }} style={{ background: 'none', border: 'none', color: 'var(--color-danger-500)', cursor: 'pointer', padding: 0 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    </button>
+                  </label>
+                  <input 
+                    type="number" 
+                    required
+                    className="form-input" 
+                    value={newRates[clothType] || 0} 
+                    onChange={(e) => setNewRates(p => ({ ...p, [clothType]: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                    min={0}
+                  />
+                </div>
+              ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-              <div className="form-group">
-                <label className="form-label">Sarees (₹) *</label>
-                <input 
-                  type="number" 
-                  required
-                  className="form-input" 
-                  value={newRates.sarees || ''} 
-                  onChange={(e) => setNewRates(p => ({ ...p, sarees: Math.max(1, parseFloat(e.target.value) || 0) }))}
-                  min={1}
+            {/* Add New Cloth Type */}
+            <div style={{ borderTop: '1px solid var(--color-neutral-200)', paddingTop: 'var(--space-4)', marginTop: 'var(--space-2)' }}>
+              <label className="form-label">Add New Cloth Type</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. bedsheets"
+                  value={newClothType}
+                  onChange={(e) => setNewClothType(e.target.value)}
+                  style={{ flex: 1 }}
                 />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Others (₹) *</label>
-                <input 
-                  type="number" 
-                  required
-                  className="form-input" 
-                  value={newRates.others || ''} 
-                  onChange={(e) => setNewRates(p => ({ ...p, others: Math.max(1, parseFloat(e.target.value) || 0) }))}
-                  min={1}
-                />
+                <button 
+                  type="button" 
+                  className="btn btn--secondary" 
+                  onClick={handleAddNewClothType}
+                  disabled={!newClothType.trim()}
+                >
+                  Add Type
+                </button>
               </div>
             </div>
           </div>

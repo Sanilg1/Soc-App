@@ -6,18 +6,17 @@ import '../../auth/providers/auth_provider.dart';
 import '../../complaints/providers/complaints_provider.dart';
 import '../../complaints/models/complaint_model.dart';
 import '../../worker/providers/worker_provider.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import '../../../core/services/storage_service.dart';
 
-class ComplaintCreateScreen extends ConsumerStatefulWidget {
-  const ComplaintCreateScreen({super.key});
+class ComplaintEditScreen extends ConsumerStatefulWidget {
+  final String complaintId;
+
+  const ComplaintEditScreen({super.key, required this.complaintId});
 
   @override
-  ConsumerState<ComplaintCreateScreen> createState() => _ComplaintCreateScreenState();
+  ConsumerState<ComplaintEditScreen> createState() => _ComplaintEditScreenState();
 }
 
-class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
+class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _customSlotController = TextEditingController();
@@ -25,18 +24,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
   String _selectedCategory = 'electrical';
   String _selectedUrgency = 'low';
   String _selectedAvailability = 'anytime_today';
-
-  File? _selectedImage;
-  final ImagePicker _imagePicker = ImagePicker();
-
-  Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _imagePicker.pickImage(source: source, imageQuality: 70);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
-    }
-  }
+  bool _isInitialized = false;
 
   // Ironing specifics
   int _shirtsCount = 0;
@@ -96,24 +84,25 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
   }
 
   void _checkDuplicate() async {
-    final authState = ref.read(authProvider);
-    final flatId = authState.flatId;
-    if (flatId == null) return;
+    // Disabled for edit screen
+  }
 
-    setState(() {
-      _isCheckingDuplicate = true;
-    });
+  void _initializeData(Complaint complaint) {
+    if (_isInitialized) return;
+    _isInitialized = true;
+    _selectedCategory = complaint.category;
+    _selectedUrgency = complaint.urgency;
+    _selectedAvailability = complaint.availability.type;
+    if (complaint.availability.customSlot != null) {
+      _customSlotController.text = complaint.availability.customSlot!;
+    }
+    _descriptionController.text = complaint.description;
 
-    final isDuplicate = await ref.read(complaintServiceProvider).checkDuplicateComplaint(
-      flatId,
-      _selectedCategory,
-    );
-
-    if (mounted) {
-      setState(() {
-        _hasDuplicate = isDuplicate;
-        _isCheckingDuplicate = false;
-      });
+    if (complaint.ironingDetails != null) {
+      _shirtsCount = complaint.ironingDetails!['counts']?['shirts'] ?? 0;
+      _trousersCount = complaint.ironingDetails!['counts']?['trousers'] ?? 0;
+      _sareesCount = complaint.ironingDetails!['counts']?['sarees'] ?? 0;
+      _othersCount = complaint.ironingDetails!['counts']?['others'] ?? 0;
     }
   }
 
@@ -134,90 +123,26 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
       _isSubmitting = true;
     });
 
-    final now = DateTime.now().toIso8601String();
-    
-    // SLA Definitions based on urgency
-    // Emergency: 15 mins, High: 12 hrs, Medium: 48 hrs, Low: 96 hrs (4 days)
-    Duration slaDuration;
-    switch (_selectedUrgency) {
-      case 'emergency':
-        slaDuration = const Duration(minutes: 15);
-        break;
-      case 'high':
-        slaDuration = const Duration(hours: 12);
-        break;
-      case 'medium':
-        slaDuration = const Duration(days: 2);
-        break;
-      default:
-        slaDuration = const Duration(days: 4);
-    }
-
-    final slaDeadline = DateTime.now().add(slaDuration).toIso8601String();
-
-    String? imageUrl;
-    if (_selectedImage != null) {
-      try {
-        final storageService = ref.read(storageServiceProvider);
-        final uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
-        imageUrl = await storageService.uploadImage(_selectedImage!, 'complaints', uniqueId);
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Image upload failed: $e'), backgroundColor: Colors.red),
-          );
-        }
-        setState(() {
-          _isSubmitting = false;
-        });
-        return;
-      }
-    }
-
-    final complaint = Complaint(
-      id: '', // Will be assigned mock ID by service
-      flatId: flatId,
-      category: _selectedCategory,
-      description: _descriptionController.text.trim(),
-      urgency: _selectedUrgency,
-      isEmergency: _selectedUrgency == 'emergency',
-      status: 'submitted',
-      availability: Availability(
-        type: _selectedCategory == 'housekeeping' ? 'general_area' : _selectedAvailability,
-        customSlot: (_selectedCategory != 'housekeeping' && _selectedAvailability == 'custom') 
-            ? _customSlotController.text.trim() 
-            : null,
-      ),
-      images: imageUrl != null ? [imageUrl] : [],
-      ironingDetails: _selectedCategory == 'ironing' ? {
-        'counts': {
-          'shirts': _shirtsCount,
-          'trousers': _trousersCount,
-          'sarees': _sareesCount,
-          'others': _othersCount,
-        },
-        'rates': _ironingRates,
-        'totalCost': _ironingTotal,
-        'countConfirmedByWorker': false,
-        'paymentStatus': 'pending',
-      } : null,
-      timeline: [
-        TimelineEvent(
-          action: 'Complaint created',
-          performedBy: authState.phone ?? 'Resident',
-          role: 'resident',
-          timestamp: now,
-        ),
-      ],
-      slaDeadline: slaDeadline,
-      createdAt: now,
-      updatedAt: now,
+    final newAvailability = Availability(
+      type: _selectedCategory == 'housekeeping' ? 'general_area' : _selectedAvailability,
+      customSlot: (_selectedCategory != 'housekeeping' && _selectedAvailability == 'custom') 
+          ? _customSlotController.text.trim() 
+          : null,
     );
 
-    final complaintId = await ref.read(complaintServiceProvider).submitComplaint(complaint);
+    await ref.read(complaintServiceProvider).editComplaint(
+      widget.complaintId,
+      _selectedCategory,
+      _descriptionController.text.trim(),
+      _selectedUrgency,
+      newAvailability,
+    );
 
     if (mounted) {
-      context.go('/complaint-submitted?category=${Uri.encodeComponent(_selectedCategory)}&urgency=${Uri.encodeComponent(_selectedUrgency)}&id=${Uri.encodeComponent(complaintId)}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Complaint updated successfully')),
+      );
+      context.pop();
     }
   }
 
@@ -230,16 +155,31 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
       orElse: () => false,
     );
     
+    final complaintsAsync = ref.watch(complaintsStreamProvider(ref.watch(authProvider).flatId ?? ''));
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Complaint'),
+        title: const Text('Edit Complaint'),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
+      body: complaintsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (complaints) {
+          final complaint = complaints.firstWhere(
+            (c) => c.id == widget.complaintId,
+            orElse: () => throw Exception('Complaint not found'),
+          );
+          
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _initializeData(complaint);
+          });
+
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Category Selector
@@ -544,15 +484,22 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                   Text('Preferred Visit Time', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _selectedAvailability,
+                    initialValue: _selectedAvailability,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    items: _buildAvailabilityItems(),
+                    items: const [
+                      DropdownMenuItem(value: 'anytime_today', child: Text('Anytime Today')),
+                      DropdownMenuItem(value: 'morning', child: Text('Morning Slot (9 AM - 12 PM)')),
+                      DropdownMenuItem(value: 'evening', child: Text('Evening Slot (4 PM - 7 PM)')),
+                      DropdownMenuItem(value: 'custom', child: Text('Custom Time Slot')),
+                    ],
                     onChanged: (val) {
-                      if (val != null) setState(() => _selectedAvailability = val);
+                      if (val != null) {
+                        setState(() => _selectedAvailability = val);
+                      }
                     },
                   ),
 
@@ -577,74 +524,6 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                     ),
                   ],
                 ],
-
-                const SizedBox(height: 24),
-
-                // Image Attachment Card
-                Card(
-                  elevation: 0,
-                  color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: theme.colorScheme.outlineVariant.withOpacity(0.5)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Attach Image (Optional)',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_selectedImage != null) ...[
-                          Stack(
-                            alignment: Alignment.topRight,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.file(
-                                  _selectedImage!,
-                                  height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.cancel, color: Colors.white),
-                                onPressed: () => setState(() => _selectedImage = null),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _pickImage(ImageSource.camera),
-                                icon: const Icon(Icons.camera_alt),
-                                label: const Text('Camera'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _pickImage(ImageSource.gallery),
-                                icon: const Icon(Icons.photo_library),
-                                label: const Text('Gallery'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
                 const SizedBox(height: 48),
 
                 // Submit Button
@@ -659,7 +538,7 @@ class _ComplaintCreateScreenState extends ConsumerState<ComplaintCreateScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Submit Complaint'),
+                      : const Text('Update Complaint'),
                 ),
               ],
             ),

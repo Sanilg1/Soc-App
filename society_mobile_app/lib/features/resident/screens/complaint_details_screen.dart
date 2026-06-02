@@ -160,19 +160,34 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
     // Watch flat complaints stream
     final complaintsAsync = ref.watch(complaintsStreamProvider(flatId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Complaint Details'),
-      ),
-      body: complaintsAsync.when(
-        data: (complaints) {
-          final complaintIndex = complaints.indexWhere((c) => c.id == widget.complaintId);
-          if (complaintIndex == -1) {
-            return const Center(child: Text('Complaint details not found.'));
-          }
-          final complaint = complaints[complaintIndex];
+    return complaintsAsync.when(
+      data: (complaints) {
+        final complaintIndex = complaints.indexWhere((c) => c.id == widget.complaintId);
+        if (complaintIndex == -1) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Complaint Details')),
+            body: const Center(child: Text('Complaint details not found.')),
+          );
+        }
+        final complaint = complaints[complaintIndex];
+        final canEdit = complaint.status == 'submitted' || complaint.status == 'queued' || complaint.status == 'reopened';
 
-          return SafeArea(
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Complaint Details'),
+            actions: [
+              if (canEdit)
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  tooltip: 'Edit Complaint',
+                  onPressed: () {
+                    // Navigate to edit screen
+                    context.push('/edit-complaint/${complaint.id}');
+                  },
+                ),
+            ],
+          ),
+          body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -371,6 +386,80 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                     const SizedBox(height: 24),
                   ],
 
+                  // Actions Section (Need Tools)
+                  if (complaint.status == 'need_tools' && complaint.toolsResponsibility != null) ...[
+                    Text('Tools / Parts Needed', style: theme.textTheme.titleLarge),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade300),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.handyman, color: Colors.orange),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  complaint.toolsDescription ?? 'Tools requested',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (complaint.toolsResponsibility == 'worker')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
+                              child: const Text('Worker is procuring the parts', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(4)),
+                              child: const Text('You need to procure these parts', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ),
+                          
+                          if (complaint.toolsResponsibility == 'resident' && !complaint.toolsProcured) ...[
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                  foregroundColor: Colors.white,
+                                ),
+                                icon: const Icon(Icons.shopping_bag),
+                                label: const Text('I Have Procured The Tools'),
+                                onPressed: () async {
+                                  await ref.read(complaintServiceProvider).markToolsProcured(
+                                    complaint.id,
+                                    authState.flatId ?? 'Resident',
+                                    'resident',
+                                    complaint.flatId,
+                                    complaint.category,
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Worker notified! They will schedule a revisit soon.')),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
                   // Actions Section (Revisit Scheduled)
                   if (complaint.status == 'revisit_scheduled') ...[
                     Text('Revisit Scheduled', style: theme.textTheme.titleLarge),
@@ -469,9 +558,9 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
+      loading: () => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: const Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: Center(child: Text('Error: $err'))),
     );
   }
 }

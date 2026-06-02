@@ -17,6 +17,7 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _toolsController = TextEditingController();
   final _noteController = TextEditingController();
+  String _responsibility = 'worker'; // Default to worker
   bool _isSubmitting = false;
 
   @override
@@ -41,6 +42,7 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
       workerName,
       _toolsController.text.trim(),
       _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : null,
+      _responsibility,
     );
 
     if (mounted) {
@@ -89,6 +91,45 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Who will procure the parts?',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      RadioListTile<String>(
+                        title: const Text('I will get them (Worker)'),
+                        subtitle: const Text('You will procure the parts and bill the society/resident later.'),
+                        value: 'worker',
+                        groupValue: _responsibility,
+                        onChanged: (value) {
+                          setState(() {
+                            _responsibility = value!;
+                          });
+                        },
+                      ),
+                      const Divider(height: 1),
+                      RadioListTile<String>(
+                        title: const Text('Resident needs to buy'),
+                        subtitle: const Text('The resident is responsible for procuring the required parts.'),
+                        value: 'resident',
+                        groupValue: _responsibility,
+                        onChanged: (value) {
+                          setState(() {
+                            _responsibility = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(

@@ -1,42 +1,43 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const admin = require('firebase-admin');
+const { Firestore } = require('@google-cloud/firestore');
+const { UserRefreshClient } = require('google-auth-library');
 
-// Ensure active project ID is set
-if (!process.env.GCLOUD_PROJECT) {
-  process.env.GCLOUD_PROJECT = 'soc-appv1';
-}
+const projectId = process.env.GCLOUD_PROJECT || 'soc-appv1';
+console.log(`Initializing Seeding for Firebase Project: ${projectId}`);
 
-console.log(`Initializing Seeding for Firebase Project: ${process.env.GCLOUD_PROJECT}`);
-
-// Attempt to load tokens from firebase-tools configstore
-let tokenConfig;
+// Load Firebase CLI tokens
+let refreshToken;
 try {
   const configPath = path.join(os.homedir(), '.config', 'configstore', 'firebase-tools.json');
   if (fs.existsSync(configPath)) {
-    tokenConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    refreshToken = config.tokens?.refresh_token;
   }
 } catch (e) {
-  console.log("Could not load firebase-tools config directly:", e.message);
+  console.log("Could not load firebase-tools config:", e.message);
 }
 
-// Initialize Admin SDK using the user's refresh token if available
-if (tokenConfig && tokenConfig.tokens && tokenConfig.tokens.refresh_token) {
-  console.log('Authenticating with user credentials from Firebase CLI...');
-  admin.initializeApp({
-    credential: admin.credential.refreshToken({
-      client_id: tokenConfig.user.azp || "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com",
-      refresh_token: tokenConfig.tokens.refresh_token
-    }),
-    projectId: process.env.GCLOUD_PROJECT
-  });
-} else {
-  console.log('Authenticating with Application Default Credentials...');
-  admin.initializeApp();
+if (!refreshToken) {
+  console.error('No Firebase CLI refresh token found. Please run: firebase login');
+  process.exit(1);
 }
 
-const db = admin.firestore();
+console.log('Using Firebase CLI user credentials...');
+
+// Create proper auth client using Firebase CLI's OAuth credentials
+const authClient = new UserRefreshClient(
+  '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  'j9iVZfS8kkCEFUPaAeJV0sAi',
+  refreshToken
+);
+
+// Initialize Firestore with proper auth credentials
+const db = new Firestore({
+  projectId,
+  authClient,
+});
 
 const seedData = async () => {
   const batch = db.batch();
@@ -190,10 +191,34 @@ const seedData = async () => {
       id: 'notice_1',
       title: 'Water Tank Cleaning Scheduled',
       topic: 'Maintenance',
-      content: 'Periodic maintenance cleaning for secondary drinking water overhead tank on Friday.',
+      content: 'Periodic maintenance cleaning for secondary drinking water overhead tank on Friday. Please store water in advance as supply will be interrupted from 10 AM to 4 PM.',
       author: 'Admin Team',
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    }
+    },
+    {
+      id: 'notice_2',
+      title: 'Annual General Meeting Notice',
+      topic: 'General',
+      content: 'The Annual General Meeting of the Society will be held on June 15, 2026 at 6:00 PM in the Community Hall. All flat owners are requested to attend. Proxy forms are available at the office.',
+      author: 'Secretary',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notice_3',
+      title: 'Parking Sticker Renewal',
+      topic: 'Parking',
+      content: 'All residents are required to renew their vehicle parking stickers before June 30, 2026. Vehicles without valid stickers will not be permitted entry after the deadline. Contact the security office for renewal.',
+      author: 'Admin Team',
+      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notice_4',
+      title: 'Pest Control Drive — All Buildings',
+      topic: 'Maintenance',
+      content: 'A society-wide pest control drive has been scheduled for June 8, 2026. All residents are requested to keep their doors closed during spraying hours (9 AM - 12 PM). Pets should be kept indoors.',
+      author: 'Admin Team',
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    },
   ];
 
   notices.forEach((notice) => {
@@ -683,9 +708,182 @@ const seedData = async () => {
     batch.set(ref, e);
   });
 
+  // 12. Seed Activity Logs
+  const activityLogs = [
+    {
+      id: 'log_1',
+      action: 'Complaint Created',
+      description: 'New emergency complaint C001 submitted by Flat 1302 — Sparking from switchboard',
+      performedBy: 'Resident 1302',
+      role: 'resident',
+      entityType: 'complaint',
+      entityId: 'C001',
+      createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_2',
+      action: 'Status Updated',
+      description: 'Complaint C002 status changed to Visited by Suresh Patil',
+      performedBy: 'Suresh Patil',
+      role: 'worker',
+      entityType: 'complaint',
+      entityId: 'C002',
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_3',
+      action: 'Worker Toggled',
+      description: 'Rajesh Kumar marked as active by Admin',
+      performedBy: 'Admin Alice',
+      role: 'admin',
+      entityType: 'worker',
+      entityId: 'worker_electrician_1',
+      createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_4',
+      action: 'Notice Published',
+      description: 'New notice posted: Water Tank Cleaning Scheduled',
+      performedBy: 'Admin Team',
+      role: 'admin',
+      entityType: 'notice',
+      entityId: 'notice_1',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_5',
+      action: 'Escalation Created',
+      description: 'Emergency escalation E001 auto-generated for complaint C001 — SLA breached',
+      performedBy: 'System',
+      role: 'system',
+      entityType: 'escalation',
+      entityId: 'E001',
+      createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_6',
+      action: 'Leave Request Submitted',
+      description: 'Rajesh Kumar submitted leave request for June 1-3 (Family function)',
+      performedBy: 'Rajesh Kumar',
+      role: 'worker',
+      entityType: 'leave_request',
+      entityId: 'LR001',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_7',
+      action: 'Leave Request Approved',
+      description: 'Leave request LR002 by Suresh Patil approved by Admin Alice',
+      performedBy: 'Admin Alice',
+      role: 'admin',
+      entityType: 'leave_request',
+      entityId: 'LR002',
+      createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_8',
+      action: 'Complaint Reopened',
+      description: 'Complaint C005 reopened for the 3rd time by Resident 2203 — auto-escalated',
+      performedBy: 'System',
+      role: 'system',
+      entityType: 'complaint',
+      entityId: 'C005',
+      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_9',
+      action: 'Society Issue Reported',
+      description: 'Lift #2 malfunction reported by Flat 2301',
+      performedBy: 'Resident 2301',
+      role: 'resident',
+      entityType: 'society_issue',
+      entityId: 'SI001',
+      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'log_10',
+      action: 'Ironing Charge Added',
+      description: 'Ironing charge of Rs 90 added to Flat 2402 (6 Shirts, 2 Trousers)',
+      performedBy: 'Admin Team',
+      role: 'admin',
+      entityType: 'ledger',
+      entityId: '2402',
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  activityLogs.forEach((log) => {
+    const ref = db.collection('activity_logs').doc(log.id);
+    batch.set(ref, log);
+  });
+
+  // 13. Seed Notifications (for admin)
+  const notifications = [
+    {
+      id: 'notif_1',
+      targetUserId: 'admin_committee_1',
+      title: 'Emergency Complaint Filed',
+      body: 'Flat 1302 reported sparking from main switchboard — immediate attention required.',
+      type: 'emergency',
+      read: false,
+      entityType: 'complaint',
+      entityId: 'C001',
+      createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notif_2',
+      targetUserId: 'admin_committee_1',
+      title: 'SLA Breach Alert',
+      body: 'Complaint C008 (Toilet flush, Flat 2402) has exceeded 24-hour SLA with no worker response.',
+      type: 'sla_breach',
+      read: false,
+      entityType: 'complaint',
+      entityId: 'C008',
+      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notif_3',
+      targetUserId: 'admin_committee_1',
+      title: 'Complaint Auto-Escalated',
+      body: 'Complaint C005 (Power outlets, Flat 2203) reopened 3 times — automatically escalated.',
+      type: 'escalation',
+      read: true,
+      entityType: 'complaint',
+      entityId: 'C005',
+      createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notif_4',
+      targetUserId: 'admin_committee_1',
+      title: 'Leave Request Pending',
+      body: 'Rajesh Kumar (Electrician) has requested leave from June 1-3 for a family function.',
+      type: 'leave_request',
+      read: true,
+      entityType: 'leave_request',
+      entityId: 'LR001',
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'notif_5',
+      targetUserId: 'admin_committee_1',
+      title: 'Society Issue Reported',
+      body: 'Lift #2 stuck between floors — reported by Flat 2301. Immediate action needed.',
+      type: 'society_issue',
+      read: false,
+      entityType: 'society_issue',
+      entityId: 'SI001',
+      createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  notifications.forEach((n) => {
+    const ref = db.collection('notifications').doc(n.id);
+    batch.set(ref, n);
+  });
+
   // Commit batch
   await batch.commit();
-  console.log('Successfully seeded flats, users, workers, admins, guards, notices, ledgers, complaints, society issues, leave requests, and escalations!');
+  console.log('Successfully seeded ALL collections: flats, users, workers, admins, guards, notices, ledgers, complaints, society issues, leave requests, escalations, activity logs, and notifications!');
 };
 
 seedData().catch((err) => {

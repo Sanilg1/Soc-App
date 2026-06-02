@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Header from '@/components/Header';
+import KpiCard from '@/components/KpiCard';
 import { useApp } from '@/context/AppContext';
 
 export default function AnalyticsPage() {
@@ -39,26 +40,53 @@ export default function AnalyticsPage() {
       <div className="dashboard-content animate-fadeIn">
         {/* Stats Summary */}
         <div className="kpi-grid">
-          <div className="kpi-card kpi-card--primary stagger-item">
-            <div className="kpi-value">{totalComplaints}</div>
-            <div className="kpi-label">Total Complaints (All Time)</div>
-            <div className="kpi-trend kpi-trend--up">Live data</div>
-          </div>
-          <div className="kpi-card kpi-card--success stagger-item">
-            <div className="kpi-value">{resolvedComplaints}</div>
-            <div className="kpi-label">Resolved</div>
-            <div className="kpi-trend kpi-trend--up">{resolutionRate}% resolution rate</div>
-          </div>
-          <div className="kpi-card kpi-card--warning stagger-item">
-            <div className="kpi-value">{avgResolutionTime}h</div>
-            <div className="kpi-label">Avg Worker Resolution Time</div>
-            <div className="kpi-trend kpi-trend--down">Based on active workers</div>
-          </div>
-          <div className="kpi-card kpi-card--info stagger-item">
-            <div className="kpi-value">{avgSlaCompliance}%</div>
-            <div className="kpi-label">Average SLA Compliance</div>
-            <div className="kpi-trend kpi-trend--up">Across all categories</div>
-          </div>
+          <KpiCard
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2z" />
+                <path d="M8 6h4M8 10h4M8 14h4" />
+              </svg>
+            }
+            label="Total Complaints (All Time)"
+            value={totalComplaints}
+            variant="primary"
+            trend={{ value: 'Live data', direction: 'up' }}
+          />
+          <KpiCard
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <path d="M22 4L12 14.01l-3-3" />
+              </svg>
+            }
+            label="Resolved"
+            value={resolvedComplaints}
+            variant="success"
+            trend={{ value: `${resolutionRate}% resolution rate`, direction: 'up' }}
+          />
+          <KpiCard
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            }
+            label="Avg Worker Resolution Time"
+            value={`${avgResolutionTime}h`}
+            variant="warning"
+            trend={{ value: 'Based on active workers', direction: 'down' }}
+          />
+          <KpiCard
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+            }
+            label="Average SLA Compliance"
+            value={`${avgSlaCompliance}%`}
+            variant="info"
+            trend={{ value: 'Across all categories', direction: 'up' }}
+          />
         </div>
 
         {/* Charts Placeholder */}

@@ -464,6 +464,40 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
             ),
           ] else if (status == 'visited' || status == 'need_tools' || status == 'revisit_scheduled') ...[
             // Main actions for active inspection: Need Tools, Resident Unavailable, Complete Work
+            
+            // If Need Tools and Worker is responsible and not procured yet, show Procure button
+            if (status == 'need_tools' && complaint.toolsResponsibility == 'worker' && !complaint.toolsProcured)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.shopping_bag),
+                    label: const Text('I Have Procured The Tools'),
+                    onPressed: () async {
+                      await ref.read(complaintServiceProvider).markToolsProcured(
+                        complaint.id,
+                        workerName,
+                        'worker',
+                        complaint.flatId,
+                        complaint.category,
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Tools procured. Please schedule a revisit.')),
+                        );
+                        // Redirect to the schedule screen immediately since worker needs to set a time
+                        context.push('/worker-visit-update/${complaint.id}?revisit=true');
+                      }
+                    },
+                  ),
+                ),
+              ),
+
             Row(
               children: [
                 Expanded(

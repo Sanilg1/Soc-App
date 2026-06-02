@@ -127,6 +127,18 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                     icon: const Icon(Icons.add_circle_outline),
                     label: const Text('New Complaint'),
                   ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(180, 44),
+                    ),
+                    onPressed: () => context.push('/society-issue-create'),
+                    icon: const Icon(Icons.campaign_outlined),
+                    label: const Text('Report Society Issue'),
+                  ),
                 ],
               ),
             ),

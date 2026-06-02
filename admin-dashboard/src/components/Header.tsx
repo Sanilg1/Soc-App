@@ -9,9 +9,10 @@ import { useRouter } from 'next/navigation';
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  action?: React.ReactNode;
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, action }: HeaderProps) {
   const router = useRouter();
   const { notifications } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -68,6 +69,11 @@ export default function Header({ title, subtitle }: HeaderProps) {
       </div>
       
       <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {action && (
+          <div style={{ display: 'flex', alignItems: 'center', marginRight: '8px' }}>
+            {action}
+          </div>
+        )}
         {/* Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {searchOpen && (

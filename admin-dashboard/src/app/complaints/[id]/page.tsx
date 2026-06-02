@@ -131,6 +131,41 @@ export default function ComplaintDetailPage({ params }: { params: { id: string }
             </div>
           </div>
 
+          {/* Tools Info */}
+          {complaint.status === 'need_tools' && complaint.toolsResponsibility && (
+            <div style={{ marginBottom: 'var(--space-8)', padding: 'var(--space-4)', border: '1px solid var(--color-warning-300)', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-warning-50)' }}>
+              <label className="form-label" style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-md)', color: 'var(--color-warning-800)' }}>
+                <span style={{ marginRight: '8px' }}>🔧</span> 
+                Tools / Parts Required
+              </label>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                <div>
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)', marginBottom: '4px' }}>Requested Items</p>
+                  <p style={{ fontWeight: 600 }}>{complaint.toolsDescription || 'Not specified'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)', marginBottom: '4px' }}>Procurement Responsibility</p>
+                  <p style={{ fontWeight: 600, color: complaint.toolsResponsibility === 'resident' ? 'var(--color-danger-600)' : 'var(--color-primary-600)' }}>
+                    {complaint.toolsResponsibility === 'resident' ? 'Resident must buy' : 'Worker will procure'}
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)', marginBottom: '4px' }}>Procurement Status</p>
+                  {complaint.toolsProcured ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', backgroundColor: 'var(--color-success-100)', color: 'var(--color-success-800)', borderRadius: '12px', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
+                      ✓ Procured
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', backgroundColor: 'var(--color-warning-100)', color: 'var(--color-warning-800)', borderRadius: '12px', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
+                      ⏳ Pending
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Quick Status Change */}
           {complaint.status !== 'closed' && (
             <div style={{ marginBottom: 'var(--space-8)', padding: 'var(--space-4)', border: '1px solid var(--color-neutral-200)', borderRadius: 'var(--radius-lg)' }}>

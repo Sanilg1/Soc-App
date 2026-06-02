@@ -103,6 +103,9 @@ class Complaint {
   final String createdAt;
   final String updatedAt;
   final Map<String, dynamic>? ironingDetails;
+  final String? toolsResponsibility;
+  final bool toolsProcured;
+  final String? toolsDescription;
 
   Complaint({
     required this.id,
@@ -124,6 +127,9 @@ class Complaint {
     required this.createdAt,
     required this.updatedAt,
     this.ironingDetails,
+    this.toolsResponsibility,
+    this.toolsProcured = false,
+    this.toolsDescription,
   });
 
   factory Complaint.fromMap(Map<String, dynamic> map, String docId) {
@@ -151,6 +157,9 @@ class Complaint {
       createdAt: map['createdAt'] as String? ?? '',
       updatedAt: map['updatedAt'] as String? ?? '',
       ironingDetails: map['ironingDetails'] != null ? Map<String, dynamic>.from(map['ironingDetails'] as Map) : null,
+      toolsResponsibility: map['toolsResponsibility'] as String?,
+      toolsProcured: map['toolsProcured'] as bool? ?? false,
+      toolsDescription: map['toolsDescription'] as String?,
     );
   }
 
@@ -174,6 +183,9 @@ class Complaint {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       if (ironingDetails != null) 'ironingDetails': ironingDetails,
+      if (toolsResponsibility != null) 'toolsResponsibility': toolsResponsibility,
+      'toolsProcured': toolsProcured,
+      if (toolsDescription != null) 'toolsDescription': toolsDescription,
     };
   }
 
@@ -197,6 +209,9 @@ class Complaint {
     String? createdAt,
     String? updatedAt,
     Map<String, dynamic>? ironingDetails,
+    String? toolsResponsibility,
+    bool? toolsProcured,
+    String? toolsDescription,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -218,6 +233,9 @@ class Complaint {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       ironingDetails: ironingDetails ?? this.ironingDetails,
+      toolsResponsibility: toolsResponsibility ?? this.toolsResponsibility,
+      toolsProcured: toolsProcured ?? this.toolsProcured,
+      toolsDescription: toolsDescription ?? this.toolsDescription,
     );
   }
 }

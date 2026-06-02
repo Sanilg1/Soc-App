@@ -33,6 +33,7 @@ class SocietyIssue {
   final String status;
   final String reportedBy;
   final List<SocietyIssueUpdate> updates;
+  final List<String> images;
   final String createdAt;
 
   SocietyIssue({
@@ -42,6 +43,7 @@ class SocietyIssue {
     required this.status,
     required this.reportedBy,
     this.updates = const [],
+    this.images = const [],
     required this.createdAt,
   });
 
@@ -55,6 +57,7 @@ class SocietyIssue {
       updates: (map['updates'] as List? ?? [])
           .map((e) => SocietyIssueUpdate.fromMap(Map<String, dynamic>.from(e)))
           .toList(),
+      images: (map['images'] as List? ?? []).map((e) => e.toString()).toList(),
       createdAt: map['createdAt'] as String? ?? '',
     );
   }
@@ -66,6 +69,7 @@ class SocietyIssue {
       'status': status,
       'reportedBy': reportedBy,
       'updates': updates.map((e) => e.toMap()).toList(),
+      'images': images,
       'createdAt': createdAt,
     };
   }

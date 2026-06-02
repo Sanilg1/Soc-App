@@ -19,19 +19,27 @@ function ComplaintsPageContent() {
 
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
+  const initialStatus = (searchParams.get('status') as ComplaintStatus | 'active' | null) || 'all';
+  const initialCategory = (searchParams.get('category') as ComplaintCategory | null) || 'all';
+  const initialUrgency = (searchParams.get('urgency') as UrgencyLevel | null) || 'all';
 
-  const [statusFilter, setStatusFilter] = useState<ComplaintStatus | 'all'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<ComplaintCategory | 'all'>('all');
-  const [urgencyFilter, setUrgencyFilter] = useState<UrgencyLevel | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<ComplaintStatus | 'all' | 'active'>(initialStatus);
+  const [categoryFilter, setCategoryFilter] = useState<ComplaintCategory | 'all'>(initialCategory);
+  const [urgencyFilter, setUrgencyFilter] = useState<UrgencyLevel | 'all'>(initialUrgency);
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
 
   // Sync state if search params change
   useEffect(() => {
     const q = searchParams.get('search');
-    if (q !== null) {
-      setSearchQuery(q);
-    }
+    const status = searchParams.get('status') as ComplaintStatus | 'active' | null;
+    const category = searchParams.get('category') as ComplaintCategory | null;
+    const urgency = searchParams.get('urgency') as UrgencyLevel | null;
+    
+    if (q !== null) setSearchQuery(q);
+    if (status !== null) setStatusFilter(status);
+    if (category !== null) setCategoryFilter(category);
+    if (urgency !== null) setUrgencyFilter(urgency);
   }, [searchParams]);
 
   // Helper variables for Flat Profile search feature
@@ -55,7 +63,12 @@ function ComplaintsPageContent() {
     const matchesFlat = q && c.flatId.toLowerCase().includes(q);
 
     if (!matchesFlat) {
-      if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+      if (statusFilter !== 'all' && statusFilter !== 'active') {
+        if (c.status !== statusFilter) return false;
+      } else if (statusFilter === 'active') {
+        if (c.status === 'closed') return false;
+      }
+      
       if (categoryFilter !== 'all' && c.category !== categoryFilter) return false;
       if (urgencyFilter !== 'all' && c.urgency !== urgencyFilter) return false;
     }
@@ -69,6 +82,19 @@ function ComplaintsPageContent() {
       );
     }
     return true;
+  });
+
+  const urgencyWeight: Record<UrgencyLevel, number> = {
+    emergency: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  const sortedAndFiltered = [...filtered].sort((a, b) => {
+    const diff = urgencyWeight[b.urgency] - urgencyWeight[a.urgency];
+    if (diff !== 0) return diff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   // Keep selectedComplaint in sync with context data
@@ -132,8 +158,9 @@ function ComplaintsPageContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             id="complaints-search"
           />
-          <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'all')} id="filter-status">
+          <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as ComplaintStatus | 'all' | 'active')} id="filter-status">
             <option value="all">All Statuses</option>
+            <option value="active">Active (Not Closed)</option>
             <option value="submitted">Submitted</option>
             <option value="queued">Queued</option>
             <option value="visited">Visited</option>
@@ -227,7 +254,7 @@ function ComplaintsPageContent() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {sortedAndFiltered.length === 0 ? (
                 <tr>
                   <td colSpan={11}>
                     <div className="empty-state">
@@ -244,7 +271,7 @@ function ComplaintsPageContent() {
                   </td>
                 </tr>
               ) : (
-                filtered.map((complaint) => {
+                sortedAndFiltered.map((complaint) => {
                   const cat = CATEGORY_CONFIG[complaint.category];
                   return (
                     <tr key={complaint.id} style={{ cursor: 'pointer' }} onClick={() => setSelectedComplaint(complaint)}>
@@ -346,11 +373,21 @@ function ComplaintsPageContent() {
             </div>
 
             {/* Quick Status Change */}
-            {liveSelected.status !== 'closed' && (
-              <div style={{ marginBottom: 'var(--space-6)' }}>
-                <label className="form-label" style={{ marginBottom: 'var(--space-3)' }}>Quick Status Change</label>
-                <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                  {(['queued', 'visited', 'need_tools', 'revisit_scheduled', 'awaiting_confirmation', 'closed'] as ComplaintStatus[])
+            <div style={{ marginBottom: 'var(--space-6)' }}>
+              <label className="form-label" style={{ marginBottom: 'var(--space-3)' }}>
+                {liveSelected.status === 'closed' ? 'Reopen Complaint' : 'Quick Status Change'}
+              </label>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                {liveSelected.status === 'closed' ? (
+                  <button
+                    className="btn btn--sm"
+                    style={{ background: 'var(--color-warning-500)', color: 'white', border: 'none' }}
+                    onClick={() => handleStatusChange(liveSelected.id, 'reopened')}
+                  >
+                    ↺ Reopen Complaint
+                  </button>
+                ) : (
+                  (['queued', 'visited', 'need_tools', 'revisit_scheduled', 'awaiting_confirmation', 'closed'] as ComplaintStatus[])
                     .filter(s => s !== liveSelected.status)
                     .map(status => (
                       <button
@@ -361,10 +398,9 @@ function ComplaintsPageContent() {
                         → {status.replace(/_/g, ' ')}
                       </button>
                     ))
-                  }
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Timeline */}
             {liveSelected.timeline.length > 0 && (

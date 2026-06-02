@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 interface NavItem {
@@ -87,9 +87,23 @@ const Icons = {
       <path d="M10 2v2M10 16v2M3.5 5.5l1.4 1.4M15.1 15.1l1.4 1.4M2 10h2M16 10h2M3.5 14.5l1.4-1.4M15.1 4.9l1.4-1.4" />
     </svg>
   ),
+  residents: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  ),
   logout: (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M7 18H4a2 2 0 01-2-2V4a2 2 0 012-2h3M13 14l4-4-4-4M17 10H7" />
+    </svg>
+  ),
+  resolved: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+      <path d="M22 4L12 14.01l-3-3" />
     </svg>
   ),
 };
@@ -105,6 +119,7 @@ const navSections: NavSection[] = [
     title: 'Operations',
     items: [
       { label: 'Complaints', href: '/complaints', icon: Icons.complaints },
+      { label: 'Resolved Queries', href: '/complaints?status=closed', icon: Icons.resolved },
       { label: 'Escalations', href: '/escalations', icon: Icons.escalation },
       { label: 'Society Issues', href: '/society-issues', icon: Icons.society },
       { label: 'Notices', href: '/notices', icon: Icons.notices },
@@ -115,6 +130,7 @@ const navSections: NavSection[] = [
   {
     title: 'Management',
     items: [
+      { label: 'Resident Directory', href: '/residents', icon: Icons.residents },
       { label: 'Workers', href: '/workers', icon: Icons.workers },
       { label: 'Analytics', href: '/analytics', icon: Icons.analytics },
       { label: 'Settings', href: '/settings', icon: Icons.settings },
@@ -124,7 +140,10 @@ const navSections: NavSection[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { adminProfile, signOut } = useAuth();
+
+  const currentPathWithQuery = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
 
   return (
     <aside className="sidebar" id="main-sidebar">
@@ -143,7 +162,18 @@ export default function Sidebar() {
           <React.Fragment key={section.title}>
             <div className="sidebar-section-label">{section.title}</div>
             {section.items.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              // Special case: "Complaints" should NOT be active if the query string is ?status=closed
+              const isResolvedQueriesItem = item.href.includes('status=closed');
+              const isResolvedQueriesActive = currentPathWithQuery.includes('status=closed');
+              
+              let isActive = false;
+              if (isResolvedQueriesItem) {
+                isActive = isResolvedQueriesActive;
+              } else if (item.href === '/complaints') {
+                isActive = pathname === '/complaints' && !isResolvedQueriesActive;
+              } else {
+                isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              }
               return (
                 <Link
                   key={item.href}

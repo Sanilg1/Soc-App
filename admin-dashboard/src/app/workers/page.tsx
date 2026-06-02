@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
+import Modal from '@/components/Modal';
+import { useState } from 'react';
 
 function getCategorySvg(category: string) {
   switch (category) {
@@ -48,7 +50,10 @@ const CATEGORY_ICONS: Record<string, { gradient: string }> = {
 };
 
 export default function WorkersPage() {
-  const { workers, leaveRequests, toggleWorkerActive, updateLeaveStatus } = useApp();
+  const { workers, leaveRequests, toggleWorkerActive, updateLeaveStatus, addWorker } = useApp();
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newWorker, setNewWorker] = useState({ name: '', category: 'electrical', phone: '' });
 
   function handleToggleActive(id: string, currentlyActive: boolean) {
     toggleWorkerActive(id);
@@ -60,9 +65,28 @@ export default function WorkersPage() {
     toast.success(`Leave request ${action}`);
   }
 
+  async function handleAddWorker(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newWorker.name.trim() || !newWorker.phone.trim()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    await addWorker(newWorker);
+    setShowAddModal(false);
+    setNewWorker({ name: '', category: 'electrical', phone: '' });
+  }
+
   return (
     <>
-      <Header title="Worker Management" subtitle="Monitor worker status, performance, and leave requests" />
+      <Header 
+        title="Worker Management" 
+        subtitle="Monitor worker status, performance, and leave requests" 
+        action={
+          <button className="btn btn--primary" onClick={() => setShowAddModal(true)}>
+            + Add Worker
+          </button>
+        }
+      />
 
       <div className="dashboard-content animate-fadeIn">
         {/* Worker Cards */}
@@ -211,6 +235,65 @@ export default function WorkersPage() {
           </div>
         </div>
       </div>
+
+      {showAddModal && (
+        <Modal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          title="Add New Worker"
+          subtitle="Register a new maintenance worker to the system"
+          maxWidth={500}
+        >
+          <form onSubmit={handleAddWorker}>
+            <div className="form-group">
+              <label className="form-label">Full Name *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Ramesh Kumar"
+                value={newWorker.name}
+                onChange={(e) => setNewWorker({ ...newWorker, name: e.target.value })}
+                required
+              />
+            </div>
+            
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Phone Number *</label>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="e.g. +91 9876543210"
+                value={newWorker.phone}
+                onChange={(e) => setNewWorker({ ...newWorker, phone: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Category *</label>
+              <select
+                className="form-select"
+                value={newWorker.category}
+                onChange={(e) => setNewWorker({ ...newWorker, category: e.target.value })}
+              >
+                <option value="electrical">Electrical</option>
+                <option value="plumbing">Plumbing</option>
+                <option value="housekeeping">Housekeeping</option>
+                <option value="ironing">Ironing</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
+              <button type="submit" className="btn btn--primary" style={{ flex: 1 }}>
+                Register Worker
+              </button>
+              <button type="button" className="btn btn--secondary" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }

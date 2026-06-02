@@ -20,6 +20,7 @@ import type {
   ActivityLog,
   Notification,
   UserRole,
+  Flat,
 } from '@/types';
 import {
   WORKER_FOR_CATEGORY,
@@ -63,6 +64,12 @@ interface AppContextType {
   ironingRates: IroningRates;
   activityLogs: ActivityLog[];
   notifications: Notification[];
+  flats: Flat[];
+
+  // Flat Actions
+  addFlat: (data: Omit<Flat, 'id' | 'createdAt'>) => Promise<void>;
+  updateFlatPhoneNumbers: (flatId: string, phoneNumbers: string[]) => Promise<void>;
+  regenerateInviteCode: (flatId: string) => Promise<void>;
 
   // Complaint Actions
   updateComplaintStatus: (id: string, status: ComplaintStatus, note?: string) => Promise<void>;
@@ -77,6 +84,7 @@ interface AppContextType {
 
   // Worker Actions
   toggleWorkerActive: (id: string) => Promise<void>;
+  addWorker: (data: { name: string; category: string; phone: string }) => Promise<void>;
 
   // Leave Request Actions
   updateLeaveStatus: (id: string, status: LeaveRequestStatus) => Promise<void>;
@@ -91,7 +99,7 @@ interface AppContextType {
 
   // Ironing Ledger Actions
   recordIroningPayment: (flatId: string, amount: number) => Promise<void>;
-  addIroningCharge: (flatId: string, itemCounts: { shirts: number; trousers: number; sarees: number; others: number }) => Promise<void>;
+  addIroningCharge: (flatId: string, itemCounts: Record<string, number>) => Promise<void>;
   updateIroningRates: (rates: IroningRates) => void;
 }
 
@@ -114,6 +122,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ironingRates, setIroningRates] = useState<IroningRates>(initialIroningRates);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [flats, setFlats] = useState<Flat[]>([]);
 
   // ── Firestore Listeners ──
   useEffect(() => {
@@ -141,6 +150,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setRawWorkers(list);
       },
       (error) => console.error('Firestore workers listener error:', error)
+    );
+
+    // Flats
+    const unsubFlats = onSnapshot(
+      collection(db, 'flats'),
+      (snapshot) => {
+        const list: Flat[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as Flat);
+        });
+        setFlats(list);
+      },
+      (error) => console.error('Firestore flats listener error:', error)
     );
 
     // 3. Escalations
@@ -258,6 +280,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubLedgers();
       unsubLogs();
       unsubNotifs();
+      unsubFlats();
     };
   }, []);
 
@@ -501,6 +524,72 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [rawWorkers]);
 
+  const addWorker = useCallback(async (data: { name: string; category: string; phone: string }) => {
+    try {
+      const ref = doc(collection(db, 'workers'));
+      await setDoc(ref, {
+        id: ref.id,
+        name: data.name,
+        category: data.category,
+        phone: data.phone,
+        active: true,
+        onLeave: false,
+        pauseStatus: false,
+        rating: 5,
+        ratingCount: 0,
+        completedThisWeek: 0,
+        avgResolutionHours: 0,
+        slaCompliance: 100,
+        activeComplaints: 0,
+        createdAt: new Date().toISOString(),
+      });
+      toast.success('Worker added successfully.');
+    } catch (e) {
+      console.error('Firestore addWorker error:', e);
+      toast.error('Failed to add worker.');
+    }
+  }, []);
+
+  // ── Flat Actions ──
+
+  const addFlat = useCallback(async (data: Omit<Flat, 'id' | 'createdAt'>) => {
+    try {
+      const ref = doc(collection(db, 'flats'));
+      await setDoc(ref, {
+        id: ref.id,
+        ...data,
+        createdAt: new Date().toISOString(),
+      });
+      toast.success('Flat added successfully.');
+    } catch (e) {
+      console.error('Firestore addFlat error:', e);
+      toast.error('Failed to add flat.');
+    }
+  }, []);
+
+  const updateFlatPhoneNumbers = useCallback(async (flatId: string, phoneNumbers: string[]) => {
+    try {
+      const ref = doc(db, 'flats', flatId);
+      await updateDoc(ref, { phoneNumbers });
+      toast.success('Phone numbers updated.');
+    } catch (e) {
+      console.error('Firestore updateFlatPhoneNumbers error:', e);
+      toast.error('Failed to update phone numbers.');
+    }
+  }, []);
+
+  const regenerateInviteCode = useCallback(async (flatId: string) => {
+    try {
+      const ref = doc(db, 'flats', flatId);
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await updateDoc(ref, { inviteCode: newCode });
+      toast.success('New invite code generated.');
+    } catch (e) {
+      console.error('Firestore regenerateInviteCode error:', e);
+      toast.error('Failed to generate invite code.');
+    }
+  }, []);
+
   // ── Leave Request Actions ──
 
   const updateLeaveStatus = useCallback(async (id: string, status: LeaveRequestStatus) => {
@@ -638,7 +727,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const addIroningCharge = useCallback(async (flatId: string, itemCounts: { shirts: number; trousers: number; sarees: number; others: number }) => {
+  const addIroningCharge = useCallback(async (flatId: string, itemCounts: Record<string, number>) => {
     try {
       const docRef = doc(db, 'flat_ledgers', flatId);
       const now = new Date().toISOString();
@@ -714,6 +803,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ironingRates,
     activityLogs,
     notifications,
+    flats,
     updateComplaintStatus,
     reassignComplaint,
     escalateComplaint,
@@ -722,6 +812,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     updateIssueStatus,
     addIssueUpdate,
     toggleWorkerActive,
+    addWorker,
+    addFlat,
+    updateFlatPhoneNumbers,
+    regenerateInviteCode,
     updateLeaveStatus,
     resolveEscalation,
     addAdmin,

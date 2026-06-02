@@ -61,6 +61,34 @@ class ComplaintService {
       return mockId;
     }
   }
+  /// Edits an existing complaint
+  Future<void> editComplaint(
+    String complaintId,
+    String newCategory,
+    String newDescription,
+    String newUrgency,
+    Availability newAvailability,
+  ) async {
+    final now = DateTime.now().toIso8601String();
+    final timelineEvent = TimelineEvent(
+      action: 'Complaint details updated by resident',
+      performedBy: 'Resident',
+      role: 'resident',
+      timestamp: now,
+    );
+
+    await _updateComplaintState(
+      complaintId: complaintId,
+      timelineEvent: timelineEvent,
+      additionalUpdates: {
+        'category': newCategory,
+        'description': newDescription,
+        'urgency': newUrgency,
+        'availability': newAvailability.toMap(),
+      },
+    );
+  }
+
 
   /// Streams real-time complaints list for the current flat
   Stream<List<Complaint>> streamComplaints(String flatId) {
@@ -461,11 +489,17 @@ class ComplaintService {
   }
 
   /// Worker marks complaint as need tools
-  Future<void> markComplaintNeedTools(String complaintId, String workerName, String toolsDescription, String? note) async {
+  Future<void> markComplaintNeedTools(
+    String complaintId, 
+    String workerName, 
+    String toolsDescription, 
+    String? note,
+    String toolsResponsibility,
+  ) async {
     final now = DateTime.now().toIso8601String();
     final combinedNote = 'Need Tools: $toolsDescription${note != null && note.trim().isNotEmpty ? " | Note: $note" : ""}';
     final timelineEvent = TimelineEvent(
-      action: 'Worker marked: Need Tools ($toolsDescription)',
+      action: 'Worker marked: Need Tools ($toolsDescription). Responsibility: $toolsResponsibility',
       performedBy: workerName,
       role: 'worker',
       note: note,
@@ -478,7 +512,56 @@ class ComplaintService {
       status: 'need_tools',
       timelineEvent: timelineEvent,
       workerNote: workerNote,
+      additionalUpdates: {
+        'toolsDescription': toolsDescription,
+        'toolsResponsibility': toolsResponsibility,
+        'toolsProcured': false,
+      },
     );
+  }
+
+  /// Mark tools as procured and optionally schedule revisit or just update timeline
+  Future<void> markToolsProcured(String complaintId, String userName, String userRole, String flatId, String category) async {
+    final now = DateTime.now().toIso8601String();
+    final timelineEvent = TimelineEvent(
+      action: 'Tools procured and ready for revisit',
+      performedBy: userName,
+      role: userRole,
+      timestamp: now,
+    );
+
+    // Send Push Notification
+    if (userRole == 'resident') {
+      _simulatePushNotification(
+        topic: 'worker_$category',
+        title: 'Tools Ready',
+        body: 'Resident at Flat $flatId has procured the required tools for Complaint $complaintId.',
+      );
+    } else {
+      _simulatePushNotification(
+        topic: 'resident_$flatId',
+        title: 'Tools Ready',
+        body: 'The worker has procured the tools. They will schedule a revisit shortly.',
+      );
+    }
+
+    await _updateComplaintState(
+      complaintId: complaintId,
+      status: 'reopened', // Move to reopened so worker can explicitly schedule a revisit date/time
+      timelineEvent: timelineEvent,
+      additionalUpdates: {
+        'toolsProcured': true,
+      },
+    );
+  }
+
+  void _simulatePushNotification({required String topic, required String title, required String body}) {
+    // In a real app, this would use Firebase Messaging API or a Cloud Function trigger.
+    debugPrint('\n=== PUSH NOTIFICATION SIMULATION ===');
+    debugPrint('To Topic: $topic');
+    debugPrint('Title: $title');
+    debugPrint('Body: $body');
+    debugPrint('====================================\n');
   }
 
   /// Worker schedules a revisit

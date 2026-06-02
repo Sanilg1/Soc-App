@@ -81,9 +81,10 @@ export interface User {
 export interface Flat {
   id: string;
   flatNumber: string;
-  building: string;
-  residents: string[];
-  phone: string;
+  building?: string;
+  residents?: string[];
+  phoneNumbers: string[];
+  inviteCode: string;
   createdAt: string;
 }
 
@@ -153,6 +154,9 @@ export interface Complaint {
   slaStatus: SlaStatus;
   createdAt: string;
   updatedAt: string;
+  toolsResponsibility?: 'resident' | 'worker';
+  toolsProcured?: boolean;
+  toolsDescription?: string;
 }
 
 export interface SocietyIssueUpdate {
@@ -295,12 +299,7 @@ export interface Notice {
   createdAt: any;
 }
 
-export interface IroningRates {
-  shirts: number;
-  trousers: number;
-  sarees: number;
-  others: number;
-}
+export type IroningRates = Record<string, number>;
 
 export interface LedgerTransaction {
   id: string;
@@ -308,12 +307,7 @@ export interface LedgerTransaction {
   amount: number;
   description: string;
   timestamp: string;
-  itemCounts?: {
-    shirts: number;
-    trousers: number;
-    sarees: number;
-    others: number;
-  };
+  itemCounts?: Record<string, number>;
 }
 
 export interface FlatLedger {

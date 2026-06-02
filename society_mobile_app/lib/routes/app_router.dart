@@ -10,6 +10,7 @@ import '../features/profile/screens/profile_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/resident/screens/complaint_create_screen.dart';
 import '../features/resident/screens/complaint_details_screen.dart';
+import '../features/resident/screens/complaint_edit_screen.dart';
 import '../features/resident/screens/notices_screen.dart';
 import '../features/resident/screens/history_screen.dart';
 import '../features/worker/screens/worker_complaint_details_screen.dart';
@@ -23,6 +24,7 @@ import '../features/worker/screens/worker_history_screen.dart';
 import '../features/worker/screens/worker_notifications_screen.dart';
 import '../features/resident/screens/resident_notifications_screen.dart';
 import '../features/resident/screens/complaint_submitted_screen.dart';
+import '../features/resident/screens/society_issue_create_screen.dart';
 import '../features/billing/screens/resident_bills_screen.dart';
 import '../features/billing/screens/worker_dues_screen.dart';
 
@@ -120,6 +122,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/edit-complaint/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return ComplaintEditScreen(complaintId: id);
+        },
+      ),
+      GoRoute(
         path: '/notices',
         builder: (context, state) => const NoticesScreen(),
       ),
@@ -186,6 +195,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/resident-notifications',
         builder: (context, state) => const ResidentNotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/society-issue-create',
+        builder: (context, state) => const SocietyIssueCreateScreen(),
       ),
       GoRoute(
         path: '/complaint-submitted',

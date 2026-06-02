@@ -53,6 +53,19 @@ export default function DashboardPage() {
 
   const activeEscalations = escalations.filter(e => !e.resolved);
   
+  const urgencyWeight: Record<string, number> = {
+    emergency: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
+  };
+
+  const sortedComplaints = [...complaints].sort((a, b) => {
+    const diff = (urgencyWeight[b.urgency] || 0) - (urgencyWeight[a.urgency] || 0);
+    if (diff !== 0) return diff;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  
   return (
     <>
       <Header title="Dashboard" subtitle="Real-time overview of society maintenance operations" />
@@ -71,6 +84,7 @@ export default function DashboardPage() {
             value={activeCount}
             variant="primary"
             trend={{ value: 'Real-time', direction: 'up' }}
+            href="/complaints?status=active"
           />
           <KpiCard
             icon={
@@ -83,6 +97,7 @@ export default function DashboardPage() {
             label="Emergencies"
             value={emergencyCount}
             variant="danger"
+            href="/complaints?urgency=emergency"
           />
           <KpiCard
             icon={
@@ -95,6 +110,7 @@ export default function DashboardPage() {
             label="SLA Breaches"
             value={slaBreaches}
             variant="warning"
+            href="/escalations"
           />
           <KpiCard
             icon={
@@ -105,6 +121,7 @@ export default function DashboardPage() {
             label="Reopened"
             value={reopenedCount}
             variant="info"
+            href="/complaints?status=reopened"
           />
           <KpiCard
             icon={
@@ -116,18 +133,9 @@ export default function DashboardPage() {
             label="Resolved This Week"
             value={14}
             variant="success"
+            href="/complaints?status=closed"
           />
-          <KpiCard
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            }
-            label="Avg Resolution"
-            value="6.2h"
-            variant="primary"
-          />
+
         </div>
 
         {/* Two Column Layout */}
@@ -150,7 +158,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {complaints.slice(0, 5).map((complaint) => (
+                  {sortedComplaints.slice(0, 5).map((complaint) => (
                     <tr key={complaint.id}>
                       <td className="table-cell-primary">{complaint.flatId}</td>
                       <td>
