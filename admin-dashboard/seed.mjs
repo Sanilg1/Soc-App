@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, doc, writeBatch, getDocs } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyD4rFBD8NUJAwnEDelTepGglGLEtfpMp7A",
@@ -27,23 +27,38 @@ const flats = [
 ];
 
 async function seed() {
-  console.log(`Seeding ${flats.length} flats...`);
-  const batch = writeBatch(db);
+  console.log(`Fetching existing flats to delete...`);
   const flatsRef = collection(db, 'flats');
+  const snapshot = await getDocs(flatsRef);
+  
+  let batch = writeBatch(db);
+  let count = 0;
 
+  snapshot.forEach((document) => {
+    batch.delete(document.ref);
+    count++;
+    // Firestore batches have a limit of 500 operations, but we probably have < 500
+  });
+
+  console.log(`Deleting ${count} flats...`);
+  await batch.commit();
+  console.log('Deleted existing flats.');
+
+  console.log(`Seeding exact 80 flats...`);
+  batch = writeBatch(db);
   for (const flat of flats) {
     const docRef = doc(flatsRef, flat);
     batch.set(docRef, {
       flatNumber: flat,
       inviteCode: '123456',
       ownerName: `Resident ${flat}`,
-      phoneNumbers: [],
+      phoneNumbers: ['+919999999901'],
       createdAt: new Date().toISOString()
     });
   }
 
   await batch.commit();
-  console.log('Successfully seeded 80 flats with invite code 123456!');
+  console.log('Successfully seeded exactly 80 flats with invite code 123456 and phone +919999999901!');
   process.exit(0);
 }
 

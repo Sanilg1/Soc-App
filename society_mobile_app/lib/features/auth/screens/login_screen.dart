@@ -82,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
-                    hintText: 'e.g., +1 555-010-0002',
+                    hintText: 'e.g., +91 9999999902',
                     prefixIcon: const Icon(Icons.phone_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),

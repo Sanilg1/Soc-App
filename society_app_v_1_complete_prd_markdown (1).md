@@ -818,3 +818,30 @@ Future expansion may include:
 - multilingual support
 - predictive analytics
 
+
+
+---
+
+# 23. Additions Implemented (V1.1)
+
+## 23.1 Image Uploads
+- Residents can capture or upload images for both Flat-Level Complaints and Society/Common Area Complaints.
+- Images are stored in Firebase Cloud Storage.
+
+## 23.2 Ironing Services & Ledger
+- The system tracks ironing requests and maintains a ledger for each flat.
+- Admins can update flat ironing balances, manage rates by cloth type, and record payments.
+
+## 23.3 Analytics & Data Export
+- Admin dashboard includes a **CSV Export** feature.
+- Admins can export monthly/all-time Complaint Data (including SLAs, status, urgency).
+- Admins can export the complete Ironing Ledger/Billing records.
+
+## 23.4 Flat Registration & Mock Authentication Constraints
+- **Strict Pre-seeding:** Admins cannot dynamically create new flats. The system assumes a pre-seeded flat database.
+- Admins can only add or update Authorized Phone Numbers and Resident Names for existing flats.
+- **Standardized Mock Authentication:** For testing, authentication strictly uses hardcoded phone numbers:
+  - Resident: +919999999901`n  - Electrical Worker: +919999999902`n  - Plumbing Worker: +919999999903`n  - Housekeeping Worker: +919999999904`n  - Ironing Worker: +919999999905`n
+## 23.5 Admin Session Security
+- Admin authentication creates a genuine, persistent anonymous Firebase session linked securely via the dmins collection.
+- Firestore security rules rigorously enforce isAdmin() validation instead of relying on open mock rules.

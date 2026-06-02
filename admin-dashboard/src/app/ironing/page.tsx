@@ -113,9 +113,61 @@ export default function IroningLedgerPage() {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 10);
 
+  const handleExportCSV = () => {
+    if (ledgers.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    const headers = ['Flat ID', 'Outstanding Balance', 'Last Paid Amount', 'Last Paid Date'];
+    const rows = ledgers.map(l => {
+      const payments = l.transactions.filter(t => t.type === 'payment').sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const lastPayment = payments.length > 0 ? payments[0] : null;
+      
+      return [
+        l.flatId,
+        l.outstandingBalance,
+        lastPayment ? lastPayment.amount : 0,
+        lastPayment ? new Date(lastPayment.timestamp).toLocaleDateString() : 'N/A'
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ironing_bills_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
-      <Header title="Ironing Ledger" subtitle="Manage residents' outstanding ironing dues and configure pricing" />
+      <Header 
+        title="Ironing Bills & Ledger" 
+        subtitle="Manage flat-wise ironing deliveries and record payments"
+        action={
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn--secondary" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Export to CSV
+            </button>
+            <button className="btn btn--primary" onClick={openRatesModal}>
+              Manage Rates
+            </button>
+          </div>
+        }
+      />
 
       <div className="dashboard-content animate-fadeIn">
         {/* Top Info Grid */}

@@ -70,43 +70,12 @@ export default function ResidentsPage() {
       <Header 
         title="Resident Directory" 
         subtitle="Manage flat access, phone numbers, and login invite codes" 
-        action={
-          <button className="btn btn--primary" onClick={() => setShowAddFlatModal(true)}>
-            + Add Flat
-          </button>
-        }
       />
 
       <div className="dashboard-content animate-fadeIn">
         {flats.length === 0 ? (
           <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
             <p style={{ color: 'var(--color-neutral-500)', marginBottom: 'var(--space-4)' }}>No flats registered yet.</p>
-            <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center' }}>
-              <button className="btn btn--primary" onClick={() => setShowAddFlatModal(true)}>
-                Register First Flat
-              </button>
-              <button className="btn btn--secondary" onClick={async () => {
-                const toastId = toast.loading('Seeding flats...');
-                try {
-                  for (let floor = 1; floor <= 24; floor++) {
-                    for (let flatNum = 1; flatNum <= 4; flatNum++) {
-                      const flatNumber = `${floor}${flatNum.toString().padStart(2, '0')}`;
-                      const inviteCode = Math.floor(100000 + Math.random() * 900000).toString();
-                      await addFlat({
-                        flatNumber,
-                        phoneNumbers: ['+919999999999'],
-                        inviteCode,
-                      });
-                    }
-                  }
-                  toast.success('Seeded all flats successfully!', { id: toastId });
-                } catch (e: any) {
-                  toast.error(`Error: ${e.message}`, { id: toastId });
-                }
-              }}>
-                [DEV] Seed 24 Floors x 4 Flats (All +919999999999)
-              </button>
-            </div>
           </div>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
@@ -174,41 +143,6 @@ export default function ResidentsPage() {
           </div>
         )}
       </div>
-
-      {/* Add Flat Modal */}
-      {showAddFlatModal && (
-        <Modal
-          isOpen={showAddFlatModal}
-          onClose={() => setShowAddFlatModal(false)}
-          title="Register New Flat"
-          subtitle="Add a flat to the system and generate an invite code"
-          maxWidth={400}
-        >
-          <form onSubmit={handleAddFlat}>
-            <div className="form-group">
-              <label className="form-label">Flat Number</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. 2402"
-                value={newFlatNumber}
-                onChange={(e) => setNewFlatNumber(e.target.value)}
-                required
-                autoFocus
-              />
-            </div>
-            
-            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
-              <button type="submit" className="btn btn--primary" style={{ flex: 1 }}>
-                Register Flat
-              </button>
-              <button type="button" className="btn btn--secondary" onClick={() => setShowAddFlatModal(false)}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
 
       {/* Manage Phones Modal */}
       {showManagePhonesModal && selectedFlat && (

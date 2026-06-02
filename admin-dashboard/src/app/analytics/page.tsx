@@ -33,9 +33,54 @@ export default function AnalyticsPage() {
     low: complaints.filter(c => c.urgency === 'low').length,
   };
 
+  const handleExportCSV = () => {
+    if (complaints.length === 0) {
+      alert('No data to export');
+      return;
+    }
+    
+    const headers = ['ID', 'Flat', 'Category', 'Urgency', 'Status', 'Submitted At', 'SLA Status'];
+    const rows = complaints.map(c => [
+      c.id,
+      c.flatId,
+      c.category,
+      c.urgency,
+      c.status,
+      new Date(c.createdAt).toLocaleDateString(),
+      c.slaStatus || 'N/A'
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `society_complaints_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
-      <Header title="Analytics" subtitle="Complaint trends, resolution metrics, and operational insights" />
+      <Header 
+        title="Analytics" 
+        subtitle="Complaint trends, resolution metrics, and operational insights"
+        action={
+          <button className="btn btn--primary" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export to CSV
+          </button>
+        }
+      />
 
       <div className="dashboard-content animate-fadeIn">
         {/* Stats Summary */}
