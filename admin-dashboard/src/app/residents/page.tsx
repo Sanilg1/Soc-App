@@ -7,36 +7,14 @@ import Modal from '@/components/Modal';
 import toast from 'react-hot-toast';
 
 export default function ResidentsPage() {
-  const { flats, addFlat, updateFlatPhoneNumbers, regenerateInviteCode } = useApp();
+  const { flats, updateFlatPhoneNumbers, regenerateInviteCode } = useApp();
   
-  const [showAddFlatModal, setShowAddFlatModal] = useState(false);
-  const [newFlatNumber, setNewFlatNumber] = useState('');
   
   const [showManagePhonesModal, setShowManagePhonesModal] = useState(false);
   const [selectedFlatId, setSelectedFlatId] = useState<string | null>(null);
   const [newPhone, setNewPhone] = useState('');
 
   const selectedFlat = flats.find(f => f.id === selectedFlatId);
-
-  const handleAddFlat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFlatNumber.trim()) {
-      toast.error('Flat number is required');
-      return;
-    }
-    
-    // Auto-generate invite code
-    const inviteCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    await addFlat({
-      flatNumber: newFlatNumber,
-      phoneNumbers: [],
-      inviteCode,
-    });
-    
-    setShowAddFlatModal(false);
-    setNewFlatNumber('');
-  };
 
   const handleAddPhone = async () => {
     if (!selectedFlat || !newPhone.trim()) return;
