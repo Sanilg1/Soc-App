@@ -466,6 +466,48 @@ class ComplaintService {
     }
   }
 
+  /// Worker accepts the complaint and provides an ETA
+  Future<void> acceptComplaintWithETA(String complaintId, String workerName, String eta) async {
+    final now = DateTime.now().toIso8601String();
+    final timelineEvent = TimelineEvent(
+      action: 'Job Accepted. ETA: $eta',
+      performedBy: workerName,
+      role: 'worker',
+      timestamp: now,
+    );
+    final workerNote = WorkerNote(
+      author: workerName,
+      note: 'Job accepted. ETA: $eta',
+      timestamp: now,
+    );
+
+    await _updateComplaintState(
+      complaintId: complaintId,
+      status: 'accepted',
+      timelineEvent: timelineEvent,
+      workerNote: workerNote,
+      additionalUpdates: {
+        'eta': eta,
+      },
+    );
+    
+    // Attempt to get flatId to simulate push notification to resident
+    // (If not readily available we will simulate with a generic topic or fetch it)
+    if (_useSimulation) {
+      _simulatePushNotification(
+        topic: 'resident_app',
+        title: 'Worker Assigned & ETA',
+        body: 'Worker $workerName has accepted your request. Estimated Arrival: $eta',
+      );
+    } else {
+       _simulatePushNotification(
+        topic: 'resident_app',
+        title: 'Worker Assigned & ETA',
+        body: 'Worker $workerName has accepted your request. Estimated Arrival: $eta',
+      );
+    }
+  }
+
   /// Worker marks complaint as visited (inspected)
   Future<void> markComplaintVisited(String complaintId, String workerName, String? note) async {
     final now = DateTime.now().toIso8601String();

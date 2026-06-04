@@ -31,6 +31,8 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
       case 'submitted':
       case 'queued':
         return Colors.blue;
+      case 'accepted':
+        return Colors.indigo;
       case 'visited':
       case 'revisit_scheduled':
         return Colors.purple;
@@ -434,7 +436,62 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: Center(child: Text('Task Complete.', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
               ),
-          ] else if (status == 'submitted' || status == 'queued' || status == 'reopened') ...[
+          ] else if (status == 'submitted' || status == 'queued') ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.thumb_up),
+                label: const Text('Accept Job & Provide ETA'),
+                onPressed: () {
+                  final etaController = TextEditingController();
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: const Text('Accept Job & ETA'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('Provide an estimated time of arrival:'),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: etaController,
+                              decoration: const InputDecoration(
+                                hintText: 'e.g., 15 mins, 2:00 PM',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              final eta = etaController.text.trim();
+                              if (eta.isEmpty) return;
+                              Navigator.of(context).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Accepting job...')),
+                              );
+                              await ref.read(complaintServiceProvider).acceptComplaintWithETA(
+                                complaint.id,
+                                workerName,
+                                eta,
+                              );
+                            },
+                            child: const Text('Submit'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ] else if (status == 'accepted' || status == 'reopened') ...[
             Row(
               children: [
                 Expanded(

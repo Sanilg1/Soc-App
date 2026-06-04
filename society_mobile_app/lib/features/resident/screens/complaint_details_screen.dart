@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
@@ -134,6 +135,8 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
       case 'submitted':
       case 'queued':
         return Colors.blue;
+      case 'accepted':
+        return Colors.indigo;
       case 'visited':
       case 'revisit_scheduled':
         return Colors.purple;
@@ -478,8 +481,82 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                     const SizedBox(height: 24),
                   ],
 
+                  // Assigned Worker Profile Card
+                  if (complaint.assignedWorker != null || complaint.status == 'accepted' || complaint.status == 'visited' || complaint.status == 'need_tools' || complaint.status == 'revisit_scheduled' || complaint.eta != null) ...[
+                    Text('Assigned Worker', style: theme.textTheme.titleLarge),
+                    const SizedBox(height: 12),
+                    Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                              child: const Icon(Icons.person, size: 30, color: AppTheme.primaryColor),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    complaint.assignedWorker ?? 'Worker Assigned',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    complaint.category.toUpperCase(),
+                                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                  ),
+                                  if (complaint.eta != null && (complaint.status == 'accepted' || complaint.status == 'queued' || complaint.status == 'submitted')) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.timer, size: 14, color: Colors.blue),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'ETA: ${complaint.eta}',
+                                            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                final number = complaint.assignedWorker ?? 'Unknown';
+                                Clipboard.setData(ClipboardData(text: number));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Copied $number to clipboard')),
+                                );
+                              },
+                              icon: const Icon(Icons.call),
+                              color: Colors.green,
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.green.shade50,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
                   // Timeline Step Stepper
-                  Text('Timeline Progress', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 12),
                   Card(
                     child: Padding(

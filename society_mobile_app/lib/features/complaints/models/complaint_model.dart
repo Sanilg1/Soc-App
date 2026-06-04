@@ -106,6 +106,7 @@ class Complaint {
   final String? toolsResponsibility;
   final bool toolsProcured;
   final String? toolsDescription;
+  final String? eta;
 
   Complaint({
     required this.id,
@@ -130,6 +131,7 @@ class Complaint {
     this.toolsResponsibility,
     this.toolsProcured = false,
     this.toolsDescription,
+    this.eta,
   });
 
   factory Complaint.fromMap(Map<String, dynamic> map, String docId) {
@@ -160,6 +162,7 @@ class Complaint {
       toolsResponsibility: map['toolsResponsibility'] as String?,
       toolsProcured: map['toolsProcured'] as bool? ?? false,
       toolsDescription: map['toolsDescription'] as String?,
+      eta: map['eta'] as String?,
     );
   }
 
@@ -186,6 +189,7 @@ class Complaint {
       if (toolsResponsibility != null) 'toolsResponsibility': toolsResponsibility,
       'toolsProcured': toolsProcured,
       if (toolsDescription != null) 'toolsDescription': toolsDescription,
+      if (eta != null) 'eta': eta,
     };
   }
 
@@ -212,6 +216,7 @@ class Complaint {
     String? toolsResponsibility,
     bool? toolsProcured,
     String? toolsDescription,
+    String? eta,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -236,6 +241,7 @@ class Complaint {
       toolsResponsibility: toolsResponsibility ?? this.toolsResponsibility,
       toolsProcured: toolsProcured ?? this.toolsProcured,
       toolsDescription: toolsDescription ?? this.toolsDescription,
+      eta: eta ?? this.eta,
     );
   }
 }
