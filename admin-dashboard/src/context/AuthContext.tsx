@@ -123,7 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     try {
       const cleanPhone = phone.replace(/\s+/g, '');
-      if (USE_SIMULATION && cleanPhone === MOCK_ADMIN_PHONE) {
+      const isMockAdmin = cleanPhone.replace('+91', '').startsWith('981') || cleanPhone.startsWith('981');
+      if (USE_SIMULATION && isMockAdmin) {
         // Simulation path
         await new Promise((res) => setTimeout(res, 800));
         setMockVerificationPhone(cleanPhone);
@@ -151,8 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmOtp = async (code: string): Promise<boolean> => {
     setError(null);
     try {
-      // Simulation successful ONLY for mock code AND mock phone number
-      if (USE_SIMULATION && mockVerificationPhone === MOCK_ADMIN_PHONE && code === '123456') {
+      const isMockAdmin = (mockVerificationPhone || '').replace('+91', '').startsWith('981') || (mockVerificationPhone || '').startsWith('981');
+      // Simulation successful ONLY for mock code AND mock phone number starting with 981
+      if (USE_SIMULATION && isMockAdmin && code === '123456') {
         // Authenticate anonymously so we get a REAL Firebase Auth session
         const cred = await signInAnonymously(auth);
         
