@@ -13,6 +13,7 @@ SocietySync is divided into two primary parts:
 - **Society Issue Reporting:** Report issues in common areas (e.g., broken streetlights, gym equipment).
 - **Image Attachments:** Take photos directly from the camera or upload from the gallery to provide visual context for issues.
 - **Ironing Bills:** Request ironing services and track your running bills transparently.
+- **Hall Bookings:** Request to reserve common amenities like community halls for events and gatherings.
 - **Real-Time Tracking:** Receive push notifications and track the progress of complaints from 'Queued' to 'Resolved'.
 
 ### For Workers (Mobile App)
@@ -23,7 +24,8 @@ SocietySync is divided into two primary parts:
 
 ### For Administrators (Web Dashboard)
 - **High-Level Analytics:** View Key Performance Indicators (KPIs) like SLA breach rates, total open complaints, and ironing revenue.
-- **Resident & Worker Management:** Maintain a directory of flats and registered workers, along with onboarding controls.
+- **Resident & Worker Management:** Maintain a directory of flats and registered workers, along with onboarding controls. Manage worker profiles, assignments, and leave requests.
+- **Hall Bookings:** Review, approve, or reject resident requests to book common amenities.
 - **Escalation Management:** Track complaints that have breached SLAs or required emergency attention.
 
 ## 🛠 Tech Stack
@@ -36,8 +38,8 @@ SocietySync is divided into two primary parts:
 
 ### Admin Dashboard
 - **Framework:** Next.js (React)
-- **Styling:** Vanilla CSS with custom theming (Neon aesthetics, Glassmorphism)
-- **Authentication:** Firebase Auth
+- **Styling:** Vanilla CSS with custom theming (Neon aesthetics, Glassmorphism). Fully responsive for desktop, tablet, and mobile viewing.
+- **Authentication:** Firebase Auth (SMS OTP with secure role-based bypasses for testing)
 
 ### Backend & Cloud
 - **Database:** Firebase Firestore (NoSQL) with strict Security Rules
