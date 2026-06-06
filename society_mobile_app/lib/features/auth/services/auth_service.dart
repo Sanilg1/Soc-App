@@ -169,17 +169,17 @@ class AuthService {
     // Simulation fallback
     if (uid.isEmpty || uid.startsWith('mock_uid_') || simulatedPhone != null) {
       final phone = simulatedPhone ?? '';
-      if (phone.contains('9999999901')) {
+      if (phone.endsWith('01')) {
         return {'role': 'resident', 'flatId': simulatedFlatId ?? '1302', 'phone': phone};
-      } else if (phone.contains('9999999902')) {
+      } else if (phone.endsWith('02')) {
         return {'role': 'worker', 'category': 'electrical', 'phone': phone};
-      } else if (phone.contains('9999999903')) {
+      } else if (phone.endsWith('03')) {
         return {'role': 'worker', 'category': 'plumbing', 'phone': phone};
-      } else if (phone.contains('9999999904')) {
+      } else if (phone.endsWith('04')) {
         return {'role': 'worker', 'category': 'housekeeping', 'phone': phone};
-      } else if (phone.contains('9999999905')) {
+      } else if (phone.endsWith('05')) {
         return {'role': 'worker', 'category': 'ironing', 'phone': phone};
-      } else if (phone.contains('9999999906')) {
+      } else if (phone.endsWith('06')) {
         return {'role': 'guard', 'phone': phone};
       }
       return {'role': 'resident', 'flatId': simulatedFlatId ?? '1302', 'phone': phone};
