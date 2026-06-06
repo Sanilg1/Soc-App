@@ -70,6 +70,10 @@ interface AppContextType {
   flats: Flat[];
   hallBookings: HallBooking[];
 
+  // Mobile Sidebar State
+  isSidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+
   // Flat Actions
   addFlat: (data: Omit<Flat, 'id' | 'createdAt'>) => Promise<void>;
   updateFlatPhoneNumbers: (flatId: string, phoneNumbers: string[]) => Promise<void>;
@@ -122,6 +126,9 @@ const AppContext = createContext<AppContextType | null>(null);
 // ──────────────────────────────────────
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  // Mobile Sidebar State
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [workers, setWorkers] = useState<WorkerWithStats[]>([]);
   const [rawWorkers, setRawWorkers] = useState<any[]>([]);
@@ -920,6 +927,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     notifications,
     flats,
     hallBookings,
+    isSidebarOpen,
+    setSidebarOpen,
     updateComplaintStatus,
     reassignComplaint,
     escalateComplaint,

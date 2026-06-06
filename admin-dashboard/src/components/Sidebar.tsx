@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 
 interface NavItem {
   label: string;
@@ -151,11 +152,26 @@ export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { adminProfile, signOut } = useAuth();
+  const { isSidebarOpen, setSidebarOpen } = useApp();
 
   const currentPathWithQuery = `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
 
   return (
-    <aside className="sidebar" id="main-sidebar">
+    <>
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            zIndex: 35,
+            backdropFilter: 'blur(2px)'
+          }}
+        />
+      )}
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`} id="main-sidebar">
       {/* Header / Logo */}
       <div className="sidebar-header">
         <div className="sidebar-logo">S</div>
@@ -189,6 +205,7 @@ export default function Sidebar() {
                   href={item.href}
                   className={`sidebar-link ${isActive ? 'active' : ''}`}
                   id={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  onClick={() => setSidebarOpen(false)}
                 >
                   <span className="sidebar-link-icon">{item.icon}</span>
                   <span>{item.label}</span>
@@ -242,6 +259,6 @@ export default function Sidebar() {
           <span>Sign Out</span>
         </button>
       </div>
-    </aside>
+    </>
   );
 }

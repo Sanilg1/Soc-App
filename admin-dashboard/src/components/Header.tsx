@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export default function Header({ title, subtitle, action }: HeaderProps) {
   const router = useRouter();
-  const { notifications } = useApp();
+  const { notifications, isSidebarOpen, setSidebarOpen } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,9 +63,19 @@ export default function Header({ title, subtitle, action }: HeaderProps) {
 
   return (
     <header className="header" id="dashboard-header" style={{ position: 'relative', zIndex: 50 }}>
-      <div className="header-left">
-        <h1 className="header-title">{title}</h1>
-        {subtitle && <p className="header-subtitle">{subtitle}</p>}
+      <div className="header-left" style={{ flexDirection: 'row', alignItems: 'center', gap: '12px' }}>
+        <button 
+          className="header-icon-btn mobile-menu-btn"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12h18M3 6h18M3 18h18" />
+          </svg>
+        </button>
+        <div>
+          <h1 className="header-title">{title}</h1>
+          {subtitle && <p className="header-subtitle">{subtitle}</p>}
+        </div>
       </div>
       
       <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
