@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
 import Modal from '@/components/Modal';
+import ImageViewerModal from '@/components/ImageViewerModal';
 import { useApp } from '@/context/AppContext';
 import { getTimeAgo } from '@/lib/mock-data';
 import type { SocietyIssue, SocietyIssueStatus } from '@/types';
@@ -25,6 +26,7 @@ export default function SocietyIssuesPage() {
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateMessage, setUpdateMessage] = useState('');
+  const [viewerImage, setViewerImage] = useState<string | null>(null);
 
   // Handlers
   function handleCreateIssue() {
@@ -110,6 +112,49 @@ export default function SocietyIssuesPage() {
                   <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)', lineHeight: 1.5, marginBottom: 'var(--space-4)' }}>
                     {issue.description}
                   </p>
+
+                  {/* Issue Images */}
+                  {issue.images && issue.images.length > 0 && (
+                    <div style={{ display: 'flex', gap: 'var(--space-3)', marginBottom: 'var(--space-4)', overflowX: 'auto', paddingBottom: 'var(--space-2)' }}>
+                      {issue.images.map((imgUrl, index) => (
+                        <div key={index} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setViewerImage(imgUrl)}>
+                          <img
+                            src={imgUrl}
+                            alt={`Attachment ${index + 1}`}
+                            style={{
+                              width: '140px',
+                              height: '140px',
+                              objectFit: 'cover',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid var(--color-neutral-200)',
+                              display: 'block',
+                            }}
+                          />
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '8px',
+                              right: '8px',
+                              background: 'rgba(0,0,0,0.6)',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                            </svg>
+                            View
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Updates Timeline */}
                   {issue.updates.length > 0 && (
@@ -237,6 +282,13 @@ export default function SocietyIssuesPage() {
             <button className="btn btn--primary btn--sm" onClick={handleAddUpdate}>Add Update</button>
           </div>
         </Modal>
+
+        {/* Image Viewer Modal */}
+        <ImageViewerModal
+          isOpen={!!viewerImage}
+          imageUrl={viewerImage || ''}
+          onClose={() => setViewerImage(null)}
+        />
 
       </div>
     </>

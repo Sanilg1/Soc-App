@@ -21,6 +21,8 @@ import type {
   Notification,
   UserRole,
   Flat,
+  HallBooking,
+  HallBookingStatus,
 } from '@/types';
 import {
   WORKER_FOR_CATEGORY,
@@ -44,6 +46,7 @@ import {
   runTransaction,
   arrayUnion,
   increment,
+  getDocs,
 } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -65,11 +68,13 @@ interface AppContextType {
   activityLogs: ActivityLog[];
   notifications: Notification[];
   flats: Flat[];
+  hallBookings: HallBooking[];
 
   // Flat Actions
   addFlat: (data: Omit<Flat, 'id' | 'createdAt'>) => Promise<void>;
   updateFlatPhoneNumbers: (flatId: string, phoneNumbers: string[]) => Promise<void>;
   regenerateInviteCode: (flatId: string) => Promise<void>;
+  updateInviteCode: (flatId: string, newCode: string) => Promise<void>;
 
   // Complaint Actions
   updateComplaintStatus: (id: string, status: ComplaintStatus, note?: string) => Promise<void>;
@@ -85,6 +90,7 @@ interface AppContextType {
   // Worker Actions
   toggleWorkerActive: (id: string) => Promise<void>;
   addWorker: (data: { name: string; category: string; phone: string }) => Promise<void>;
+  updateWorker: (id: string, data: { name: string; category: string; phone: string }, oldPhone?: string) => Promise<void>;
 
   // Leave Request Actions
   updateLeaveStatus: (id: string, status: LeaveRequestStatus) => Promise<void>;
@@ -96,11 +102,17 @@ interface AppContextType {
   addAdmin: (data: { name: string; role: string; phone: string }) => Promise<void>;
   removeAdmin: (id: string) => Promise<void>;
   addNotice: (data: { title: string; topic: string; content: string; author?: string }) => Promise<Notice>;
+  updateNotice: (id: string, data: Partial<Notice>) => Promise<void>;
+  deleteNotice: (id: string) => Promise<void>;
 
   // Ironing Ledger Actions
   recordIroningPayment: (flatId: string, amount: number) => Promise<void>;
   addIroningCharge: (flatId: string, itemCounts: Record<string, number>) => Promise<void>;
   updateIroningRates: (rates: IroningRates) => void;
+
+  // Hall Booking Actions
+  updateHallBookingStatus: (id: string, status: HallBookingStatus) => Promise<void>;
+  deleteHallBooking: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -123,6 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [flats, setFlats] = useState<Flat[]>([]);
+  const [hallBookings, setHallBookings] = useState<HallBooking[]>([]);
 
   // ── Firestore Listeners ──
   useEffect(() => {
@@ -269,6 +282,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (error) => console.error('Firestore notifications listener error:', error)
     );
 
+    // 11. Hall Bookings
+    const unsubHallBookings = onSnapshot(
+      query(collection(db, 'hall_bookings'), orderBy('createdAt', 'desc')),
+      (snapshot) => {
+        const list: HallBooking[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as HallBooking);
+        });
+        setHallBookings(list);
+      },
+      (error) => console.error('Firestore hall bookings listener error:', error)
+    );
+
     return () => {
       unsubComplaints();
       unsubWorkers();
@@ -281,6 +307,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubLogs();
       unsubNotifs();
       unsubFlats();
+      unsubHallBookings();
     };
   }, []);
 
@@ -550,6 +577,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateWorker = useCallback(async (id: string, data: { name: string; category: string; phone: string }, oldPhone?: string) => {
+    try {
+      const ref = doc(db, 'workers', id);
+      await updateDoc(ref, {
+        name: data.name,
+        category: data.category,
+        phone: data.phone,
+      });
+
+      // Try to sync with users collection if a user document exists for this worker
+      if (oldPhone) {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('role', '==', 'worker'), where('phone', '==', oldPhone));
+        const snapshot = await getDocs(q);
+        
+        const updatePromises = snapshot.docs.map(userDoc => {
+          return updateDoc(doc(db, 'users', userDoc.id), {
+            name: data.name,
+            category: data.category,
+            phone: data.phone,
+          });
+        });
+        await Promise.all(updatePromises);
+      }
+
+      toast.success('Worker updated successfully.');
+    } catch (e) {
+      console.error('Firestore updateWorker error:', e);
+      toast.error('Failed to update worker.');
+    }
+  }, []);
+
   // ── Flat Actions ──
 
   const addFlat = useCallback(async (data: Omit<Flat, 'id' | 'createdAt'>) => {
@@ -587,6 +646,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       console.error('Firestore regenerateInviteCode error:', e);
       toast.error('Failed to generate invite code.');
+    }
+  }, []);
+
+  const updateInviteCode = useCallback(async (flatId: string, newCode: string) => {
+    try {
+      const ref = doc(db, 'flats', flatId);
+      await updateDoc(ref, { inviteCode: newCode });
+      toast.success('Invite code updated manually.');
+    } catch (e) {
+      console.error('Firestore updateInviteCode error:', e);
+      toast.error('Failed to update invite code manually.');
     }
   }, []);
 
@@ -680,6 +750,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Firestore addNotice error:', e);
       toast.error('Failed to post notice.');
       throw e;
+    }
+  }, []);
+
+  const updateNotice = useCallback(async (id: string, data: Partial<Notice>) => {
+    try {
+      await updateDoc(doc(db, 'notices', id), data);
+      toast.success('Notice updated successfully.');
+    } catch (e) {
+      console.error('Firestore updateNotice error:', e);
+      toast.error('Failed to update notice.');
+    }
+  }, []);
+
+  const deleteNotice = useCallback(async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'notices', id));
+      toast.success('Notice deleted successfully.');
+    } catch (e) {
+      console.error('Firestore deleteNotice error:', e);
+      toast.error('Failed to delete notice.');
     }
   }, []);
 
@@ -789,6 +879,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIroningRates(rates);
   }, []);
 
+  // ── Hall Booking Actions ──
+
+  const updateHallBookingStatus = useCallback(async (id: string, status: HallBookingStatus) => {
+    try {
+      await updateDoc(doc(db, 'hall_bookings', id), {
+        status,
+        updatedAt: new Date().toISOString(),
+      });
+      toast.success(`Booking ${status}.`);
+    } catch (e) {
+      console.error('Firestore updateHallBookingStatus error:', e);
+      toast.error('Failed to update booking status.');
+    }
+  }, []);
+
+  const deleteHallBooking = useCallback(async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'hall_bookings', id));
+      toast.success('Booking deleted.');
+    } catch (e) {
+      console.error('Firestore deleteHallBooking error:', e);
+      toast.error('Failed to delete booking.');
+    }
+  }, []);
+
   // ── Context Value ──
 
   const value: AppContextType = {
@@ -804,6 +919,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activityLogs,
     notifications,
     flats,
+    hallBookings,
     updateComplaintStatus,
     reassignComplaint,
     escalateComplaint,
@@ -813,17 +929,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addIssueUpdate,
     toggleWorkerActive,
     addWorker,
+    updateWorker,
     addFlat,
     updateFlatPhoneNumbers,
     regenerateInviteCode,
+    updateInviteCode,
     updateLeaveStatus,
     resolveEscalation,
     addAdmin,
     removeAdmin,
     addNotice,
+    updateNotice,
+    deleteNotice,
     recordIroningPayment,
     addIroningCharge,
     updateIroningRates,
+    updateHallBookingStatus,
+    deleteHallBooking,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

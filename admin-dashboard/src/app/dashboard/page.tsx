@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const activeCount = complaints.filter(c => c.status !== 'closed').length;
 
   const activeEscalations = escalations.filter(e => !e.resolved);
+  const pendingBookings = useApp().hallBookings?.filter(b => b.status === 'pending')?.length || 0;
   
   const urgencyWeight: Record<string, number> = {
     emergency: 4,
@@ -135,7 +136,20 @@ export default function DashboardPage() {
             variant="success"
             href="/complaints?status=closed"
           />
-
+          <KpiCard
+            icon={
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            }
+            label="Pending Bookings"
+            value={pendingBookings}
+            variant="primary"
+            href="/hall-bookings"
+          />
         </div>
 
         {/* Two Column Layout */}

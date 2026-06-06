@@ -1,69 +1,345 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:society_mobile_app/features/auth/providers/auth_provider.dart';
+import 'package:society_mobile_app/core/services/storage_service.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isEditingName = false;
+  bool _isUploading = false;
+  late TextEditingController _nameController;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    final authState = ref.read(authProvider);
+    final userId = authState.userId;
+    if (userId == null) return;
+
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 500,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _isUploading = true;
+      });
+
+      final file = File(pickedFile.path);
+      // Upload using storage service under folder "profiles" and userId as the doc container
+      final downloadUrl = await ref.read(storageServiceProvider).uploadImage(
+        file,
+        'profiles',
+        userId,
+      );
+
+      // Save to Auth State & Firestore
+      await ref.read(authProvider.notifier).updateProfilePicture(downloadUrl);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture updated successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update picture: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndUploadImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveName() async {
+    final newName = _nameController.text.trim();
+    if (newName.isEmpty) return;
+
+    try {
+      await ref.read(authProvider.notifier).updateProfileName(newName);
+      setState(() {
+        _isEditingName = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Name updated successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update name: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
     final isResident = authState.role == 'resident';
 
+    // Initialize controller value if name changes or is loaded
+    final displayName = authState.name ?? (isResident ? 'Sanil Grover' : 'Electrician Pro');
+    if (!_isEditingName) {
+      _nameController.text = displayName;
+    }
+
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('My Profile'),
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 24),
-            const CircleAvatar(
-              radius: 48,
-              backgroundColor: Color(0xFFE2E8F0),
-              child: Icon(Icons.person, size: 48, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isResident ? 'Sanil Grover' : 'Electrician Pro', 
-              style: theme.textTheme.headlineMedium
-            ),
-            Text(
-              isResident 
-                  ? 'Flat ${authState.flatId ?? "Unknown"} • Resident' 
-                  : 'Assigned Category: ${authState.category ?? "None"} • Worker', 
-              style: const TextStyle(color: Colors.grey)
-            ),
-            const SizedBox(height: 32),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Help & Support'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.security),
-              title: const Text('Privacy Policy'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
-            ),
-            const Spacer(),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              // Profile Avatar with Camera Overlay
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 56,
+                      backgroundColor: Colors.grey.shade200,
+                      backgroundImage: authState.profilePictureUrl != null
+                          ? NetworkImage(authState.profilePictureUrl!)
+                          : null,
+                      child: authState.profilePictureUrl == null
+                          ? const Icon(Icons.person, size: 56, color: Colors.grey)
+                          : null,
+                    ),
+                    if (_isUploading)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black45,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _isUploading ? null : _showImagePickerOptions,
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: theme.colorScheme.primary,
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              onPressed: () {
-                ref.read(authProvider.notifier).logout();
-              },
-              child: const Text('Sign Out'),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+
+              // Name Display & Inline Editor
+              _isEditingName
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _nameController,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.headlineSmall,
+                            decoration: const InputDecoration(
+                              hintText: 'Enter name',
+                              contentPadding: EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            maxLength: 30,
+                            buildCounter: (context, {required int currentLength, required bool isFocused, required int? maxLength}) => null,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.check, color: Colors.green),
+                          onPressed: _saveName,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _isEditingName = false;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(width: 40), // Spacer to offset pencil icon
+                        Text(
+                          displayName,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                          onPressed: () {
+                            setState(() {
+                              _isEditingName = true;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+              Text(
+                isResident 
+                    ? 'Flat ${authState.flatId ?? "Unknown"} • Resident' 
+                    : 'Assigned Category: ${authState.category ?? "None"} • Worker', 
+                style: const TextStyle(color: Colors.grey)
+              ),
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 12),
+
+              // Links list
+              _buildMenuItem(
+                icon: Icons.menu_book_outlined,
+                title: 'User Guide',
+                onTap: () => context.push('/user-guide'),
+              ),
+              _buildMenuItem(
+                icon: Icons.help_outline,
+                title: 'Help & Support',
+                onTap: () => context.push('/help-support'),
+              ),
+              _buildMenuItem(
+                icon: Icons.security,
+                title: 'Privacy Policy',
+                onTap: () => context.push('/privacy-policy'),
+              ),
+              
+              const SizedBox(height: 48),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.error,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    ref.read(authProvider.notifier).logout();
+                  },
+                  child: const Text(
+                    'Sign Out',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFF64748B)),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 20),
+        onTap: onTap,
       ),
     );
   }

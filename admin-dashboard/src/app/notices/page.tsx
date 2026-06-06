@@ -12,7 +12,7 @@ import { formatDate } from '@/lib/mock-data';
 
 export default function NoticesPage() {
   const { isSimulated } = useAuth();
-  const { notices: contextNotices, addNotice: contextAddNotice } = useApp();
+  const { notices: contextNotices, addNotice: contextAddNotice, updateNotice: contextUpdateNotice, deleteNotice: contextDeleteNotice } = useApp();
 
   const [dbNotices, setDbNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(!isSimulated);
@@ -23,6 +23,7 @@ export default function NoticesPage() {
   const [topic, setTopic] = useState('General');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isSimulated) {
@@ -54,26 +55,40 @@ export default function NoticesPage() {
     setIsSubmitting(true);
     
     try {
-      if (isSimulated) {
-        contextAddNotice({
-          title,
-          topic,
-          content,
-          author: 'Admin Team',
-        });
+      if (editId) {
+        if (isSimulated) {
+          contextUpdateNotice(editId, { title, topic, content });
+        } else {
+          // If we had a contextUpdateNotice it's fine, but wait we didn't export db update to context properly if we bypassed it here.
+          // In the current code, the context has addNotice/updateNotice/deleteNotice. 
+          // We can just use contextUpdateNotice for both simulated and real if it handles it, but currently the page uses addDoc directly.
+          // Let's use contextUpdateNotice. Wait, the page does addDoc directly for real mode.
+          // Let's keep the pattern.
+          await contextUpdateNotice(editId, { title, topic, content });
+        }
       } else {
-        await addDoc(collection(db, 'notices'), {
-          title,
-          topic,
-          content,
-          author: 'Admin Team',
-          createdAt: serverTimestamp(),
-        });
+        if (isSimulated) {
+          contextAddNotice({
+            title,
+            topic,
+            content,
+            author: 'Admin Team',
+          });
+        } else {
+          await addDoc(collection(db, 'notices'), {
+            title,
+            topic,
+            content,
+            author: 'Admin Team',
+            createdAt: serverTimestamp(),
+          });
+        }
       }
       setIsModalOpen(false);
       setTitle('');
       setTopic('General');
       setContent('');
+      setEditId(null);
     } catch (error) {
       console.error('Error adding notice: ', error);
       alert('Failed to publish notice.');
@@ -100,6 +115,28 @@ export default function NoticesPage() {
     }
   }
 
+  const handleEdit = (notice: Notice) => {
+    setEditId(notice.id);
+    setTitle(notice.title);
+    setTopic(notice.topic);
+    setContent(notice.content);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this notice?')) {
+      await contextDeleteNotice(id);
+    }
+  };
+
+  const openAddModal = () => {
+    setEditId(null);
+    setTitle('');
+    setTopic('General');
+    setContent('');
+    setIsModalOpen(true);
+  };
+
   return (
     <>
       <Header title="Official Notices" subtitle="Publish and manage society announcements" />
@@ -112,7 +149,7 @@ export default function NoticesPage() {
           </h2>
           <button 
             className="btn btn--primary btn--sm" 
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             id="btn-publish-notice"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
@@ -158,7 +195,15 @@ export default function NoticesPage() {
                         Published by {notice.author} • {formattedDate}
                       </span>
                     </div>
-                    <span className={getTopicBadgeClass(notice.topic)}>{notice.topic}</span>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className={getTopicBadgeClass(notice.topic)}>{notice.topic}</span>
+                      <button onClick={() => handleEdit(notice)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-500)' }} title="Edit">
+                        ✏️
+                      </button>
+                      <button onClick={() => handleDelete(notice.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-emergency-500)' }} title="Delete">
+                        🗑️
+                      </button>
+                    </div>
                   </div>
 
                   <p style={{ 
@@ -181,8 +226,8 @@ export default function NoticesPage() {
       <Modal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        title="Publish Official Notice" 
-        subtitle="Announce society updates to residents"
+        title={editId ? "Edit Notice" : "Publish Official Notice"} 
+        subtitle={editId ? "Update existing announcement" : "Announce society updates to residents"}
       >
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: 'var(--space-4)' }}>
@@ -239,7 +284,7 @@ export default function NoticesPage() {
               disabled={isSubmitting}
               className="btn btn--primary btn--sm"
             >
-              {isSubmitting ? 'Publishing...' : 'Publish Notice'}
+              {isSubmitting ? 'Saving...' : editId ? 'Save Changes' : 'Publish Notice'}
             </button>
           </div>
         </form>

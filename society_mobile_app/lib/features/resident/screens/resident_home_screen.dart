@@ -93,23 +93,56 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
       }
     });
 
+    // Calculate unread notifications count from complaints timeline
+    int unreadNotificationsCount = 0;
+    complaintsAsync.whenData((complaintsList) {
+      for (final complaint in complaintsList) {
+        for (int i = 0; i < complaint.timeline.length; i++) {
+          final notifId = '${complaint.id}_$i';
+          if (!authState.readNotifications.contains(notifId)) {
+            unreadNotificationsCount++;
+          }
+        }
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Flat $flatId Dashboard'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.push('/resident-notifications'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            onPressed: () => context.push('/profile'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authProvider.notifier).logout();
-            },
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () => context.push('/resident-notifications'),
+              ),
+              if (unreadNotificationsCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$unreadNotificationsCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -133,11 +166,19 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
               ),
             ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(complaintsStreamProvider(flatId));
+                ref.invalidate(noticesStreamProvider);
+                ref.invalidate(visitorStreamProvider(flatId));
+                await Future.delayed(const Duration(milliseconds: 600));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Welcome Header Card
             Container(
               width: double.infinity,
@@ -173,30 +214,54 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                     icon: const Icon(Icons.add_circle_outline),
                     label: const Text('New Complaint'),
                   ),
-                  const SizedBox(height: 8),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.2),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(180, 44),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size(180, 44),
+                      ),
+                      onPressed: () => context.push('/society-issue-create'),
+                      icon: const Icon(Icons.campaign_outlined),
+                      label: const Text('Report Society Issue'),
                     ),
-                    onPressed: () => context.push('/society-issue-create'),
-                    icon: const Icon(Icons.campaign_outlined),
-                    label: const Text('Report Society Issue'),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size(180, 44),
+                      ),
+                      onPressed: () => context.push('/hall-bookings'),
+                      icon: const Icon(Icons.event_available),
+                      label: const Text('Book Community Hall'),
+                    ),
+                  ],
               ),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade100, foregroundColor: Colors.orange.shade900),
-                icon: const Icon(Icons.receipt_long),
-                label: const Text('My Ironing Bills'),
-                onPressed: () => context.push('/resident-bills'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade100, foregroundColor: Colors.orange.shade900),
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('Ironing Bills'),
+                    onPressed: () => context.push('/resident-bills'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade100, foregroundColor: Colors.green.shade900),
+                    icon: const Icon(Icons.contact_phone),
+                    label: const Text('Worker Contacts'),
+                    onPressed: () => context.push('/worker-directory'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 28),
 
@@ -395,32 +460,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                         ),
                         isThreeLine: true,
                         onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text(notice.title),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
-                                      child: Text(notice.topic, style: TextStyle(color: Colors.blue.shade800, fontSize: 12, fontWeight: FontWeight.bold)),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(notice.content),
-                                    const SizedBox(height: 16),
-                                    Text('From: ${notice.author}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
-                              ],
-                            ),
-                          );
+                          context.push('/notice-details/${notice.id}');
                         },
                       ),
                     );
@@ -433,6 +473,9 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
           ],
         ),
       ),
+      ),
+      ),
+        ],
       ),
     );
   }

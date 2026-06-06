@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../../../core/services/messaging_service.dart';
 
 enum AuthStatus {
   initial,
@@ -19,7 +21,10 @@ class AuthState {
   final String? role;
   final String? phone;
   final String? category;
+  final String? name;
+  final String? profilePictureUrl;
   final String? errorMessage;
+  final List<String> readNotifications;
 
   AuthState({
     required this.status,
@@ -28,7 +33,10 @@ class AuthState {
     this.role,
     this.phone,
     this.category,
+    this.name,
+    this.profilePictureUrl,
     this.errorMessage,
+    this.readNotifications = const [],
   });
 
   factory AuthState.initial() => AuthState(status: AuthStatus.initial);
@@ -40,7 +48,10 @@ class AuthState {
     String? role,
     String? phone,
     String? category,
+    String? name,
+    String? profilePictureUrl,
     String? errorMessage,
+    List<String>? readNotifications,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -49,7 +60,10 @@ class AuthState {
       role: role ?? this.role,
       phone: phone ?? this.phone,
       category: category ?? this.category,
+      name: name ?? this.name,
+      profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
       errorMessage: errorMessage ?? this.errorMessage,
+      readNotifications: readNotifications ?? this.readNotifications,
     );
   }
 }
@@ -88,10 +102,16 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   void _setAuthenticatedState(String uid, Map<String, dynamic> profile) {
+    // Initialize FCM Token
+    ref.read(messagingServiceProvider).init(uid);
+
     final role = profile['role'] as String?;
     final flatId = profile['flatId'] as String?;
     final category = profile['category'] as String?;
     final phone = profile['phone'] as String?;
+    final name = profile['name'] as String?;
+    final profilePictureUrl = profile['profilePictureUrl'] as String?;
+    final readNotifications = List<String>.from(profile['readNotifications'] ?? []);
 
     if (role == 'worker') {
       state = AuthState(
@@ -100,6 +120,9 @@ class AuthNotifier extends Notifier<AuthState> {
         role: role,
         phone: phone,
         category: category,
+        name: name,
+        profilePictureUrl: profilePictureUrl,
+        readNotifications: readNotifications,
       );
     } else if (role == 'guard') {
       state = AuthState(
@@ -107,6 +130,9 @@ class AuthNotifier extends Notifier<AuthState> {
         userId: uid,
         role: role,
         phone: phone,
+        name: name,
+        profilePictureUrl: profilePictureUrl,
+        readNotifications: readNotifications,
       );
     } else {
       state = AuthState(
@@ -115,81 +141,152 @@ class AuthNotifier extends Notifier<AuthState> {
         role: role,
         phone: phone,
         flatId: flatId ?? 'Unknown',
+        name: name,
+        profilePictureUrl: profilePictureUrl,
+        readNotifications: readNotifications,
       );
     }
   }
 
-  /// Step 1: Resident Invite Code Check
-  Future<bool> verifyInvite(String flatNumber, String inviteCode) async {
+  /// Step 1: Resident Register / Login via Invite Code
+  Future<bool> submitInviteDetails({
+    required String name,
+    required String flatNumber,
+    required String phone,
+    required String inviteCode,
+  }) async {
     state = state.copyWith(status: AuthStatus.authenticating);
-    final isValid = await _authService.verifyInviteCode(flatNumber, inviteCode);
-    if (!isValid) {
+    
+    // First verify if the invite code matches the flat and phone
+    final result = await _authService.verifyInviteCode(flatNumber, inviteCode, phone);
+    if (!result.isValid) {
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
-        errorMessage: 'Invalid Flat Number or Invite Code',
+        errorMessage: result.errorMessage ?? 'Invalid Flat Number, Invite Code, or Phone Number',
       );
       return false;
     }
-    state = state.copyWith(status: AuthStatus.unauthenticated, flatId: flatNumber);
-    return true;
-  }
 
-  /// Step 2: Request OTP for Login
-  Future<void> sendOtp(String phone) async {
-    state = state.copyWith(status: AuthStatus.authenticating, phone: phone);
-    await _authService.signInWithPhone(
-      phoneNumber: phone,
-      onCodeSent: (verificationId) {
-        _verificationId = verificationId;
-        state = state.copyWith(status: AuthStatus.unauthenticated);
-      },
-      onFailed: (e) {
-        state = state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: e.message ?? 'Phone verification failed',
-        );
-      },
-    );
-  }
-
-  /// Step 3: Verify OTP and log in
-  Future<void> verifyOtpCode(String smsCode) async {
-    if (_verificationId == null) {
-      state = state.copyWith(status: AuthStatus.error, errorMessage: 'Verification session expired');
-      return;
-    }
-
-    state = state.copyWith(status: AuthStatus.authenticating);
     try {
-      final userCred = await _authService.verifyOtp(_verificationId!, smsCode);
+      final userCred = await _authService.registerWithInvite(
+        name: name,
+        flatNumber: flatNumber,
+        phone: phone,
+        inviteCode: inviteCode,
+      );
       
-      // Simulate or read from Firestore profile
-      final uid = userCred?.user?.uid ?? 'mock_uid_${state.phone?.replaceAll(' ', '')}';
-      final profile = await _authService.getUserProfile(uid, simulatedPhone: state.phone, simulatedFlatId: state.flatId);
+      final uid = userCred.user?.uid;
+      if (uid == null) throw Exception("Failed to get User ID");
+
+      final profile = await _authService.getUserProfile(uid) ?? {
+        'role': 'resident',
+        'flatId': flatNumber,
+        'phone': phone,
+      };
       
-      if (profile != null) {
-        _setAuthenticatedState(uid, profile);
-      } else {
-        // Create a default profile if missing (Resident default)
-        final defaultProfile = {
-          'role': 'resident',
-          'flatId': state.flatId ?? '1302',
-          'phone': state.phone,
-        };
-        _setAuthenticatedState(uid, defaultProfile);
-      }
+      _setAuthenticatedState(uid, profile);
+      return true;
     } on fb.FirebaseAuthException catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
+      return false;
     } catch (e) {
       state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
+      return false;
+    }
+  }
+
+  /// Step 2: Login for Returning Residents / Workers using Passcode
+  Future<bool> loginUser(String phone, String code) async {
+    state = state.copyWith(status: AuthStatus.authenticating);
+    
+    try {
+      final userCred = await _authService.loginWithPhoneAndCode(phone, code);
+      final uid = userCred.user?.uid;
+      if (uid == null) throw Exception("Failed to get User ID");
+
+      final profile = await _authService.getUserProfile(uid) ?? {
+        'role': 'worker', // default fallback for dynamically created mock accounts
+        'phone': phone,
+      };
+
+      _setAuthenticatedState(uid, profile);
+      return true;
+    } on fb.FirebaseAuthException catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.message);
+      return false;
+    } catch (e) {
+      state = state.copyWith(status: AuthStatus.error, errorMessage: e.toString());
+      return false;
     }
   }
 
   /// Sign out
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.authenticating);
+    
+    // Clear FCM token before signing out so they don't receive notifications while logged out
+    final uid = state.userId;
+    if (uid != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'fcmToken': FieldValue.delete(),
+        });
+      } catch (e) {
+        // Ignore if user document doesn't exist or offline
+      }
+    }
+    
     await _authService.signOut();
     state = AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  Future<void> updateProfilePicture(String url) async {
+    final uid = state.userId;
+    if (uid == null) return;
+    
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'profilePictureUrl': url,
+    });
+    
+    state = state.copyWith(profilePictureUrl: url);
+  }
+
+  Future<void> updateProfileName(String newName) async {
+    final uid = state.userId;
+    if (uid == null) return;
+    
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'name': newName,
+    });
+    
+    state = state.copyWith(name: newName);
+  }
+
+  Future<void> markNotificationAsRead(String notificationId) async {
+    final uid = state.userId;
+    if (uid == null) return;
+    if (state.readNotifications.contains(notificationId)) return;
+
+    final updatedList = [...state.readNotifications, notificationId];
+    
+    // Optimistic UI update
+    state = state.copyWith(readNotifications: updatedList);
+    
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'readNotifications': FieldValue.arrayUnion([notificationId]),
+    });
+  }
+
+  Future<void> markAllNotificationsAsRead(List<String> allNotificationIds) async {
+    final uid = state.userId;
+    if (uid == null) return;
+    
+    // Optimistic UI update
+    state = state.copyWith(readNotifications: allNotificationIds);
+    
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'readNotifications': allNotificationIds,
+    });
   }
 
   void clearError() {

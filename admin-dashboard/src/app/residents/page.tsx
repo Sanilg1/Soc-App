@@ -7,12 +7,15 @@ import Modal from '@/components/Modal';
 import toast from 'react-hot-toast';
 
 export default function ResidentsPage() {
-  const { flats, updateFlatPhoneNumbers, regenerateInviteCode } = useApp();
+  const { flats, updateFlatPhoneNumbers, regenerateInviteCode, updateInviteCode } = useApp();
   
   
   const [showManagePhonesModal, setShowManagePhonesModal] = useState(false);
   const [selectedFlatId, setSelectedFlatId] = useState<string | null>(null);
   const [newPhone, setNewPhone] = useState('');
+
+  const [editingCodeFlatId, setEditingCodeFlatId] = useState<string | null>(null);
+  const [editingCodeValue, setEditingCodeValue] = useState('');
 
   const selectedFlat = flats.find(f => f.id === selectedFlatId);
 
@@ -43,6 +46,28 @@ export default function ResidentsPage() {
     }
   };
 
+  const handleSaveEditedCode = async (flatId: string) => {
+    if (!editingCodeValue.trim()) {
+      toast.error('Invite code cannot be empty');
+      return;
+    }
+    if (editingCodeValue.trim().length < 4) {
+      toast.error('Invite code must be at least 4 characters');
+      return;
+    }
+    
+    // Check if another flat already uses this code
+    const existing = flats.find(f => f.inviteCode === editingCodeValue.trim() && f.id !== flatId);
+    if (existing) {
+      toast.error(`Code ${editingCodeValue.trim()} is already used by Flat ${existing.flatNumber}`);
+      return;
+    }
+
+    await updateInviteCode(flatId, editingCodeValue.trim());
+    setEditingCodeFlatId(null);
+    setEditingCodeValue('');
+  };
+
   return (
     <>
       <Header 
@@ -68,11 +93,64 @@ export default function ResidentsPage() {
                       {(flat.phoneNumbers || []).length} registered member(s)
                     </p>
                   </div>
-                  <div style={{ background: 'var(--color-primary-50)', padding: '6px 12px', borderRadius: '8px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '10px', color: 'var(--color-primary-600)', fontWeight: 600, textTransform: 'uppercase' }}>Invite Code</div>
-                    <div style={{ fontSize: 'var(--font-size-lg)', fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary-900)', letterSpacing: '2px' }}>
-                      {flat.inviteCode}
+                  <div style={{ background: 'var(--color-primary-50)', padding: '6px 12px', borderRadius: '8px', textAlign: 'center', minWidth: '120px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--color-primary-600)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>
+                      Invite Code
                     </div>
+                    {editingCodeFlatId === flat.id ? (
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <input
+                          autoFocus
+                          type="text"
+                          value={editingCodeValue}
+                          onChange={(e) => setEditingCodeValue(e.target.value)}
+                          style={{
+                            width: '80px',
+                            padding: '2px 4px',
+                            fontSize: 'var(--font-size-md)',
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            color: 'var(--color-primary-900)',
+                            letterSpacing: '1px',
+                            border: '1px solid var(--color-primary-300)',
+                            borderRadius: '4px',
+                            textAlign: 'center'
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveEditedCode(flat.id);
+                            if (e.key === 'Escape') setEditingCodeFlatId(null);
+                          }}
+                        />
+                        <button 
+                          onClick={() => handleSaveEditedCode(flat.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary-600)', padding: '4px' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={() => setEditingCodeFlatId(null)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-neutral-400)', padding: '4px' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div 
+                        style={{ fontSize: 'var(--font-size-lg)', fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary-900)', letterSpacing: '2px', cursor: 'pointer' }}
+                        onClick={() => {
+                          setEditingCodeFlatId(flat.id);
+                          setEditingCodeValue(flat.inviteCode);
+                        }}
+                        title="Click to edit"
+                      >
+                        {flat.inviteCode}
+                      </div>
+                    )}
                   </div>
                 </div>
 

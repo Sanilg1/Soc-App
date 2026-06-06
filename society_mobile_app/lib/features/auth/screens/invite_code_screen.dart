@@ -31,41 +31,25 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
 
     final authNotifier = ref.read(authProvider.notifier);
     
-    // Step 1: Verify invite code and flat number
-    final isValidInvite = await authNotifier.verifyInvite(
-      _flatController.text.trim(),
-      _inviteController.text.trim(),
+    // Attempt to register/login directly using the Invite Code
+    final success = await authNotifier.submitInviteDetails(
+      name: _nameController.text.trim(),
+      flatNumber: _flatController.text.trim(),
+      phone: _phoneController.text.trim(),
+      inviteCode: _inviteController.text.trim(),
     );
 
-    if (!isValidInvite) {
-      if (mounted) {
+    if (mounted) {
+      if (success) {
+        context.go('/'); // AuthProvider will redirect based on role
+      } else {
         final error = ref.read(authProvider).errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(error ?? 'Invalid invite code or flat number'),
+            content: Text(error ?? 'Failed to verify invite code'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      }
-      return;
-    }
-
-    // Step 2: Trigger OTP sending
-    await authNotifier.sendOtp(_phoneController.text.trim());
-
-    if (mounted) {
-      final authState = ref.read(authProvider);
-      if (authState.status == AuthStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authState.errorMessage ?? 'OTP send failed'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      } else {
-        if (mounted) {
-          context.go('/otp-verify?phone=${Uri.encodeComponent(_phoneController.text.trim())}&invite=true');
-        }
       }
     }
   }

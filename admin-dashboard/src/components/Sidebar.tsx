@@ -106,6 +106,14 @@ const Icons = {
       <path d="M22 4L12 14.01l-3-3" />
     </svg>
   ),
+  bookings: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+  ),
 };
 
 const navSections: NavSection[] = [
@@ -122,6 +130,7 @@ const navSections: NavSection[] = [
       { label: 'Resolved Queries', href: '/complaints?status=closed', icon: Icons.resolved },
       { label: 'Escalations', href: '/escalations', icon: Icons.escalation },
       { label: 'Society Issues', href: '/society-issues', icon: Icons.society },
+      { label: 'Hall Bookings', href: '/hall-bookings', icon: Icons.bookings },
       { label: 'Notices', href: '/notices', icon: Icons.notices },
       { label: 'Ironing Ledger', href: '/ironing', icon: Icons.ironing },
       { label: 'Activity Logs', href: '/activity-logs', icon: Icons.activityLogs },

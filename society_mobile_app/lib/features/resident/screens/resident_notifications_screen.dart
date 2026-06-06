@@ -95,6 +95,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
   List<ResidentNotification> _buildNotificationsFromComplaints(
     List complaints,
     String flatId,
+    List<String> readNotificationIds,
   ) {
     final notifications = <ResidentNotification>[];
 
@@ -161,13 +162,15 @@ class ResidentNotificationsScreen extends ConsumerWidget {
           message = event.action;
         }
 
+        final notifId = '${complaint.id}_$i';
+
         notifications.add(ResidentNotification(
-          id: '${complaint.id}_$i',
+          id: notifId,
           type: type,
           title: title,
           message: message,
           timestamp: event.timestamp,
-          read: i < complaint.timeline.length - 1, // Only latest is unread
+          read: readNotificationIds.contains(notifId),
           complaintId: complaint.id,
         ));
       }
@@ -193,16 +196,25 @@ class ResidentNotificationsScreen extends ConsumerWidget {
             icon: const Icon(Icons.done_all),
             tooltip: 'Mark all as read',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All notifications marked as read')),
-              );
+              if (complaintsAsync.hasValue) {
+                final notifications = _buildNotificationsFromComplaints(
+                  complaintsAsync.value!, 
+                  flatId, 
+                  authState.readNotifications
+                );
+                final allIds = notifications.map((n) => n.id).toList();
+                ref.read(authProvider.notifier).markAllNotificationsAsRead(allIds);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All notifications marked as read')),
+                );
+              }
             },
           ),
         ],
       ),
       body: complaintsAsync.when(
         data: (complaints) {
-          final notifications = _buildNotificationsFromComplaints(complaints, flatId);
+          final notifications = _buildNotificationsFromComplaints(complaints, flatId, authState.readNotifications);
 
           if (notifications.isEmpty) {
             return Center(
@@ -300,6 +312,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                   ],
                 ),
                 onTap: () {
+                  ref.read(authProvider.notifier).markNotificationAsRead(notif.id);
                   if (notif.complaintId != null) {
                     Navigator.of(context).pushNamed(
                       '/complaint-details/${notif.complaintId}',

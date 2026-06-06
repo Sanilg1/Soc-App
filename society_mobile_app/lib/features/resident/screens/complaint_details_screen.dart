@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../complaints/models/complaint_model.dart';
 import '../../complaints/providers/complaints_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class ComplaintDetailsScreen extends ConsumerStatefulWidget {
   final String complaintId;
@@ -166,12 +167,21 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
     return complaintsAsync.when(
       data: (complaints) {
         final complaintIndex = complaints.indexWhere((c) => c.id == widget.complaintId);
-        if (complaintIndex == -1) {
+        if (complaintIndex != -1) {
+          final complaint = complaints[complaintIndex];
+          // Automatically mark all notifications for this complaint as read
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            for (int i = 0; i < complaint.timeline.length; i++) {
+              ref.read(authProvider.notifier).markNotificationAsRead('${complaint.id}_$i');
+            }
+          });
+        } else {
           return Scaffold(
             appBar: AppBar(title: const Text('Complaint Details')),
             body: const Center(child: Text('Complaint details not found.')),
           );
         }
+        
         final complaint = complaints[complaintIndex];
         final canEdit = complaint.status == 'submitted' || complaint.status == 'queued' || complaint.status == 'reopened';
 
@@ -260,21 +270,22 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                 complaint.category.toUpperCase(),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  complaint.urgency.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey[700],
+                              if (complaint.category != 'housekeeping' && complaint.category != 'ironing')
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    complaint.urgency.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey[700],
+                                    ),
                                   ),
                                 ),
-                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -298,9 +309,11 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                               children: [
                                 const Icon(Icons.timer_outlined, size: 16, color: AppTheme.highPriorityColor),
                                 const SizedBox(width: 8),
-                                Text(
-                                  'SLA Target: ${_formatDateTime(complaint.slaDeadline!)} (${_getSlaCountdownText(complaint.slaDeadline!)})',
-                                  style: const TextStyle(fontSize: 12, color: AppTheme.highPriorityColor, fontWeight: FontWeight.w500),
+                                Expanded(
+                                  child: Text(
+                                    'SLA Target: ${_formatDateTime(complaint.slaDeadline!)} (${_getSlaCountdownText(complaint.slaDeadline!)})',
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.highPriorityColor, fontWeight: FontWeight.w500),
+                                  ),
                                 ),
                               ],
                             ),
@@ -633,9 +646,9 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
       loading: () => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: const Center(child: CircularProgressIndicator())),
       error: (err, stack) => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: Center(child: Text('Error: $err'))),
     );

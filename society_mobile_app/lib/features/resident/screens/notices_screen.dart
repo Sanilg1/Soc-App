@@ -110,34 +110,45 @@ class NoticesScreen extends ConsumerWidget {
               ]
             : null,
       ),
-      body: noticesAsync.when(
-        data: (notices) {
-          if (notices.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.campaign_outlined,
-                    size: 64,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(noticesStreamProvider);
+          await Future.delayed(const Duration(milliseconds: 600));
+        },
+        child: noticesAsync.when(
+          data: (notices) {
+            if (notices.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height - 200,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.campaign_outlined,
+                        size: 64,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No notices published yet',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No notices published yet',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(24.0),
-            itemCount: notices.length,
-            itemBuilder: (context, index) {
+                ),
+              );
+            }
+  
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24.0),
+              itemCount: notices.length,
+              itemBuilder: (context, index) {
               final notice = notices[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 20),
@@ -197,6 +208,7 @@ class NoticesScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
+     ),
     );
   }
 }

@@ -50,10 +50,13 @@ const CATEGORY_ICONS: Record<string, { gradient: string }> = {
 };
 
 export default function WorkersPage() {
-  const { workers, leaveRequests, toggleWorkerActive, updateLeaveStatus, addWorker } = useApp();
+  const { workers, leaveRequests, toggleWorkerActive, updateLeaveStatus, addWorker, updateWorker } = useApp();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [newWorker, setNewWorker] = useState({ name: '', category: 'electrical', phone: '' });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingWorker, setEditingWorker] = useState<{ id: string; name: string; category: string; phone: string; oldPhone: string } | null>(null);
 
   function handleToggleActive(id: string, currentlyActive: boolean) {
     toggleWorkerActive(id);
@@ -74,6 +77,21 @@ export default function WorkersPage() {
     await addWorker(newWorker);
     setShowAddModal(false);
     setNewWorker({ name: '', category: 'electrical', phone: '' });
+  }
+
+  async function handleEditWorker(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingWorker || !editingWorker.name.trim() || !editingWorker.phone.trim()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    await updateWorker(
+      editingWorker.id, 
+      { name: editingWorker.name, category: editingWorker.category, phone: editingWorker.phone },
+      editingWorker.oldPhone
+    );
+    setShowEditModal(false);
+    setEditingWorker(null);
   }
 
   return (
@@ -167,7 +185,22 @@ export default function WorkersPage() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                  <a href="/complaints" className="btn btn--secondary btn--sm" style={{ flex: 1, textAlign: 'center' }}>View Complaints</a>
+                  <button 
+                    className="btn btn--secondary btn--sm" 
+                    style={{ flex: 1, textAlign: 'center' }}
+                    onClick={() => {
+                      setEditingWorker({
+                        id: worker.id,
+                        name: worker.name,
+                        category: worker.category,
+                        phone: worker.phone,
+                        oldPhone: worker.phone
+                      });
+                      setShowEditModal(true);
+                    }}
+                  >
+                    Edit Details
+                  </button>
                   <button className="btn btn--ghost btn--sm" onClick={() => handleToggleActive(worker.id, worker.active)}>
                     {worker.active ? 'Deactivate' : 'Activate'}
                   </button>
@@ -288,6 +321,74 @@ export default function WorkersPage() {
                 Register Worker
               </button>
               <button type="button" className="btn btn--secondary" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {showEditModal && editingWorker && (
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingWorker(null);
+          }}
+          title="Edit Worker Details"
+          subtitle="Update maintenance worker information"
+          maxWidth={500}
+        >
+          <form onSubmit={handleEditWorker}>
+            <div className="form-group">
+              <label className="form-label">Full Name *</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="e.g. Ramesh Kumar"
+                value={editingWorker.name}
+                onChange={(e) => setEditingWorker({ ...editingWorker, name: e.target.value })}
+                required
+              />
+            </div>
+            
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Phone Number *</label>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="e.g. +91 9876543210"
+                value={editingWorker.phone}
+                onChange={(e) => setEditingWorker({ ...editingWorker, phone: e.target.value })}
+                required
+              />
+              <span style={{ fontSize: '12px', color: 'var(--color-warning-600)', marginTop: '4px', display: 'block' }}>
+                Changing the phone number will affect how this worker logs into the mobile app.
+              </span>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Category *</label>
+              <select
+                className="form-select"
+                value={editingWorker.category}
+                onChange={(e) => setEditingWorker({ ...editingWorker, category: e.target.value })}
+              >
+                <option value="electrical">Electrical</option>
+                <option value="plumbing">Plumbing</option>
+                <option value="housekeeping">Housekeeping</option>
+                <option value="ironing">Ironing</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
+              <button type="submit" className="btn btn--primary" style={{ flex: 1 }}>
+                Save Changes
+              </button>
+              <button type="button" className="btn btn--secondary" onClick={() => {
+                setShowEditModal(false);
+                setEditingWorker(null);
+              }}>
                 Cancel
               </button>
             </div>

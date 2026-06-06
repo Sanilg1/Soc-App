@@ -491,7 +491,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 },
               ),
             ),
-          ] else if (status == 'accepted' || status == 'reopened') ...[
+          ] else if (status == 'accepted' || status == 'reopened' || (status == 'escalated' && !complaint.timeline.any((e) => e.action.toLowerCase().contains('visited') || e.action.toLowerCase().contains('inspected')))) ...[
             Row(
               children: [
                 Expanded(
@@ -519,7 +519,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 ),
               ],
             ),
-          ] else if (status == 'visited' || status == 'need_tools' || status == 'revisit_scheduled') ...[
+          ] else if (status == 'visited' || status == 'need_tools' || status == 'revisit_scheduled' || (status == 'escalated' && complaint.timeline.any((e) => e.action.toLowerCase().contains('visited') || e.action.toLowerCase().contains('inspected')))) ...[
             // Main actions for active inspection: Need Tools, Resident Unavailable, Complete Work
             
             // If Need Tools and Worker is responsible and not procured yet, show Procure button

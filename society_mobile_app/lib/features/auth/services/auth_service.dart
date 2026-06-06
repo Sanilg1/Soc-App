@@ -2,6 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+class InviteVerificationResult {
+  final bool isValid;
+  final String? errorMessage;
+  InviteVerificationResult({required this.isValid, this.errorMessage});
+}
+
 class AuthService {
   FirebaseAuth get _auth => FirebaseAuth.instance;
   FirebaseFirestore get _db => FirebaseFirestore.instance;
@@ -14,83 +20,149 @@ class AuthService {
     return phone.replaceAll(' ', '').contains('+1555010');
   }
 
+  // Robust phone comparison helper
+  bool _comparePhones(String phone1, String phone2) {
+    final clean1 = phone1.replaceAll(RegExp(r'\D'), '');
+    final clean2 = phone2.replaceAll(RegExp(r'\D'), '');
+    if (clean1.length >= 10 && clean2.length >= 10) {
+      return clean1.endsWith(clean2) || clean2.endsWith(clean1);
+    }
+    return clean1 == clean2;
+  }
+
   /// Verifies if the invite code matches the registered flat number in Firestore
-  Future<bool> verifyInviteCode(String flatNumber, String inviteCode) async {
+  Future<InviteVerificationResult> verifyInviteCode(String flatNumber, String inviteCode, String phone) async {
     if (_useSimulation && inviteCode == '123456') {
-      return true;
+      return InviteVerificationResult(isValid: true);
     }
     
     try {
       final doc = await _db.collection('flats').doc(flatNumber).get();
-      if (!doc.exists) return false;
-      
-      final data = doc.data();
-      if (data == null) return false;
-      
-      return data['inviteCode'] == inviteCode;
-    } catch (e) {
-      debugPrint('Error verifying invite code: $e');
-      // If Firestore is not initialized or connected, return true for our developer mock codes
-      if (inviteCode == '123456') return true;
-      return false;
-    }
-  }
-
-  /// Triggers Firebase Phone Number authentication or simulates it for mock accounts
-  Future<void> signInWithPhone({
-    required String phoneNumber,
-    required Function(String verificationId) onCodeSent,
-    required Function(FirebaseAuthException e) onFailed,
-  }) async {
-    // If it is a simulation/mock number, immediately trigger onCodeSent with a mock ID
-    if (_useSimulation || _isMockNumber(phoneNumber)) {
-      await Future.delayed(const Duration(seconds: 1));
-      onCodeSent('mock_verification_id_${phoneNumber.replaceAll(' ', '')}');
-      return;
-    }
-
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          onFailed(e);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          onCodeSent(verificationId);
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {},
-      );
-    } catch (e) {
-      onFailed(FirebaseAuthException(
-        code: 'verify-failed',
-        message: e.toString(),
-      ));
-    }
-  }
-
-  /// Verifies the OTP SMS Code and signs the user in
-  Future<UserCredential?> verifyOtp(String verificationId, String smsCode) async {
-    // Simulation / mock check
-    if (verificationId.startsWith('mock_verification_id_')) {
-      if (smsCode != '123456') {
-        throw FirebaseAuthException(
-          code: 'invalid-verification-code',
-          message: 'The SMS verification code is invalid.',
+      if (!doc.exists) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'Flat $flatNumber does not exist in the society database.',
         );
       }
-      // Return a dummy UserCredential wrapper or simulate success
-      await Future.delayed(const Duration(milliseconds: 500));
-      return null; // Riverpod provider will handle assigning mock state
-    }
+      
+      final data = doc.data();
+      if (data == null) {
+        return InviteVerificationResult(isValid: false, errorMessage: 'Flat data is empty.');
+      }
+      
+      if (data['inviteCode'] != inviteCode) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'Incorrect invite code for Flat $flatNumber.',
+        );
+      }
 
-    final credential = PhoneAuthProvider.credential(
-      verificationId: verificationId,
-      smsCode: smsCode,
-    );
-    return await _auth.signInWithCredential(credential);
+      final List<dynamic> registeredPhones = data['phoneNumbers'] ?? [];
+      final hasMatchingPhone = registeredPhones.any((registeredPhone) => 
+        _comparePhones(registeredPhone.toString(), phone)
+      );
+
+      if (!hasMatchingPhone) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'Phone number $phone is not registered for Flat $flatNumber by the administrator.',
+        );
+      }
+
+      return InviteVerificationResult(isValid: true);
+    } catch (e) {
+      debugPrint('Error verifying invite code: $e');
+      if (inviteCode == '123456') {
+        return InviteVerificationResult(isValid: true);
+      }
+      return InviteVerificationResult(
+        isValid: false,
+        errorMessage: 'Database connection error: $e',
+      );
+    }
+  }
+
+  /// Registers a new user via Invite Code (using Email/Password under the hood)
+  Future<UserCredential> registerWithInvite({
+    required String name,
+    required String flatNumber,
+    required String phone,
+    required String inviteCode,
+  }) async {
+    final email = '${phone.replaceAll(' ', '').replaceAll('+', '')}@society.app';
+    
+    try {
+      // 1. Create account using Phone as Email, and Invite Code as Password
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: inviteCode,
+      );
+
+      // 2. Save profile in Firestore
+      if (credential.user != null) {
+        await _db.collection('users').doc(credential.user!.uid).set({
+          'name': name,
+          'phone': phone,
+          'flatId': flatNumber,
+          'role': 'resident',
+          'createdAt': FieldValue.serverTimestamp(),
+          'status': 'active',
+        });
+      }
+
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        // If they already registered, just log them in instead and update flatId
+        final credential = await loginWithPhoneAndCode(phone, inviteCode);
+        if (credential.user != null) {
+          await _db.collection('users').doc(credential.user!.uid).set({
+            'name': name,
+            'phone': phone,
+            'flatId': flatNumber,
+            'role': 'resident',
+            'status': 'active',
+          }, SetOptions(merge: true));
+        }
+        return credential;
+      }
+      throw Exception(e.message ?? 'Registration failed');
+    }
+  }
+
+  /// Logs in an existing user or worker using their Phone and Passcode/Invite Code
+  Future<UserCredential> loginWithPhoneAndCode(String phone, String code) async {
+    final email = '${phone.replaceAll(' ', '').replaceAll('+', '')}@society.app';
+    
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: code,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        // If it's a worker logging in for the first time with a default code (e.g., 123456)
+        // we can dynamically create their account here.
+        if (code == '123456') {
+          try {
+            final credential = await _auth.createUserWithEmailAndPassword(
+              email: email,
+              password: code,
+            );
+            await _db.collection('users').doc(credential.user!.uid).set({
+              'phone': phone,
+              'role': 'worker', // Fallback role
+              'createdAt': FieldValue.serverTimestamp(),
+              'status': 'active',
+            });
+            return credential;
+          } catch (createErr) {
+            throw Exception('Invalid phone or code');
+          }
+        }
+      }
+      throw Exception(e.message ?? 'Login failed. Check your phone number and code.');
+    }
   }
 
   Future<Map<String, dynamic>?> getUserProfile(String uid, {String? simulatedPhone, String? simulatedFlatId}) async {

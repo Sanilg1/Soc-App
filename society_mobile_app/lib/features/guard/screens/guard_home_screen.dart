@@ -81,12 +81,6 @@ class _GuardHomeScreenState extends ConsumerState<GuardHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gate Security'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authProvider.notifier).logout(),
-          )
-        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddVisitorModal,

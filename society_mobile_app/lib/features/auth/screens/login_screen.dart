@@ -13,10 +13,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+  final _codeController = TextEditingController();
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _codeController.dispose();
     super.dispose();
   }
 
@@ -24,21 +26,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authNotifier = ref.read(authProvider.notifier);
-    await authNotifier.sendOtp(_phoneController.text.trim());
+    
+    final success = await authNotifier.loginUser(
+      _phoneController.text.trim(),
+      _codeController.text.trim(),
+    );
 
     if (mounted) {
-      final authState = ref.read(authProvider);
-      if (authState.status == AuthStatus.error) {
+      if (success) {
+        context.go('/'); // AuthProvider will redirect based on role
+      } else {
+        final error = ref.read(authProvider).errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authState.errorMessage ?? 'OTP send failed'),
+            content: Text(error ?? 'Login failed'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-      } else {
-        if (mounted) {
-          context.go('/otp-verify?phone=${Uri.encodeComponent(_phoneController.text.trim())}&invite=false');
-        }
       }
     }
   }
@@ -51,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Worker Access'),
+        title: const Text('Worker Login'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/invite'),
@@ -72,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your registered mobile number to receive a one-time verification code.',
+                  'Enter your registered phone number and the Worker Passcode provided by the admin.',
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 32),
@@ -95,6 +99,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _codeController,
+                  enabled: !isLoading,
+                  obscureText: true,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Worker Passcode',
+                    hintText: 'e.g., 123456',
+                    prefixIcon: const Icon(Icons.lock_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your passcode';
+                    }
+                    return null;
+                  },
+                ),
                 const Spacer(),
                 ElevatedButton(
                   onPressed: isLoading ? null : _onSubmit,
@@ -107,7 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Send OTP'),
+                      : const Text('Login'),
                 ),
                 const SizedBox(height: 16),
               ],

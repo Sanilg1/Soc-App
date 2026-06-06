@@ -81,9 +81,38 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => context.push('/worker-notifications'),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () => context.push('/worker-notifications'),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: const Text(
+                    '3',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ],
           ),
           Builder(
             builder: (context) => IconButton(
@@ -617,22 +646,6 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
             },
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('My Profile'),
-            onTap: () {
-              context.pop();
-              context.push('/profile');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.red)),
-            onTap: () async {
-              context.pop();
-              await ref.read(authProvider.notifier).logout();
-            },
-          ),
         ],
       ),
     );

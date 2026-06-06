@@ -9,7 +9,7 @@
 
 export type UserRole = 'resident' | 'worker' | 'admin' | 'guard';
 
-export type ComplaintCategory = 'electrical' | 'plumbing' | 'housekeeping';
+export type ComplaintCategory = 'electrical' | 'plumbing' | 'housekeeping' | 'ironing';
 
 export type UrgencyLevel = 'low' | 'medium' | 'high' | 'emergency';
 
@@ -314,5 +314,19 @@ export interface FlatLedger {
   flatId: string;
   outstandingBalance: number;
   transactions: LedgerTransaction[];
+}
+
+export type HallBookingStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface HallBooking {
+  id: string;
+  flatId: string;
+  eventName: string;
+  date: string;
+  timeSlot: string;
+  guestCount: number;
+  status: HallBookingStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 

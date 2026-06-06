@@ -11,6 +11,9 @@ import {
   signInWithCredential, 
   signInAnonymously,
   PhoneAuthProvider,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  type ConfirmationResult,
   type User 
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -56,23 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Custom mock verification state
   const [mockVerificationPhone, setMockVerificationPhone] = useState<string | null>(null);
   const [isSimulated, setIsSimulated] = useState<boolean>(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Monitor Auth Status
   useEffect(() => {
-    // If we are simulating and already have a simulated session stored, skip Firebase monitor
-    if (typeof window !== 'undefined') {
-      const simSession = localStorage.getItem('sim_admin_session');
-      if (simSession) {
-        setUser({
-          uid: 'mock_admin_uid',
-          phoneNumber: MOCK_ADMIN_PHONE,
-        } as User);
-        setAdminProfile(MOCK_ADMIN_PROFILE);
-        setIsSimulated(true);
-        setLoading(false);
-        return;
-      }
-    }
+    // Note: We use anonymous Firebase Auth for the mock session, 
+    // so onAuthStateChanged will handle persistence natively.
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
@@ -138,11 +130,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
       
-      // Real firebase auth verification (requires recaptcha setup in browser/DOM)
-      // Since window/recaptcha configuration is handled inside the Page component,
-      // we check for verification ID or let page handle execution.
-      // For fallback/simulation, we will default to mock flow.
-      await new Promise((res) => setTimeout(res, 800));
+      // Real firebase auth verification
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+        });
+      }
+
+      const appVerifier = (window as any).recaptchaVerifier;
+      const result = await signInWithPhoneNumber(auth, cleanPhone, appVerifier);
+      setConfirmationResult(result);
       setMockVerificationPhone(cleanPhone);
       return true;
     } catch (err: any) {
@@ -154,30 +151,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmOtp = async (code: string): Promise<boolean> => {
     setError(null);
     try {
-      if (mockVerificationPhone === MOCK_ADMIN_PHONE) {
-        if (code !== '123456') {
-          throw new Error('Invalid verification code.');
-        }
-        
-        // Successful simulation
-        const mockUser = {
-          uid: 'mock_admin_uid',
-          phoneNumber: MOCK_ADMIN_PHONE,
-        } as User;
-        
-        setUser(mockUser);
-        setAdminProfile(MOCK_ADMIN_PROFILE);
-        setIsSimulated(true);
-        
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('sim_admin_session', 'true');
-        }
-        
-        return true;
-      }
-      
-      // Fallback/simulation successful for other codes too in dev mode
-      if (code === '123456') {
+      // Simulation successful ONLY for mock code AND mock phone number
+      if (USE_SIMULATION && mockVerificationPhone === MOCK_ADMIN_PHONE && code === '123456') {
         // Authenticate anonymously so we get a REAL Firebase Auth session
         const cred = await signInAnonymously(auth);
         
@@ -205,7 +180,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      throw new Error('Real Firebase verification requires window recapture initialization. Please use testing mock credentials (+1 555-010-0003 with code 123456) for local environment.');
+      if (confirmationResult) {
+        const cred = await confirmationResult.confirm(code);
+        if (cred.user) {
+          // Verify if they are an admin
+          const docRef = doc(db, 'users', cred.user.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists() && docSnap.data().role === 'admin') {
+            return true;
+          } else {
+            // Check admins collection too
+            const adminRef = doc(db, 'admins', cred.user.uid);
+            const adminSnap = await getDoc(adminRef);
+            if (adminSnap.exists()) {
+              return true;
+            } else {
+              throw new Error('You are not authorized as an administrator.');
+            }
+          }
+        }
+        return true;
+      }
+
+      throw new Error('Verification session expired or invalid state.');
     } catch (err: any) {
       setError(err.message || 'OTP verification failed.');
       return false;
@@ -214,15 +212,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      await fbSignOut(auth);
       if (isSimulated) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('sim_admin_session');
-        }
-        setUser(null);
-        setAdminProfile(null);
         setIsSimulated(false);
-      } else {
-        await fbSignOut(auth);
       }
     } catch (err: any) {
       console.error('Sign out error:', err);

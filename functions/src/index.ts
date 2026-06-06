@@ -68,11 +68,24 @@ export const onComplaintUpdated = onDocumentUpdated("complaints/{complaintId}", 
   const promises: Promise<any>[] = [];
 
   // Prevent infinite trigger loop if there are no relevant updates
+  const statusChanged = before.status !== after.status;
+  const workerChanged = before.assignedWorker !== after.assignedWorker;
+  const reopenCountChanged = before.reopenCount !== after.reopenCount;
+  const slaStatusChanged = before.slaStatus !== after.slaStatus;
+  const etaChanged = before.eta !== after.eta;
+  const toolsChanged = before.toolsProcured !== after.toolsProcured;
+  const notesLengthBefore = before.workerNotes?.length || 0;
+  const notesLengthAfter = after.workerNotes?.length || 0;
+  const newNoteAdded = notesLengthBefore < notesLengthAfter;
+
   if (
-    before.status === after.status &&
-    before.assignedWorker === after.assignedWorker &&
-    before.reopenCount === after.reopenCount &&
-    before.slaStatus === after.slaStatus
+    !statusChanged &&
+    !workerChanged &&
+    !reopenCountChanged &&
+    !slaStatusChanged &&
+    !etaChanged &&
+    !toolsChanged &&
+    !newNoteAdded
   ) {
     return;
   }
@@ -169,19 +182,40 @@ export const onComplaintUpdated = onDocumentUpdated("complaints/{complaintId}", 
     return;
   }
 
-  // 2. Status Change Handler
-  if (before.status !== after.status) {
+  // 2. Compile updates and Notify Resident
+  const updates: string[] = [];
+  if (statusChanged) {
+    updates.push(`Status changed to ${after.status.replace(/_/g, " ")}`);
+  }
+  if (workerChanged) {
+    updates.push(after.assignedWorker ? `Worker assigned: ${after.assignedWorker}` : "Worker unassigned");
+  }
+  if (etaChanged && after.eta) {
+    updates.push(`Estimated resolution time (ETA) set to ${after.eta}`);
+  }
+  if (newNoteAdded && after.workerNotes.length > 0) {
+    const lastNote = after.workerNotes[after.workerNotes.length - 1];
+    updates.push(`New note from worker: "${lastNote.note}"`);
+  }
+  if (toolsChanged) {
+    updates.push(after.toolsProcured ? "Required tools have been procured" : "Required tools are not procured");
+  }
+  if (slaStatusChanged) {
+    updates.push(`SLA status updated to ${after.slaStatus}`);
+  }
+
+  if (updates.length > 0) {
     const logRef = db.collection("activity_logs").doc();
     promises.push(
       logRef.set({
         id: logRef.id,
         complaintId,
-        action: after.status === "reopened" ? "reopen" : "status_change",
+        action: statusChanged ? (after.status === "reopened" ? "reopen" : "status_change") : "update",
         performedBy: "System",
         role: "admin",
         previousValue: before.status,
         newValue: after.status,
-        note: `Status changed from ${before.status} to ${after.status}`,
+        note: updates.join(". "),
         createdAt: now,
       })
     );
@@ -192,9 +226,9 @@ export const onComplaintUpdated = onDocumentUpdated("complaints/{complaintId}", 
       notifRef.set({
         id: notifRef.id,
         targetUserId: `resident_${after.flatId}`,
-        type: "worker_update",
+        type: "complaint_update",
         title: `Complaint Update - ${complaintId}`,
-        message: `Your complaint status has changed to: ${after.status.replace(/_/g, " ")}.`,
+        message: updates.join(". "),
         read: false,
         complaintId,
         createdAt: now,
@@ -202,38 +236,21 @@ export const onComplaintUpdated = onDocumentUpdated("complaints/{complaintId}", 
     );
   }
 
-  // 3. Assignment Change Handler
-  if (before.assignedWorker !== after.assignedWorker) {
-    const logRef = db.collection("activity_logs").doc();
+  // 3. Assignment Change Handler (Notify worker when newly assigned)
+  if (workerChanged && after.assignedWorker) {
+    const notifRef = db.collection("notifications").doc();
     promises.push(
-      logRef.set({
-        id: logRef.id,
+      notifRef.set({
+        id: notifRef.id,
+        targetUserId: `worker_${after.assignedWorker}`,
+        type: "admin_action",
+        title: `New Job Assigned - ${complaintId}`,
+        message: `You have been assigned a new complaint: ${after.description || ""}`,
+        read: false,
         complaintId,
-        action: "assignment",
-        performedBy: "Admin",
-        role: "admin",
-        previousValue: before.assignedWorker || "None",
-        newValue: after.assignedWorker || "None",
-        note: `Reassigned from ${before.assignedWorker || "None"} to ${after.assignedWorker || "None"}`,
         createdAt: now,
       })
     );
-
-    if (after.assignedWorker) {
-      const notifRef = db.collection("notifications").doc();
-      promises.push(
-        notifRef.set({
-          id: notifRef.id,
-          targetUserId: `worker_${after.assignedWorker}`,
-          type: "admin_action",
-          title: `New Job Assigned - ${complaintId}`,
-          message: `You have been assigned a new complaint: ${after.description || ""}`,
-          read: false,
-          complaintId,
-          createdAt: now,
-        })
-      );
-    }
   }
 
   if (promises.length > 0) {
@@ -465,8 +482,8 @@ export const onNotificationCreated = onDocumentCreated("notifications/{notifId}"
     const flatId = targetUserId.replace("resident_", "");
     userQuery = userQuery.where("role", "==", "resident").where("flatId", "==", flatId);
   } else if (targetUserId.startsWith("worker_")) {
-    // We can extract worker phone if needed: const workerPhone = targetUserId.replace("worker_", "");
-    // Fallback: Just query for the user document if targetUserId *is* the UID.
+    const workerPhone = targetUserId.replace("worker_", "");
+    userQuery = userQuery.where("role", "==", "worker").where("phone", "==", workerPhone);
   }
 
   // If the targetUserId is just a raw UID (which might be the case for new features), try fetching it directly first.
@@ -480,7 +497,7 @@ export const onNotificationCreated = onDocumentCreated("notifications/{notifId}"
     // Ignore and fallback to query
   }
 
-  if (tokens.length === 0 && targetUserId.startsWith("resident_")) {
+  if (tokens.length === 0 && (targetUserId.startsWith("resident_") || targetUserId.startsWith("worker_"))) {
     const usersSnapshot = await userQuery.get();
     usersSnapshot.forEach((doc) => {
       const token = doc.data().fcmToken;
@@ -499,11 +516,26 @@ export const onNotificationCreated = onDocumentCreated("notifications/{notifId}"
       title: notif.title || "New Notification",
       body: notif.message || "",
     },
+    android: {
+      priority: "high" as const,
+      notification: {
+        sound: "default",
+        channelId: "high_importance_channel"
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true
+        }
+      }
+    },
     tokens: tokens,
   };
 
   try {
-    const response = await getMessaging().sendMulticast(message);
+    const response = await getMessaging().sendEachForMulticast(message);
     console.log(`Successfully sent message to ${response.successCount} devices`);
   } catch (error) {
     console.error("Error sending FCM message:", error);
@@ -536,3 +568,298 @@ export const onVisitorCreated = onDocumentCreated("visitors/{visitorId}", async 
   }
 });
 
+/**
+ * Triggered when a new Notice is created.
+ * Sends a push notification to all users.
+ */
+export const onNoticeCreated = onDocumentCreated("notices/{noticeId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const notice = snapshot.data();
+
+  const usersSnapshot = await db.collection("users").get();
+  const tokens: string[] = [];
+  usersSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: `New Notice: ${notice.topic || 'General'}`,
+      body: notice.title || "A new official notice has been posted.",
+    },
+    android: {
+      priority: "high" as const,
+      notification: {
+        sound: "default",
+        channelId: "high_importance_channel"
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true
+        }
+      }
+    },
+    data: {
+      route: `/notice-details/${event.params.noticeId}`,
+      click_action: "FLUTTER_NOTIFICATION_CLICK"
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log(`Successfully sent notice alert to ${response.successCount} devices`);
+  } catch (error) {
+    console.error("Error sending notice FCM message:", error);
+  }
+});
+
+/**
+ * Triggered when a Notice is updated.
+ * Sends a push notification to all users.
+ */
+export const onNoticeUpdated = onDocumentUpdated("notices/{noticeId}", async (event) => {
+  const change = event.data;
+  if (!change) return;
+  const after = change.after.data();
+  const before = change.before.data();
+
+  // Ensure it's an actual content change to avoid spam
+  if (before.title === after.title && before.content === after.content && before.topic === after.topic) {
+    return;
+  }
+
+  const usersSnapshot = await db.collection("users").get();
+  const tokens: string[] = [];
+  usersSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: `Notice Updated: ${after.topic || 'General'}`,
+      body: after.title || "An official notice has been updated.",
+    },
+    android: {
+      priority: "high" as const,
+      notification: {
+        sound: "default",
+        channelId: "high_importance_channel"
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true
+        }
+      }
+    },
+    data: {
+      route: `/notice-details/${event.params.noticeId}`,
+      click_action: "FLUTTER_NOTIFICATION_CLICK"
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log(`Successfully sent updated notice alert to ${response.successCount} devices`);
+  } catch (error) {
+    console.error("Error sending updated notice FCM message:", error);
+  }
+});
+
+// ──────────────────────────────────────
+// Hall Bookings Notifications
+// ──────────────────────────────────────
+
+export const onHallBookingCreated = onDocumentCreated("hall_bookings/{bookingId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const data = snapshot.data();
+  const eventName = data.eventName || 'an event';
+
+  // Notify admins
+  const adminsSnapshot = await getFirestore().collection("users").where("role", "==", "admin").get();
+  const tokens: string[] = [];
+
+  adminsSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: "New Hall Booking Request",
+      body: `Flat ${data.flatId} has requested the hall for ${eventName} on ${data.date}.`,
+    },
+    tokens: tokens,
+  };
+
+  try {
+    await getMessaging().sendEachForMulticast(message);
+  } catch (error) {
+    console.error("Error sending hall booking created FCM:", error);
+  }
+});
+
+export const onHallBookingUpdated = onDocumentUpdated("hall_bookings/{bookingId}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+
+  if (!before || !after) return;
+  if (before.status === after.status) return;
+
+  // Notify the resident who booked it
+  const usersSnapshot = await getFirestore()
+    .collection("users")
+    .where("flatId", "==", after.flatId)
+    .where("role", "==", "resident")
+    .get();
+
+  const tokens: string[] = [];
+  usersSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: `Hall Booking ${after.status.toUpperCase()}`,
+      body: `Your booking for ${after.eventName} on ${after.date} has been ${after.status}.`,
+    },
+    tokens: tokens,
+  };
+
+  try {
+    await getMessaging().sendEachForMulticast(message);
+  } catch (error) {
+    console.error("Error sending hall booking updated FCM:", error);
+  }
+});
+
+// ──────────────────────────────────────
+// Society Issues Notifications
+// ──────────────────────────────────────
+
+export const onSocietyIssueCreated = onDocumentCreated("society_issues/{issueId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const issue = snapshot.data();
+
+  const usersSnapshot = await getFirestore().collection("users").get();
+  const tokens: string[] = [];
+  usersSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: `New Society Issue: ${issue.title || "Reported"}`,
+      body: issue.description || "A new society issue has been reported.",
+    },
+    android: {
+      priority: "high" as const,
+      notification: {
+        sound: "default",
+        channelId: "high_importance_channel"
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true
+        }
+      }
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log(`Successfully sent society issue alert to ${response.successCount} devices`);
+  } catch (error) {
+    console.error("Error sending society issue FCM message:", error);
+  }
+});
+
+export const onSocietyIssueUpdated = onDocumentUpdated("society_issues/{issueId}", async (event) => {
+  const change = event.data;
+  if (!change) return;
+  const before = change.before.data();
+  const after = change.after.data();
+
+  const statusChanged = before.status !== after.status;
+  const newUpdateAdded = (before.updates?.length || 0) < (after.updates?.length || 0);
+
+  if (!statusChanged && !newUpdateAdded) {
+    return;
+  }
+
+  let body = `Society issue "${after.title}" was updated.`;
+  if (statusChanged) {
+    body = `Status of "${after.title}" changed from ${before.status} to ${after.status}.`;
+  } else if (newUpdateAdded && after.updates.length > 0) {
+    const lastUpdate = after.updates[after.updates.length - 1];
+    body = `New update on "${after.title}": ${lastUpdate.message}`;
+  }
+
+  const usersSnapshot = await getFirestore().collection("users").get();
+  const tokens: string[] = [];
+  usersSnapshot.forEach((doc) => {
+    const token = doc.data().fcmToken;
+    if (token) tokens.push(token);
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: `Society Issue Updated: ${after.title}`,
+      body: body,
+    },
+    android: {
+      priority: "high" as const,
+      notification: {
+        sound: "default",
+        channelId: "high_importance_channel"
+      }
+    },
+    apns: {
+      payload: {
+        aps: {
+          sound: "default",
+          contentAvailable: true
+        }
+      }
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log(`Successfully sent society issue update alert to ${response.successCount} devices`);
+  } catch (error) {
+    console.error("Error sending society issue update FCM message:", error);
+  }
+});

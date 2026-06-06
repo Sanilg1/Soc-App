@@ -214,7 +214,10 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       selected: _selectedCategory == 'housekeeping',
                       onSelected: (selected) {
                         if (selected) {
-                          setState(() => _selectedCategory = 'housekeeping');
+                          setState(() {
+                            _selectedCategory = 'housekeeping';
+                            _selectedUrgency = 'low';
+                          });
                           _checkDuplicate();
                         }
                       },
@@ -224,7 +227,10 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       selected: _selectedCategory == 'ironing',
                       onSelected: (selected) {
                         if (selected) {
-                          setState(() => _selectedCategory = 'ironing');
+                          setState(() {
+                            _selectedCategory = 'ironing';
+                            _selectedUrgency = 'low';
+                          });
                           _checkDuplicate();
                         }
                       },
@@ -349,68 +355,70 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                     ),
                   ),
 
-                // Urgency Selector
-                Text('Urgency Level', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Low'),
-                      selected: _selectedUrgency == 'low',
-                      selectedColor: AppTheme.lowPriorityColor.withValues(alpha: 0.25),
-                      onSelected: (s) => s ? setState(() => _selectedUrgency = 'low') : null,
-                    ),
-                    ChoiceChip(
-                      label: const Text('Medium'),
-                      selected: _selectedUrgency == 'medium',
-                      selectedColor: AppTheme.mediumPriorityColor.withValues(alpha: 0.25),
-                      onSelected: (s) => s ? setState(() => _selectedUrgency = 'medium') : null,
-                    ),
-                    ChoiceChip(
-                      label: const Text('High'),
-                      selected: _selectedUrgency == 'high',
-                      selectedColor: AppTheme.highPriorityColor.withValues(alpha: 0.25),
-                      onSelected: (s) => s ? setState(() => _selectedUrgency = 'high') : null,
-                    ),
-                    ChoiceChip(
-                      label: const Text('Emergency'),
-                      selected: _selectedUrgency == 'emergency',
-                      selectedColor: AppTheme.emergencyColor.withValues(alpha: 0.25),
-                      onSelected: (s) => s ? setState(() => _selectedUrgency = 'emergency') : null,
-                    ),
-                  ],
-                ),
-                
-                // Emergency Alert Warning
-                if (_selectedUrgency == 'emergency')
-                  Container(
-                    margin: const EdgeInsets.only(top: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.emergencyColor.withValues(alpha: 0.1),
-                      border: Border.all(color: AppTheme.emergencyColor),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.report_problem, color: AppTheme.emergencyColor),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'WARNING: Select Emergency only for dangerous events (e.g. fire hazard, major sparking, indoor flooding). Abuse may lead to admin flags.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.emergencyColor,
-                              fontWeight: FontWeight.w600,
+                // Urgency Selector (Hidden for Housekeeping and Ironing)
+                if (_selectedCategory != 'housekeeping' && _selectedCategory != 'ironing') ...[
+                  Text('Urgency Level', style: theme.textTheme.titleLarge),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Low'),
+                        selected: _selectedUrgency == 'low',
+                        selectedColor: AppTheme.lowPriorityColor.withValues(alpha: 0.25),
+                        onSelected: (s) => s ? setState(() => _selectedUrgency = 'low') : null,
+                      ),
+                      ChoiceChip(
+                        label: const Text('Medium'),
+                        selected: _selectedUrgency == 'medium',
+                        selectedColor: AppTheme.mediumPriorityColor.withValues(alpha: 0.25),
+                        onSelected: (s) => s ? setState(() => _selectedUrgency = 'medium') : null,
+                      ),
+                      ChoiceChip(
+                        label: const Text('High'),
+                        selected: _selectedUrgency == 'high',
+                        selectedColor: AppTheme.highPriorityColor.withValues(alpha: 0.25),
+                        onSelected: (s) => s ? setState(() => _selectedUrgency = 'high') : null,
+                      ),
+                      ChoiceChip(
+                        label: const Text('Emergency'),
+                        selected: _selectedUrgency == 'emergency',
+                        selectedColor: AppTheme.emergencyColor.withValues(alpha: 0.25),
+                        onSelected: (s) => s ? setState(() => _selectedUrgency = 'emergency') : null,
+                      ),
+                    ],
+                  ),
+                  
+                  // Emergency Alert Warning
+                  if (_selectedUrgency == 'emergency')
+                    Container(
+                      margin: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.emergencyColor.withValues(alpha: 0.1),
+                        border: Border.all(color: AppTheme.emergencyColor),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.report_problem, color: AppTheme.emergencyColor),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'WARNING: Select Emergency only for dangerous events (e.g. fire hazard, major sparking, indoor flooding). Abuse may lead to admin flags.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.emergencyColor,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
 
                 // Description Input (or Cloth Counter for Ironing)
                 if (_selectedCategory == 'ironing') ...[
@@ -544,6 +552,8 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
             ),
           ),
         ),
+      );
+        },
       ),
     );
   }

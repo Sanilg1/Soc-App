@@ -102,23 +102,20 @@ function ComplaintsPageContent() {
 
   // ── Handlers ──
 
-  function handleStatusChange(id: string, status: ComplaintStatus) {
-    updateComplaintStatus(id, status);
-    toast.success(`Complaint ${id} → ${status.replace(/_/g, ' ')}`);
+  async function handleStatusChange(id: string, status: ComplaintStatus) {
+    await updateComplaintStatus(id, status);
   }
 
-  function handleReassign() {
+  async function handleReassign() {
     if (!liveSelected || !reassignWorker) return;
-    reassignComplaint(liveSelected.id, reassignWorker);
-    toast.success(`${liveSelected.id} reassigned to ${reassignWorker}`);
+    await reassignComplaint(liveSelected.id, reassignWorker);
     setShowReassignModal(false);
     setReassignWorker('');
   }
 
-  function handleEscalate() {
+  async function handleEscalate() {
     if (!liveSelected || !escalateReason.trim()) return;
-    escalateComplaint(liveSelected.id, escalateReason);
-    toast.success(`${liveSelected.id} escalated`);
+    await escalateComplaint(liveSelected.id, escalateReason);
     setShowEscalateModal(false);
     setEscalateReason('');
     setSelectedComplaint(null);
@@ -134,8 +131,7 @@ function ComplaintsPageContent() {
       return;
     }
     try {
-      const createdId = await addComplaint(newComplaint);
-      toast.success(`Complaint ${createdId} created for Flat ${newComplaint.flatId}`);
+      await addComplaint(newComplaint);
       setShowCreateModal(false);
       setNewComplaint({ flatId: '', category: 'electrical', description: '', urgency: 'medium' });
     } catch (e) {
@@ -176,6 +172,7 @@ function ComplaintsPageContent() {
             <option value="electrical">Electrical</option>
             <option value="plumbing">Plumbing</option>
             <option value="housekeeping">Housekeeping</option>
+            <option value="ironing">Ironing</option>
           </select>
           <select className="form-select" value={urgencyFilter} onChange={(e) => setUrgencyFilter(e.target.value as UrgencyLevel | 'all')} id="filter-urgency">
             <option value="all">All Urgency</option>
@@ -524,6 +521,7 @@ function ComplaintsPageContent() {
                   <option value="electrical">Electrical</option>
                   <option value="plumbing">Plumbing</option>
                   <option value="housekeeping">Housekeeping</option>
+                  <option value="ironing">Ironing</option>
                 </select>
               </div>
               <div className="form-group">

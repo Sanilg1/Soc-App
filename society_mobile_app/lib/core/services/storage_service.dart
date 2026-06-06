@@ -20,8 +20,19 @@ class StorageService {
       
       final storageRef = _storage.ref().child('$folder/$id/$fileName.$extension');
       
-      // Upload the file
-      final uploadTask = await storageRef.putFile(imageFile);
+      // Determine content type
+      String contentType = 'image/jpeg';
+      if (extension.toLowerCase() == 'png') {
+        contentType = 'image/png';
+      } else if (extension.toLowerCase() == 'gif') {
+        contentType = 'image/gif';
+      }
+      
+      // Upload the file with explicit metadata
+      final uploadTask = await storageRef.putFile(
+        imageFile,
+        SettableMetadata(contentType: contentType),
+      );
       
       // Get the download URL
       final downloadUrl = await uploadTask.ref.getDownloadURL();

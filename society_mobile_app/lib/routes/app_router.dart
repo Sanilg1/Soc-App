@@ -3,15 +3,20 @@ import 'package:go_router/go_router.dart';
 import '../features/common/screens/splash_screen.dart';
 import '../features/auth/screens/invite_code_screen.dart';
 import '../features/auth/screens/login_screen.dart';
-import '../features/auth/screens/otp_screen.dart';
-import '../features/resident/screens/resident_home_screen.dart';
-import '../features/worker/screens/worker_home_screen.dart';
+
+import '../features/resident/screens/resident_main_screen.dart';
+import '../features/resident/screens/worker_directory_screen.dart';
+import '../features/worker/screens/worker_main_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/privacy_policy_screen.dart';
+import '../features/profile/screens/user_guide_screen.dart';
+import '../features/profile/screens/help_support_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/resident/screens/complaint_create_screen.dart';
 import '../features/resident/screens/complaint_details_screen.dart';
 import '../features/resident/screens/complaint_edit_screen.dart';
 import '../features/resident/screens/notices_screen.dart';
+import '../features/resident/screens/notice_details_screen.dart';
 import '../features/resident/screens/history_screen.dart';
 import '../features/worker/screens/worker_complaint_details_screen.dart';
 import '../features/worker/screens/visit_update_screen.dart';
@@ -27,7 +32,10 @@ import '../features/resident/screens/complaint_submitted_screen.dart';
 import '../features/resident/screens/society_issue_create_screen.dart';
 import '../features/billing/screens/resident_bills_screen.dart';
 import '../features/billing/screens/worker_dues_screen.dart';
-import '../features/guard/screens/guard_home_screen.dart';
+import '../features/guard/screens/guard_main_screen.dart';
+import '../features/bookings/screens/hall_booking_list_screen.dart';
+import '../features/bookings/screens/create_hall_booking_screen.dart';
+import '../features/bookings/models/hall_booking_model.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -37,9 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final status = authState.status;
       final currentLoc = state.uri.path;
       final isAuthFlow = currentLoc == '/invite' || 
-                         currentLoc == '/login' || 
-                         currentLoc == '/otp-setup' || 
-                         currentLoc == '/otp-verify';
+                         currentLoc == '/login';
 
       if (status == AuthStatus.initial) {
         return '/';
@@ -88,39 +94,38 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
-      GoRoute(
-        path: '/otp-setup',
-        builder: (context, state) => const OtpScreen(
-          phone: '',
-          isInviteFlow: true,
-        ),
-      ),
-      GoRoute(
-        path: '/otp-verify',
-        builder: (context, state) {
-          final phone = state.uri.queryParameters['phone'] ?? '';
-          final isInvite = state.uri.queryParameters['invite'] == 'true';
-          return OtpScreen(
-            phone: phone,
-            isInviteFlow: isInvite,
-          );
-        },
-      ),
+
       GoRoute(
         path: '/resident-home',
-        builder: (context, state) => const ResidentHomeScreen(),
+        builder: (context, state) => const ResidentMainScreen(),
+      ),
+      GoRoute(
+        path: '/worker-directory',
+        builder: (context, state) => const WorkerDirectoryScreen(),
       ),
       GoRoute(
         path: '/worker-home',
-        builder: (context, state) => const WorkerHomeScreen(),
+        builder: (context, state) => const WorkerMainScreen(),
       ),
       GoRoute(
         path: '/guard-home',
-        builder: (context, state) => const GuardHomeScreen(),
+        builder: (context, state) => const GuardMainScreen(),
       ),
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/user-guide',
+        builder: (context, state) => const UserGuideScreen(),
+      ),
+      GoRoute(
+        path: '/help-support',
+        builder: (context, state) => const HelpSupportScreen(),
       ),
       GoRoute(
         path: '/complaint-create',
@@ -143,6 +148,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notices',
         builder: (context, state) => const NoticesScreen(),
+      ),
+      GoRoute(
+        path: '/notice-details/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return NoticeDetailsScreen(noticeId: id);
+        },
       ),
       GoRoute(
         path: '/history',
@@ -223,6 +235,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             urgency: urgency,
             complaintId: complaintId,
           );
+        },
+      ),
+      GoRoute(
+        path: '/hall-bookings',
+        builder: (context, state) => const HallBookingListScreen(),
+      ),
+      GoRoute(
+        path: '/hall-booking-create',
+        builder: (context, state) {
+          final booking = state.extra as HallBooking?;
+          return CreateHallBookingScreen(existingBooking: booking);
         },
       ),
     ],
