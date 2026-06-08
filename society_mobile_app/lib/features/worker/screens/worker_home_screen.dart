@@ -114,15 +114,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
               ),
             ],
           ),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
-          ),
         ],
       ),
-      endDrawer: _buildDrawer(context, category, workerPhone),
+      drawer: _buildDrawer(context, category, workerPhone),
       body: complaintsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
