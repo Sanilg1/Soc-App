@@ -60,7 +60,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
       case 'low':
         return AppTheme.lowPriorityColor;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -116,7 +116,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_rounded,
                     color: Colors.white,
                     size: 52,
@@ -124,7 +124,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                 ),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // Title
               FadeTransition(
@@ -138,7 +138,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       'Your ${widget.category} complaint has been logged and assigned to a worker.',
                       style: theme.textTheme.bodyMedium,
@@ -148,7 +148,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                 ),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // Summary Card
               FadeTransition(
@@ -188,7 +188,7 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
 
               // Emergency warning
               if (widget.urgency == 'emergency')
@@ -205,9 +205,9 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded,
+                        Icon(Icons.warning_amber_rounded,
                             color: AppTheme.emergencyColor, size: 20),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             'This is marked as EMERGENCY. The worker and admin have been alerted immediately.',
@@ -234,23 +234,23 @@ class _ComplaintSubmittedScreenState extends State<ComplaintSubmittedScreen>
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () => context.go('/resident-home'),
-                        child: const Text('Back to Home'),
+                        child: Text('Back to Home'),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () =>
                             context.go('/complaint-details/${widget.complaintId}'),
-                        child: const Text('View Complaint Details'),
+                        child: Text('View Complaint Details'),
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
             ],
           ),
         ),
@@ -276,12 +276,12 @@ class _SummaryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: Colors.grey[500]),
-        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
         Text(

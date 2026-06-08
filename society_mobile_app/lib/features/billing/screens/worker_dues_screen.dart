@@ -11,16 +11,16 @@ class WorkerDuesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resident Dues Tracker'),
+        title: Text('Resident Dues Tracker'),
       ),
       body: allLedgersAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (ledgers) {
           final outstandingLedgers = ledgers.where((l) => l.outstandingBalance > 0).toList();
 
           if (outstandingLedgers.isEmpty) {
-            return const Center(child: Text('All residents are cleared up! No outstanding dues.'));
+            return Center(child: Text('All residents are cleared up! No outstanding dues.'));
           }
 
           return ListView.builder(
@@ -35,13 +35,13 @@ class WorkerDuesScreen extends ConsumerWidget {
                     backgroundColor: Colors.red,
                     child: Icon(Icons.warning, color: Colors.white),
                   ),
-                  title: Text('Flat: ${ledger.flatId}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text('Flat: ${ledger.flatId}', style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text('Total Outstanding: ₹${ledger.outstandingBalance.toStringAsFixed(0)}'),
                   trailing: ElevatedButton(
                     onPressed: () {
                       _showConfirmDialog(context, ref, ledger.flatId, ledger.outstandingBalance);
                     },
-                    child: const Text('Confirm Receipt'),
+                    child: Text('Confirm Receipt'),
                   ),
                 ),
               );
@@ -56,12 +56,12 @@ class WorkerDuesScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Receipt'),
+        title: Text('Confirm Receipt'),
         content: Text('Did you receive ₹${amount.toStringAsFixed(0)} from Flat $flatId?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -76,7 +76,7 @@ class WorkerDuesScreen extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment confirmed!')));
               }
             },
-            child: const Text('Confirm'),
+            child: Text('Confirm'),
           ),
         ],
       ),

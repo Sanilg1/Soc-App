@@ -52,19 +52,19 @@ class _ResidentMainScreenState extends ConsumerState<ResidentMainScreen> {
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue.shade50,
                       child: Icon(Icons.add_task_rounded, color: Colors.blue.shade700),
                     ),
-                    title: const Text('Add Complaint', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Request electrician, plumber, housekeeping, or ironing'),
+                    title: Text('Add Complaint', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Request electrician, plumber, housekeeping, or ironing'),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/complaint-create');
@@ -75,8 +75,8 @@ class _ResidentMainScreenState extends ConsumerState<ResidentMainScreen> {
                       backgroundColor: Colors.green.shade50,
                       child: Icon(Icons.event_seat_rounded, color: Colors.green.shade700),
                     ),
-                    title: const Text('Book Community Hall', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Reserve hall for private events'),
+                    title: Text('Book Community Hall', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Reserve hall for private events'),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/hall-booking-create');
@@ -87,8 +87,8 @@ class _ResidentMainScreenState extends ConsumerState<ResidentMainScreen> {
                       backgroundColor: Colors.amber.shade50,
                       child: Icon(Icons.report_problem_rounded, color: Colors.amber.shade700),
                     ),
-                    title: const Text('Report Society Issue', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Report lift, gate, or common area issues'),
+                    title: Text('Report Society Issue', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Report lift, gate, or common area issues'),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/society-issue-create');
@@ -99,8 +99,8 @@ class _ResidentMainScreenState extends ConsumerState<ResidentMainScreen> {
                       backgroundColor: Colors.orange.shade50,
                       child: Icon(Icons.receipt_long_rounded, color: Colors.orange.shade700),
                     ),
-                    title: const Text('Ironing Bills', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('View outstanding ledger and history'),
+                    title: Text('Ironing Bills', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('View outstanding ledger and history'),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/resident-bills');
@@ -111,8 +111,8 @@ class _ResidentMainScreenState extends ConsumerState<ResidentMainScreen> {
                       backgroundColor: Colors.teal.shade50,
                       child: Icon(Icons.contact_phone_rounded, color: Colors.teal.shade700),
                     ),
-                    title: const Text('Worker Contacts', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Directory of all society staff'),
+                    title: Text('Worker Contacts', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text('Directory of all society staff'),
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/worker-directory');

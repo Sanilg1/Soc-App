@@ -31,7 +31,7 @@ class WorkerNotificationsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text('Notifications'),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -60,10 +60,10 @@ class WorkerNotificationsScreen extends ConsumerWidget {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   Text(notif['message'] as String),
-                  const SizedBox(height: 8),
-                  Text(timeStr, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  SizedBox(height: 8),
+                  Text(timeStr, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             ),

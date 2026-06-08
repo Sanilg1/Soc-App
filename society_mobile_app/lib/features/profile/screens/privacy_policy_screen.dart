@@ -8,7 +8,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text('Privacy Policy'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -22,12 +22,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 color: theme.colorScheme.primary,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               'Last updated: June 05, 2026',
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+              style: theme.textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             _buildSection(
               theme,
               '1. Information We Collect',
@@ -36,7 +36,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               '• Society Activities: Complaint descriptions, feedback notes, booking logs, and visitor approval choices.\n'
               '• Device Permissions: Camera and gallery access (only used for profile pictures and attaching photos to complaints).',
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _buildSection(
               theme,
               '2. How We Use Information',
@@ -46,19 +46,19 @@ class PrivacyPolicyScreen extends StatelessWidget {
               '• Notifying residents about guest arrivals at the gate and admin notices.\n'
               '• Displaying profile cards to admins and committee members for validation.',
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _buildSection(
               theme,
               '3. Data Storage & Security',
               'All data is securely stored using Firebase Auth, Cloud Firestore, and Firebase Storage. Access is restricted based on system roles (Residents, Workers, Guards, and Admins). Profile pictures and attached photos are stored securely in storage buckets under rules preventing unauthorized access.',
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             _buildSection(
               theme,
               '4. Contact Us',
               'If you have any questions or suggestions about our Privacy Policy, please contact the Society Office at support@society.app.',
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: 40),
           ],
         ),
       ),
@@ -73,14 +73,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
           title,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: const Color(0xDD000000),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Text(
           body,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.black54,
+            color: const Color(0x8A000000),
             height: 1.5,
           ),
         ),

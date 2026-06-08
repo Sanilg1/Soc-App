@@ -46,7 +46,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
       case 'escalated':
         return AppTheme.emergencyColor;
       default:
-        return Colors.grey;
+        return const Color(0xFF9E9E9E);
     }
   }
 
@@ -82,8 +82,8 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
 
         if (complaint.id.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Details')),
-            body: const Center(child: Text('Complaint not found or has been reassigned.')),
+            appBar: AppBar(title: Text('Details')),
+            body: Center(child: Text('Complaint not found or has been reassigned.')),
           );
         }
 
@@ -136,48 +136,48 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
 
                       Text('Issue Description', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         complaint.description,
                         style: theme.textTheme.bodyLarge?.copyWith(height: 1.4),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
 
                       // Availability & Date
                       Row(
                         children: [
-                          const Icon(Icons.access_time_filled, size: 20, color: Colors.blueAccent),
-                          const SizedBox(width: 8),
+                          Icon(Icons.access_time_filled, size: 20, color: Colors.blueAccent),
+                          SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               complaint.availability.type == 'custom'
                                   ? 'Slot: ${complaint.availability.customSlot}'
                                   : 'Slot: ${complaint.availability.type.replaceAll('_', ' ')}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_month, size: 20, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          Text('Reported on: $createdDate', style: const TextStyle(color: Colors.grey)),
+                          Icon(Icons.calendar_month, size: 20, color: const Color(0xFF9E9E9E)),
+                          SizedBox(width: 8),
+                          Text('Reported on: $createdDate', style: TextStyle(color: const Color(0xFF9E9E9E))),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
 
                       const Divider(),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
 
                       // Ironing Details Section
                       if (complaint.category == 'ironing' && complaint.ironingDetails != null) ...[
                         Text('Ironing Order Details', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -191,75 +191,75 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Shirts:'),
-                                  Text('${complaint.ironingDetails!['counts']['shirts']} x ₹${complaint.ironingDetails!['rates']['shirts']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Shirts:'),
+                                  Text('${complaint.ironingDetails!['counts']['shirts']} x ₹${complaint.ironingDetails!['rates']['shirts']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Trousers:'),
-                                  Text('${complaint.ironingDetails!['counts']['trousers']} x ₹${complaint.ironingDetails!['rates']['trousers']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Trousers:'),
+                                  Text('${complaint.ironingDetails!['counts']['trousers']} x ₹${complaint.ironingDetails!['rates']['trousers']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Sarees:'),
-                                  Text('${complaint.ironingDetails!['counts']['sarees']} x ₹${complaint.ironingDetails!['rates']['sarees']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Sarees:'),
+                                  Text('${complaint.ironingDetails!['counts']['sarees']} x ₹${complaint.ironingDetails!['rates']['sarees']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Others:'),
-                                  Text('${complaint.ironingDetails!['counts']['others']} x ₹${complaint.ironingDetails!['rates']['others']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('Others:'),
+                                  Text('${complaint.ironingDetails!['counts']['others']} x ₹${complaint.ironingDetails!['rates']['others']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              const Padding(
+                              Padding(
                                 padding: EdgeInsets.symmetric(vertical: 8.0),
                                 child: Divider(),
                               ),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text('Total Bill:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                  Text('₹${complaint.ironingDetails!['totalCost']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
+                                  Text('Total Bill:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  Text('₹${complaint.ironingDetails!['totalCost']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12),
                               if (complaint.ironingDetails!['clothesReturned'] == true)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('Clothes Returned ✓', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: Text('Clothes Returned ✓', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
                                 )
                               else if (complaint.ironingDetails!['countConfirmedByWorker'] == true)
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('Ironing in Progress...', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: Text('Ironing in Progress...', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
                                 )
                               else
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(4)),
-                                  child: const Text('Pending Count Confirmation', style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  child: Text('Pending Count Confirmation', style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
                                 ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         const Divider(),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                       ],
 
                       // Timeline
                       Text('Progress Timeline', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       _buildTimeline(context, complaint.timeline),
                     ],
                   ),
@@ -280,7 +280,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
   Widget _buildTimeline(BuildContext context, List<TimelineEvent> timeline) {
     final theme = Theme.of(context);
     if (timeline.isEmpty) {
-      return const Text('No timeline events recorded.', style: TextStyle(color: Colors.grey));
+      return Text('No timeline events recorded.', style: TextStyle(color: const Color(0xFF9E9E9E)));
     }
 
     return ListView.builder(
@@ -299,18 +299,18 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 10,
-                  backgroundColor: isLast ? theme.colorScheme.primary : Colors.grey.shade400,
+                  backgroundColor: isLast ? theme.colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: const CircleAvatar(radius: 5, backgroundColor: Colors.white),
                 ),
                 if (!isLast)
                   Container(
                     width: 2,
                     height: 50,
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
               ],
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,13 +321,13 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                       fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     'By ${event.performedBy} (${event.role}) • $eventTime',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF9E9E9E)),
                   ),
                   if (event.note != null && event.note!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -340,7 +340,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                 ],
               ),
             ),
@@ -358,7 +358,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
         width: double.infinity,
         color: Colors.green.shade50,
         padding: const EdgeInsets.all(16),
-        child: const Center(
+        child: Center(
           child: Text(
             'This complaint is closed.',
             style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
@@ -372,7 +372,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
         width: double.infinity,
         color: Colors.teal.shade50,
         padding: const EdgeInsets.all(16),
-        child: const Center(
+        child: Center(
           child: Text(
             'Awaiting resident confirmation of completion.',
             style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
@@ -388,7 +388,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.15),
+            color: const Color(0xFF9E9E9E).withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, -3),
           )
@@ -403,8 +403,8 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Confirm Clothes Count & Pickup'),
+                  icon: Icon(Icons.check_circle_outline),
+                  label: Text('Confirm Clothes Count & Pickup'),
                   onPressed: () async {
                     await ref.read(complaintServiceProvider).confirmIroningCount(complaint.id, workerName, complaint.ironingDetails!);
                     if (context.mounted) {
@@ -418,8 +418,8 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                  icon: const Icon(Icons.shopping_bag),
-                  label: const Text('Return Clothes & Post Bill'),
+                  icon: Icon(Icons.shopping_bag),
+                  label: Text('Return Clothes & Post Bill'),
                   onPressed: () async {
                     await ref.read(complaintServiceProvider).markIroningReturnedAndCharge(
                       complaint.id, 
@@ -434,7 +434,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 ),
               )
             else
-              const SizedBox(
+              SizedBox(
                 width: double.infinity,
                 child: Center(child: Text('Task Complete.', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
               ),
@@ -442,20 +442,20 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.thumb_up),
-                label: const Text('Accept Job & Provide ETA'),
+                icon: Icon(Icons.thumb_up),
+                label: Text('Accept Job & Provide ETA'),
                 onPressed: () {
                   final etaController = TextEditingController();
                   showDialog(
                     context: context,
                     builder: (context) {
                       return AlertDialog(
-                        title: const Text('Accept Job & ETA'),
+                        title: Text('Accept Job & ETA'),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Provide an estimated time of arrival:'),
-                            const SizedBox(height: 12),
+                            Text('Provide an estimated time of arrival:'),
+                            SizedBox(height: 12),
                             TextField(
                               controller: etaController,
                               decoration: const InputDecoration(
@@ -468,7 +468,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Cancel'),
+                            child: Text('Cancel'),
                           ),
                           ElevatedButton(
                             onPressed: () async {
@@ -484,7 +484,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                                 eta,
                               );
                             },
-                            child: const Text('Submit'),
+                            child: Text('Submit'),
                           ),
                         ],
                       );
@@ -499,10 +499,10 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => context.push('/worker-visit-update/${complaint.id}?revisit=true'),
-                    child: const Text('Schedule Visit'),
+                    child: Text('Schedule Visit'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () async {
@@ -516,7 +516,7 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                         'Visited flat to inspect.',
                       );
                     },
-                    child: const Text('Mark Visited'),
+                    child: Text('Mark Visited'),
                   ),
                 ),
               ],
@@ -535,8 +535,8 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                     ),
-                    icon: const Icon(Icons.shopping_bag),
-                    label: const Text('I Have Procured The Tools'),
+                    icon: Icon(Icons.shopping_bag),
+                    label: Text('I Have Procured The Tools'),
                     onPressed: () async {
                       await ref.read(complaintServiceProvider).markToolsProcured(
                         complaint.id,
@@ -561,26 +561,26 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.handyman_outlined, size: 18),
-                    label: const Text('Need Tools'),
+                    icon: Icon(Icons.handyman_outlined, size: 18),
+                    label: Text('Need Tools'),
                     onPressed: () => context.push('/worker-need-tools/${complaint.id}'),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.person_off_outlined, size: 18),
-                    label: const Text('Absent'),
+                    icon: Icon(Icons.person_off_outlined, size: 18),
+                    label: Text('Absent'),
                     onPressed: () async {
                       // Confirm and Mark Resident Unavailable
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Resident Unavailable'),
-                          content: const Text('Are you sure the resident was unavailable at the flat? This will log the miss and reopen the slot.'),
+                          title: Text('Resident Unavailable'),
+                          content: Text('Are you sure the resident was unavailable at the flat? This will log the miss and reopen the slot.'),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Confirm')),
                           ],
                         ),
                       );
@@ -599,21 +599,21 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    icon: const Icon(Icons.date_range_outlined, size: 18),
-                    label: const Text('Reschedule'),
+                    icon: Icon(Icons.date_range_outlined, size: 18),
+                    label: Text('Reschedule'),
                     onPressed: () => context.push('/worker-visit-update/${complaint.id}?revisit=true'),
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.done_all_rounded, size: 18),
-                    label: const Text('Resolve Task'),
+                    icon: Icon(Icons.done_all_rounded, size: 18),
+                    label: Text('Resolve Task'),
                     onPressed: () => context.push('/worker-complete/${complaint.id}'),
                   ),
                 ),

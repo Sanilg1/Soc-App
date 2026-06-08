@@ -39,7 +39,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: lightSurface,
         elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shadowColor: const Color(0x0D000000),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       appBarTheme: const AppBarTheme(
@@ -60,7 +60,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       textTheme: const TextTheme(
@@ -108,7 +108,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       textTheme: const TextTheme(

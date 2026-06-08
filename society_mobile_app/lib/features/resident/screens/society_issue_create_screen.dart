@@ -110,7 +110,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Report Society Issue'),
+        title: Text('Report Society Issue'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -126,7 +126,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 TextFormField(
                   controller: _titleController,
                   decoration: InputDecoration(
@@ -138,7 +138,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Title is required' : null,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 4,
@@ -151,7 +151,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Description is required' : null,
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Card(
                   elevation: 0,
                   color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
@@ -170,7 +170,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         if (_selectedImage != null) ...[
                           Stack(
                             alignment: Alignment.topRight,
@@ -185,28 +185,28 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.cancel, color: Colors.white),
+                                icon: Icon(Icons.cancel, color: Colors.white),
                                 onPressed: () => setState(() => _selectedImage = null),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                         ],
                         Row(
                           children: [
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickImage(ImageSource.camera),
-                                icon: const Icon(Icons.camera_alt),
-                                label: const Text('Camera'),
+                                icon: Icon(Icons.camera_alt),
+                                label: Text('Camera'),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickImage(ImageSource.gallery),
-                                icon: const Icon(Icons.photo_library),
-                                label: const Text('Gallery'),
+                                icon: Icon(Icons.photo_library),
+                                label: Text('Gallery'),
                               ),
                             ),
                           ],
@@ -215,11 +215,11 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                     ),
                   ),
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -227,7 +227,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Submit Issue'),
+                      : Text('Submit Issue'),
                 ),
               ],
             ),

@@ -29,7 +29,7 @@ class NoticesScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Simulate Admin Notice'),
+              title: Text('Simulate Admin Notice'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -47,12 +47,12 @@ class NoticesScreen extends ConsumerWidget {
                         if (val != null) setState(() => selectedTopic = val);
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(labelText: 'Title'),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     TextField(
                       controller: contentController,
                       decoration: const InputDecoration(labelText: 'Content'),
@@ -64,7 +64,7 @@ class NoticesScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -82,7 +82,7 @@ class NoticesScreen extends ConsumerWidget {
                       const SnackBar(content: Text('Simulated notice added successfully!')),
                     );
                   },
-                  child: const Text('Simulate'),
+                  child: Text('Simulate'),
                 ),
               ],
             );
@@ -99,11 +99,11 @@ class NoticesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Official Notices'),
+        title: Text('Official Notices'),
         actions: ref.read(noticeServiceProvider).isSimulation
             ? [
                 IconButton(
-                  icon: const Icon(Icons.add_alert_outlined),
+                  icon: Icon(Icons.add_alert_outlined),
                   tooltip: 'Simulate Admin Notice',
                   onPressed: () => _showSimulateNoticeDialog(context, ref),
                 )
@@ -131,7 +131,7 @@ class NoticesScreen extends ConsumerWidget {
                         size: 64,
                         color: theme.colorScheme.primary.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         'No notices published yet',
                         style: theme.textTheme.titleLarge?.copyWith(
@@ -177,26 +177,26 @@ class NoticesScreen extends ConsumerWidget {
                           ),
                           Text(
                             _formatDateTime(notice.createdAt),
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       Text(
                         notice.title,
                         style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Text(
                         notice.content,
-                        style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey[800], height: 1.5),
+                        style: theme.textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5),
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 16),
                       const Divider(),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         'Published by ${notice.author}',
-                        style: const TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12, fontStyle: FontStyle.italic),
                       ),
                     ],
                   ),
@@ -205,7 +205,7 @@ class NoticesScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
      ),

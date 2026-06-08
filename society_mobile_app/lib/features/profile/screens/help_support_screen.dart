@@ -35,7 +35,7 @@ class HelpSupportScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help & Support'),
+        title: Text('Help & Support'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -50,12 +50,12 @@ class HelpSupportScreen extends StatelessWidget {
                   color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Find answers to popular questions or get in touch with our management committee.',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               Text(
                 'Frequently Asked Questions',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -63,7 +63,7 @@ class HelpSupportScreen extends StatelessWidget {
                   color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _buildFaqTile(
                 theme,
                 'My notifications are not appearing when the screen is off',
@@ -89,7 +89,7 @@ class HelpSupportScreen extends StatelessWidget {
                 'Emergency complaints have a 15-minute acknowledgment window. '
                 'If a worker does not accept it within 15 minutes, the system auto-escalates it to the admin committee and alerts them directly.',
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               Text(
                 'Contact Admin Office',
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -97,7 +97,7 @@ class HelpSupportScreen extends StatelessWidget {
                   color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               Card(
                 elevation: 1,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -108,20 +108,20 @@ class HelpSupportScreen extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.phone_outlined, color: theme.colorScheme.primary),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('+91 98765 43210', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('+91 98765 43210', style: TextStyle(fontWeight: FontWeight.bold)),
                                 Text('Monday to Saturday • 9 AM - 6 PM', style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7))),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () => _makeCall('+919876543210'),
-                            child: const Text('Call'),
+                            child: Text('Call'),
                           ),
                         ],
                       ),
@@ -129,20 +129,20 @@ class HelpSupportScreen extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.email_outlined, color: theme.colorScheme.primary),
-                          const SizedBox(width: 16),
+                          SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('admin@society.app', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('admin@society.app', style: TextStyle(fontWeight: FontWeight.bold)),
                                 Text('Typically replies within 4 hours', style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7))),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () => _sendEmail('admin@society.app'),
-                            child: const Text('Email'),
+                            child: Text('Email'),
                           ),
                         ],
                       ),
@@ -150,7 +150,7 @@ class HelpSupportScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
             ],
           ),
         ),

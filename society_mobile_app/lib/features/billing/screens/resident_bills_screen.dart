@@ -18,14 +18,14 @@ class ResidentBillsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Ironing Bills'),
+        title: Text('My Ironing Bills'),
       ),
       body: ledgerAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (ledger) {
           if (ledger == null) {
-            return const Center(child: Text('No billing information found.'));
+            return Center(child: Text('No billing information found.'));
           }
 
           final bool hasDues = ledger.outstandingBalance > 0;
@@ -48,7 +48,7 @@ class ResidentBillsScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       Text('Total Outstanding', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         '₹${ledger.outstandingBalance.toStringAsFixed(0)}', 
                         style: theme.textTheme.displayMedium?.copyWith(
@@ -57,7 +57,7 @@ class ResidentBillsScreen extends ConsumerWidget {
                         ),
                       ),
                       if (hasDues) ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
@@ -66,8 +66,8 @@ class ResidentBillsScreen extends ConsumerWidget {
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            icon: const Icon(Icons.payment),
-                            label: const Text('Clear Dues (Cash / Direct)'),
+                            icon: Icon(Icons.payment),
+                            label: Text('Clear Dues (Cash / Direct)'),
                             onPressed: () {
                               _showPaymentDialog(context, ref, ledger.outstandingBalance, flatId);
                             },
@@ -78,16 +78,16 @@ class ResidentBillsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               
               // Transactions History
               Text('Transaction History', style: theme.textTheme.titleLarge),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               
               if (ledger.transactions.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Center(child: Text('No transactions yet.', style: TextStyle(color: Colors.grey))),
+                  child: Center(child: Text('No transactions yet.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))),
                 )
               else
                 ...ledger.transactions.map((txn) {
@@ -102,7 +102,7 @@ class ResidentBillsScreen extends ConsumerWidget {
                           color: isCharge ? Colors.orange : Colors.green,
                         ),
                       ),
-                      title: Text(txn.description, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      title: Text(txn.description, style: TextStyle(fontWeight: FontWeight.w500)),
                       subtitle: Text(
                         '${DateTime.parse(txn.timestamp).toLocal().toString().split('.')[0]}\nCategory: ${txn.category}',
                         style: theme.textTheme.bodySmall,
@@ -130,12 +130,12 @@ class ResidentBillsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirm Payment'),
+        title: Text('Confirm Payment'),
         content: Text('Mark ₹${amount.toStringAsFixed(0)} as paid? This will notify the society/workers to confirm receipt.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -150,7 +150,7 @@ class ResidentBillsScreen extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payment recorded!')));
               }
             },
-            child: const Text('Confirm'),
+            child: Text('Confirm'),
           ),
         ],
       ),

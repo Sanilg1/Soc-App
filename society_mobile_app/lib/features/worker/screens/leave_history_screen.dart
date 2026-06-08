@@ -28,10 +28,10 @@ class LeaveHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leave History'),
+        title: Text('Leave History'),
       ),
       body: leavesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (leaves) {
           if (leaves.isEmpty) {
@@ -44,10 +44,10 @@ class LeaveHistoryScreen extends ConsumerWidget {
                     size: 64,
                     color: theme.colorScheme.primary.withValues(alpha: 0.25),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'No leave applications found.',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
                   ),
                 ],
               ),
@@ -94,23 +94,23 @@ class LeaveHistoryScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Text('Reason: ${leave.reason}', style: const TextStyle(fontSize: 14)),
+                      SizedBox(height: 10),
+                      Text('Reason: ${leave.reason}', style: TextStyle(fontSize: 14)),
                       if (leave.note != null && leave.note!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           'Note: ${leave.note}',
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+                          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic),
                         ),
                       ],
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       const Divider(),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Applied on:', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                          Text(submittedDate, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text('Applied on:', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          Text(submittedDate, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         ],
                       ),
                     ],

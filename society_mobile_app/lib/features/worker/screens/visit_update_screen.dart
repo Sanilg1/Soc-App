@@ -60,7 +60,7 @@ class _VisitUpdateScreenState extends ConsumerState<VisitUpdateScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Schedule/Reschedule Visit'),
+        title: Text('Schedule/Reschedule Visit'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -74,7 +74,7 @@ class _VisitUpdateScreenState extends ConsumerState<VisitUpdateScreen> {
                   'Specify Revisit Slot',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _slotController,
                   decoration: InputDecoration(
@@ -89,12 +89,12 @@ class _VisitUpdateScreenState extends ConsumerState<VisitUpdateScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   'Add Worker Note',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _noteController,
                   maxLines: 3,
@@ -104,16 +104,16 @@ class _VisitUpdateScreenState extends ConsumerState<VisitUpdateScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                         )
-                      : const Text('Save Schedule'),
+                      : Text('Save Schedule'),
                 ),
               ],
             ),

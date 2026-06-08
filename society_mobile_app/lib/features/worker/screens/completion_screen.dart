@@ -59,7 +59,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete Work'),
+        title: Text('Complete Work'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -73,7 +73,7 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen> {
                   'Resolution Details',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _noteController,
                   maxLines: 4,
@@ -92,16 +92,16 @@ class _CompletionScreenState extends ConsumerState<CompletionScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                         )
-                      : const Text('Mark Resolution Done'),
+                      : Text('Mark Resolution Done'),
                 ),
               ],
             ),

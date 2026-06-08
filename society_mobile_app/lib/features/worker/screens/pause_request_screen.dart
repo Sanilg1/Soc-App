@@ -84,7 +84,7 @@ class _PauseRequestScreenState extends ConsumerState<PauseRequestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Request Workboard Pause'),
+        title: Text('Request Workboard Pause'),
       ),
       body: SafeArea(
         child: Column(
@@ -102,7 +102,7 @@ class _PauseRequestScreenState extends ConsumerState<PauseRequestScreen> {
                         'Why do you need to pause?',
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       TextFormField(
                         controller: _reasonController,
                         decoration: InputDecoration(
@@ -117,12 +117,12 @@ class _PauseRequestScreenState extends ConsumerState<PauseRequestScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
                       Text(
                         'Expected Duration',
                         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       DropdownButtonFormField<String>(
                         initialValue: _selectedDuration,
                         decoration: InputDecoration(
@@ -140,16 +140,16 @@ class _PauseRequestScreenState extends ConsumerState<PauseRequestScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32),
                       ElevatedButton(
                         onPressed: _isSubmitting ? null : _submit,
                         child: _isSubmitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                               )
-                            : const Text('Submit Pause Request'),
+                            : Text('Submit Pause Request'),
                       ),
                     ],
                   ),
@@ -161,23 +161,23 @@ class _PauseRequestScreenState extends ConsumerState<PauseRequestScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               width: double.infinity,
-              color: Colors.grey.shade50,
+              color: const Color(0xFFFAFAFA),
               child: Text(
                 'PAUSE REQUEST HISTORY (Real-time)',
-                style: theme.textTheme.titleSmall?.copyWith(color: Colors.grey, fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleSmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.bold),
               ),
             ),
             Expanded(
               flex: 5,
               child: pausesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Center(child: Text('Error: $err')),
                 data: (pauses) {
                   if (pauses.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
                         'No pause requests submitted yet.',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     );
                   }

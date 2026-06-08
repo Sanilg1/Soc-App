@@ -163,19 +163,19 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                 'Select Date',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               InkWell(
                 onTap: _pickDate,
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.calendar_month, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Text(
                         _startDate == null || _endDate == null
                             ? 'Tap to select date range'
@@ -184,26 +184,26 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                                 : '${DateFormat('EEEE, MMM d').format(_startDate!)} - ${DateFormat('EEEE, MMM d, yyyy').format(_endDate!)}',
                         style: TextStyle(
                           fontSize: 16,
-                          color: _startDate == null ? Colors.grey : Colors.black87,
+                          color: _startDate == null ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.87),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               Text(
                 'Select Time Slot',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 decoration: InputDecoration(
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 ),
-                hint: const Text('Choose a timing dropdown'),
+                hint: Text('Choose a timing dropdown'),
                 value: _selectedTimeSlot,
                 items: _timeSlots.map((slot) {
                   return DropdownMenuItem(value: slot, child: Text(slot));
@@ -215,13 +215,13 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                 },
                 validator: (val) => val == null ? 'Please select a time slot' : null,
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               Text(
                 'Event Details',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               TextFormField(
                 controller: _eventNameController,
                 decoration: InputDecoration(
@@ -230,7 +230,7 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextFormField(
                 controller: _guestCountController,
                 keyboardType: TextInputType.number,
@@ -240,7 +240,7 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                 ),
                 validator: (val) => val == null || val.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               SizedBox(
                 width: double.infinity,
@@ -251,8 +251,8 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading 
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Text(widget.existingBooking != null ? 'Update Booking Request' : 'Submit Booking Request', style: const TextStyle(fontSize: 16)),
+                      ? SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(widget.existingBooking != null ? 'Update Booking Request' : 'Submit Booking Request', style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],

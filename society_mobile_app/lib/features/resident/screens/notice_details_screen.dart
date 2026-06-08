@@ -25,10 +25,10 @@ class NoticeDetailsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notice Details'),
+        title: Text('Notice Details'),
       ),
       body: noticesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (notices) {
           final notice = notices.firstWhere(
@@ -61,44 +61,44 @@ class NoticeDetailsScreen extends ConsumerWidget {
                     ),
                     Text(
                       _formatDateTime(notice.createdAt),
-                      style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   notice.title,
                   style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Text(
                   notice.content,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[800], 
+                    color: Theme.of(context).colorScheme.onSurfaceVariant, 
                     height: 1.6,
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 const Divider(),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Row(
                   children: [
                     CircleAvatar(
                       backgroundColor: Colors.blue.shade50,
                       child: Icon(Icons.admin_panel_settings, color: Colors.blue.shade700),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Published by',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                         ),
                         Text(
                           notice.author,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                       ],
                     ),

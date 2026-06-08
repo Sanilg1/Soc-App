@@ -48,14 +48,14 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: Colors.white.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.home_work_rounded,
                   size: 72,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'SOC APP',
                 style: TextStyle(
                   color: Colors.white,
@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               Text(
                 'Residential Coordination Platform',
                 style: TextStyle(
@@ -72,8 +72,8 @@ class _SplashScreenState extends State<SplashScreen> {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 48),
-              const SizedBox(
+              SizedBox(height: 48),
+              SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(

@@ -68,7 +68,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Emergency keywords detected. Urgency auto-set to Emergency.'),
+          content: Text('Emergency keywords detected. Urgency auto-set to Emergency.'),
           backgroundColor: AppTheme.emergencyColor,
           duration: const Duration(seconds: 3),
         ),
@@ -159,10 +159,10 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Complaint'),
+        title: Text('Edit Complaint'),
       ),
       body: complaintsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (complaints) {
           final complaint = complaints.firstWhere(
@@ -184,13 +184,13 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
               children: [
                 // Category Selector
                 Text('Category', style: theme.textTheme.titleLarge),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('Electrical', style: TextStyle(fontSize: 12)),
+                      label: Text('Electrical', style: TextStyle(fontSize: 12)),
                       selected: _selectedCategory == 'electrical',
                       onSelected: (selected) {
                         if (selected) {
@@ -200,7 +200,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       },
                     ),
                     ChoiceChip(
-                      label: const Text('Plumbing', style: TextStyle(fontSize: 12)),
+                      label: Text('Plumbing', style: TextStyle(fontSize: 12)),
                       selected: _selectedCategory == 'plumbing',
                       onSelected: (selected) {
                         if (selected) {
@@ -210,7 +210,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       },
                     ),
                     ChoiceChip(
-                      label: const Text('Housekeeping', style: TextStyle(fontSize: 12)),
+                      label: Text('Housekeeping', style: TextStyle(fontSize: 12)),
                       selected: _selectedCategory == 'housekeeping',
                       onSelected: (selected) {
                         if (selected) {
@@ -223,7 +223,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       },
                     ),
                     ChoiceChip(
-                      label: const Text('Ironing', style: TextStyle(fontSize: 12)),
+                      label: Text('Ironing', style: TextStyle(fontSize: 12)),
                       selected: _selectedCategory == 'ironing',
                       onSelected: (selected) {
                         if (selected) {
@@ -237,7 +237,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Housekeeping General Area Banner
                 if (_selectedCategory == 'housekeeping')
@@ -253,7 +253,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(Icons.info_outline, color: Colors.blue.shade800),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,8 +265,8 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                                   color: Colors.blue.shade900,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
+                              SizedBox(height: 4),
+                              Text(
                                 'Housekeeping requests are strictly for common areas (lobbies, corridors, gym, etc.). No visit time is required.',
                                 style: TextStyle(fontSize: 13, height: 1.4),
                               ),
@@ -291,7 +291,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,8 +303,8 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                                   color: Colors.amber.shade900,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
+                              SizedBox(height: 4),
+                              Text(
                                 'The worker for this category is currently on leave or paused. Delays in initial response or resolution may occur.',
                                 style: TextStyle(fontSize: 13, height: 1.4),
                               ),
@@ -330,23 +330,23 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: AppTheme.highPriorityColor),
-                        const SizedBox(width: 12),
+                        Icon(Icons.warning_amber_rounded, color: AppTheme.highPriorityColor),
+                        SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Duplicate Warning',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.highPriorityColor,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'You already have an active, unresolved $_selectedCategory complaint for Flat ${ref.read(authProvider).flatId}. You can still proceed if this is a separate issue.',
-                                style: const TextStyle(fontSize: 13, height: 1.4),
+                                style: TextStyle(fontSize: 13, height: 1.4),
                               ),
                             ],
                           ),
@@ -358,31 +358,31 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                 // Urgency Selector (Hidden for Housekeeping and Ironing)
                 if (_selectedCategory != 'housekeeping' && _selectedCategory != 'ironing') ...[
                   Text('Urgency Level', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     children: [
                       ChoiceChip(
-                        label: const Text('Low'),
+                        label: Text('Low'),
                         selected: _selectedUrgency == 'low',
                         selectedColor: AppTheme.lowPriorityColor.withValues(alpha: 0.25),
                         onSelected: (s) => s ? setState(() => _selectedUrgency = 'low') : null,
                       ),
                       ChoiceChip(
-                        label: const Text('Medium'),
+                        label: Text('Medium'),
                         selected: _selectedUrgency == 'medium',
                         selectedColor: AppTheme.mediumPriorityColor.withValues(alpha: 0.25),
                         onSelected: (s) => s ? setState(() => _selectedUrgency = 'medium') : null,
                       ),
                       ChoiceChip(
-                        label: const Text('High'),
+                        label: Text('High'),
                         selected: _selectedUrgency == 'high',
                         selectedColor: AppTheme.highPriorityColor.withValues(alpha: 0.25),
                         onSelected: (s) => s ? setState(() => _selectedUrgency = 'high') : null,
                       ),
                       ChoiceChip(
-                        label: const Text('Emergency'),
+                        label: Text('Emergency'),
                         selected: _selectedUrgency == 'emergency',
                         selectedColor: AppTheme.emergencyColor.withValues(alpha: 0.25),
                         onSelected: (s) => s ? setState(() => _selectedUrgency = 'emergency') : null,
@@ -402,8 +402,8 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.report_problem, color: AppTheme.emergencyColor),
-                          const SizedBox(width: 12),
+                          Icon(Icons.report_problem, color: AppTheme.emergencyColor),
+                          SizedBox(width: 12),
                           const Expanded(
                             child: Text(
                               'WARNING: Select Emergency only for dangerous events (e.g. fire hazard, major sparking, indoor flooding). Abuse may lead to admin flags.',
@@ -417,16 +417,16 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                         ],
                       ),
                     ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                 ],
 
                 // Description Input (or Cloth Counter for Ironing)
                 if (_selectedCategory == 'ironing') ...[
                   Text('Clothes to Iron', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.all(16),
@@ -439,7 +439,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                         _buildCounterRow('Sarees (₹${_ironingRates['sarees']?.toInt()})', _sareesCount, (v) => setState(() => _sareesCount = v)),
                         const Divider(),
                         _buildCounterRow('Others (₹${_ironingRates['others']?.toInt()})', _othersCount, (v) => setState(() => _othersCount = v)),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -462,7 +462,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                   ),
                 ] else ...[
                   Text('Describe the Issue', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   TextFormField(
                     controller: _descriptionController,
                     maxLines: 4,
@@ -485,12 +485,12 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                     },
                   ),
                 ],
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Availability Slots Selector (Hidden for Housekeeping)
                 if (_selectedCategory != 'housekeeping') ...[
                   Text('Preferred Visit Time', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedAvailability,
                     decoration: InputDecoration(
@@ -513,7 +513,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
 
                   // Custom Time Slot Input
                   if (_selectedAvailability == 'custom') ...[
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextFormField(
                       controller: _customSlotController,
                       decoration: InputDecoration(
@@ -532,13 +532,13 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                     ),
                   ],
                 ],
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
 
                 // Submit Button
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -546,7 +546,7 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Update Complaint'),
+                      : Text('Update Complaint'),
                 ),
               ],
             ),
@@ -562,24 +562,24 @@ class _ComplaintEditScreenState extends ConsumerState<ComplaintEditScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 16)),
+        Text(label, style: TextStyle(fontSize: 16)),
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
+              icon: Icon(Icons.remove_circle_outline),
               onPressed: value > 0 ? () => onChanged(value - 1) : null,
-              color: value > 0 ? Theme.of(context).colorScheme.primary : Colors.grey,
+              color: value > 0 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             SizedBox(
               width: 30,
               child: Text(
                 value.toString(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.add_circle_outline),
+              icon: Icon(Icons.add_circle_outline),
               onPressed: () => onChanged(value + 1),
               color: Theme.of(context).colorScheme.primary,
             ),

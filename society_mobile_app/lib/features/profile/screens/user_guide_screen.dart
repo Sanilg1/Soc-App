@@ -8,7 +8,7 @@ class UserGuideScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Guide'),
+        title: Text('User Guide'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20.0),
@@ -20,12 +20,12 @@ class UserGuideScreen extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Learn how to get the most out of your Society Portal.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _buildGuideCard(
             context,
             theme,
@@ -65,7 +65,7 @@ class UserGuideScreen extends StatelessWidget {
             'To report generic society issues (like street light failure or parking problems), use the plus (+) button and select "Add Society Issue". '
             'This allows all residents to view, discuss, and track common area issues.',
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30),
         ],
       ),
     );
@@ -106,7 +106,7 @@ class UserGuideScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +114,7 @@ class UserGuideScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(icon, size: 20, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           title,
@@ -127,7 +127,7 @@ class UserGuideScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     description,
                     style: TextStyle(

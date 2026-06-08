@@ -33,16 +33,16 @@ class _GuardHomeScreenState extends ConsumerState<GuardHomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('New Visitor Entry', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
+            Text('New Visitor Entry', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 16),
             TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Visitor Name')),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: _flatController, decoration: const InputDecoration(labelText: 'Flat Number (e.g. 1302)')),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: _companyController, decoration: const InputDecoration(labelText: 'Company (Swiggy, Amazon, Guest)')),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             TextField(controller: _purposeController, decoration: const InputDecoration(labelText: 'Purpose (Delivery, Visit)')),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -64,10 +64,10 @@ class _GuardHomeScreenState extends ConsumerState<GuardHomeScreen> {
                   _companyController.clear();
                   _purposeController.clear();
                 },
-                child: const Text('Send Approval Request'),
+                child: Text('Send Approval Request'),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -80,17 +80,17 @@ class _GuardHomeScreenState extends ConsumerState<GuardHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gate Security'),
+        title: Text('Gate Security'),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddVisitorModal,
-        icon: const Icon(Icons.person_add),
-        label: const Text('New Visitor'),
+        icon: Icon(Icons.person_add),
+        label: Text('New Visitor'),
       ),
       body: visitorsAsync.when(
         data: (visitors) {
           if (visitors.isEmpty) {
-            return const Center(child: Text('No visitors today'));
+            return Center(child: Text('No visitors today'));
           }
           return ListView.builder(
             itemCount: visitors.length,
@@ -121,7 +121,7 @@ class _GuardHomeScreenState extends ConsumerState<GuardHomeScreen> {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text('Error: $e')),
       ),
     );

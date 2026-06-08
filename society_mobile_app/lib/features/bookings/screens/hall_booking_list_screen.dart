@@ -17,7 +17,7 @@ class HallBookingListScreen extends ConsumerWidget {
       case 'cancelled':
         return Colors.red;
       default:
-        return Colors.grey;
+        return const Color(0xFF9E9E9E);
     }
   }
 
@@ -30,7 +30,7 @@ class HallBookingListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Community Hall Bookings'),
+        title: Text('Community Hall Bookings'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -48,14 +48,14 @@ class HallBookingListScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.event_busy, size: 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 16),
-                      const Text('No bookings found', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                      const SizedBox(height: 24),
+                      Icon(Icons.event_busy, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      SizedBox(height: 16),
+                      Text('No bookings found', style: TextStyle(fontSize: 18, color: const Color(0xFF9E9E9E))),
+                      SizedBox(height: 24),
                       ElevatedButton.icon(
                         onPressed: () => context.push('/hall-booking-create'),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Book Community Hall'),
+                        icon: Icon(Icons.add),
+                        label: Text('Book Community Hall'),
                       ),
                     ],
                   ),
@@ -82,7 +82,7 @@ class HallBookingListScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               booking.eventName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                             ),
                           ),
                           Container(
@@ -102,34 +102,34 @@ class HallBookingListScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
+                          Icon(Icons.calendar_today, size: 16, color: const Color(0xFF9E9E9E)),
+                          SizedBox(width: 8),
                           Text(booking.date == booking.endDate || booking.endDate.isEmpty
                               ? booking.date
                               : '${booking.date} to ${booking.endDate}'),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 16, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
+                          Icon(Icons.access_time, size: 16, color: const Color(0xFF9E9E9E)),
+                          SizedBox(width: 8),
                           Text(booking.timeSlot),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.people, size: 16, color: Colors.grey.shade600),
-                          const SizedBox(width: 8),
+                          Icon(Icons.people, size: 16, color: const Color(0xFF9E9E9E)),
+                          SizedBox(width: 8),
                           Text('${booking.guestCount} Guests'),
                         ],
                       ),
                       if (booking.status == 'pending') ...[
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
@@ -141,10 +141,10 @@ class HallBookingListScreen extends ConsumerWidget {
                                 onPressed: () {
                                   context.push('/hall-booking-create', extra: booking);
                                 },
-                                child: const Text('Edit Request'),
+                                child: Text('Edit Request'),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
@@ -154,7 +154,7 @@ class HallBookingListScreen extends ConsumerWidget {
                                 onPressed: () {
                                   ref.read(hallBookingServiceProvider).updateBookingStatus(booking.id, 'cancelled');
                                 },
-                                child: const Text('Cancel'),
+                                child: Text('Cancel'),
                               ),
                             ),
                           ],
@@ -167,15 +167,15 @@ class HallBookingListScreen extends ConsumerWidget {
              },
            );
          },
-         loading: () => const Center(child: CircularProgressIndicator()),
+         loading: () => Center(child: CircularProgressIndicator()),
          error: (e, st) => Center(child: Text('Error: $e')),
        ),
       ),
       floatingActionButton: bookingsAsync.hasValue && (bookingsAsync.value?.isNotEmpty ?? false)
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/hall-booking-create'),
-              icon: const Icon(Icons.add),
-              label: const Text('Book Hall'),
+              icon: Icon(Icons.add),
+              label: Text('Book Hall'),
             )
           : null,
     );

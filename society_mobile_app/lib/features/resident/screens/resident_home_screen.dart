@@ -38,7 +38,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
       case 'escalated':
         return AppTheme.emergencyColor;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -114,7 +114,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined),
+                icon: Icon(Icons.notifications_outlined),
                 onPressed: () => context.push('/resident-notifications'),
               ),
               if (unreadNotificationsCount > 0)
@@ -133,7 +133,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                     ),
                     child: Text(
                       '$unreadNotificationsCount',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               color: Colors.red.shade600,
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.wifi_off, color: Colors.white, size: 16),
@@ -194,16 +194,16 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Welcome, Resident!',
                     style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     'Sanil Grover • Flat $flatId',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -211,10 +211,10 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                       minimumSize: const Size(180, 44),
                     ),
                     onPressed: () => context.push('/complaint-create'),
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text('New Complaint'),
+                    icon: Icon(Icons.add_circle_outline),
+                    label: Text('New Complaint'),
                   ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -223,10 +223,10 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                         minimumSize: const Size(180, 44),
                       ),
                       onPressed: () => context.push('/society-issue-create'),
-                      icon: const Icon(Icons.campaign_outlined),
-                      label: const Text('Report Society Issue'),
+                      icon: Icon(Icons.campaign_outlined),
+                      label: Text('Report Society Issue'),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -235,35 +235,35 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                         minimumSize: const Size(180, 44),
                       ),
                       onPressed: () => context.push('/hall-bookings'),
-                      icon: const Icon(Icons.event_available),
-                      label: const Text('Book Community Hall'),
+                      icon: Icon(Icons.event_available),
+                      label: Text('Book Community Hall'),
                     ),
                   ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade100, foregroundColor: Colors.orange.shade900),
-                    icon: const Icon(Icons.receipt_long),
-                    label: const Text('Ironing Bills'),
+                    icon: Icon(Icons.receipt_long),
+                    label: Text('Ironing Bills'),
                     onPressed: () => context.push('/resident-bills'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade100, foregroundColor: Colors.green.shade900),
-                    icon: const Icon(Icons.contact_phone),
-                    label: const Text('Worker Contacts'),
+                    icon: Icon(Icons.contact_phone),
+                    label: Text('Worker Contacts'),
                     onPressed: () => context.push('/worker-directory'),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
 
             // Section: Gate Visitors
             visitorsAsync.when(
@@ -275,7 +275,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Visitors at Gate', style: theme.textTheme.titleLarge?.copyWith(color: Colors.red.shade700)),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     ...pendingVisitors.map((visitor) => Card(
                           color: Colors.red.shade50,
                           margin: const EdgeInsets.only(bottom: 12),
@@ -287,32 +287,32 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(visitor.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                    Text(visitor.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
-                                      child: const Text('PENDING', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                      child: Text('PENDING', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: 4),
                                 Text('${visitor.company} • ${visitor.purpose}'),
-                                const SizedBox(height: 16),
+                                SizedBox(height: 16),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
                                         style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
                                         onPressed: () => ref.read(visitorServiceProvider).updateVisitorStatus(visitor.id, 'denied'),
-                                        child: const Text('Deny'),
+                                        child: Text('Deny'),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: 12),
                                     Expanded(
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
                                         onPressed: () => ref.read(visitorServiceProvider).updateVisitorStatus(visitor.id, 'approved'),
-                                        child: const Text('Approve'),
+                                        child: Text('Approve'),
                                       ),
                                     ),
                                   ],
@@ -321,7 +321,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                             ),
                           ),
                         )),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
                 );
               },
@@ -336,11 +336,11 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                 Text('Active Complaints', style: theme.textTheme.titleLarge),
                 TextButton(
                   onPressed: () => context.push('/history'),
-                  child: const Text('View History'),
+                  child: Text('View History'),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             
             complaintsAsync.when(
               data: (complaints) {
@@ -359,16 +359,16 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                               size: 48, 
                               color: theme.colorScheme.primary.withValues(alpha: 0.5)
                             ),
-                            const SizedBox(height: 12),
-                            const Text(
+                            SizedBox(height: 12),
+                            Text(
                               'No complaints made',
                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
+                            SizedBox(height: 4),
+                            Text(
                               'Any issues? Tap "New Complaint" to log an issue.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -389,7 +389,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                         onTap: () => context.push('/complaint-details/${complaint.id}'),
                         title: Text(
                           complaint.category.toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           complaint.description,
@@ -416,11 +416,11 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error loading complaints: $err')),
             ),
             
-            const SizedBox(height: 28),
+            SizedBox(height: 28),
             
             // Section: Official Notices
             Row(
@@ -429,15 +429,15 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                 Text('Official Notices', style: theme.textTheme.titleLarge),
                 TextButton(
                   onPressed: () => context.push('/notices'),
-                  child: const Text('View All'),
+                  child: Text('View All'),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             noticesAsync.when(
               data: (notices) {
                 if (notices.isEmpty) {
-                  return const Text('No recent notices.', style: TextStyle(color: Colors.grey));
+                  return Text('No recent notices.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant));
                 }
                 return Column(
                   children: notices.take(3).map((notice) {
@@ -448,7 +448,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                           backgroundColor: Colors.blue.shade50,
                           child: Icon(Icons.campaign, color: Colors.blue.shade700),
                         ),
-                        title: Text(notice.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        title: Text(notice.title, style: TextStyle(fontWeight: FontWeight.w600)),
                         subtitle: Text(
                           notice.content, 
                           maxLines: 2, 
@@ -467,7 +467,7 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
                   }).toList(),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => Center(child: CircularProgressIndicator()),
               error: (err, stack) => Text('Error: $err'),
             ),
           ],

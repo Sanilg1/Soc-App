@@ -62,7 +62,7 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Request Parts/Tools'),
+        title: Text('Request Parts/Tools'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -76,7 +76,7 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                   'What parts or tools are needed?',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _toolsController,
                   maxLines: 2,
@@ -92,22 +92,22 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   'Who will procure the parts?',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
                       RadioListTile<String>(
-                        title: const Text('I will get them (Worker)'),
-                        subtitle: const Text('You will procure the parts and bill the society/resident later.'),
+                        title: Text('I will get them (Worker)'),
+                        subtitle: Text('You will procure the parts and bill the society/resident later.'),
                         value: 'worker',
                         groupValue: _responsibility,
                         onChanged: (value) {
@@ -118,8 +118,8 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                       ),
                       const Divider(height: 1),
                       RadioListTile<String>(
-                        title: const Text('Resident needs to buy'),
-                        subtitle: const Text('The resident is responsible for procuring the required parts.'),
+                        title: Text('Resident needs to buy'),
+                        subtitle: Text('The resident is responsible for procuring the required parts.'),
                         value: 'resident',
                         groupValue: _responsibility,
                         onChanged: (value) {
@@ -131,12 +131,12 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   'Procurement Note',
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _noteController,
                   maxLines: 3,
@@ -146,16 +146,16 @@ class _NeedToolsScreenState extends ConsumerState<NeedToolsScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                         )
-                      : const Text('Submit Request'),
+                      : Text('Submit Request'),
                 ),
               ],
             ),

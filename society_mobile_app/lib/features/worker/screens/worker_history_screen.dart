@@ -18,10 +18,10 @@ class WorkerHistoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Task History'),
+        title: Text('Task History'),
       ),
       body: complaintsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (complaints) {
           // Filter closed or awaiting confirmation
@@ -38,10 +38,10 @@ class WorkerHistoryScreen extends ConsumerWidget {
                     size: 64,
                     color: theme.colorScheme.primary.withValues(alpha: 0.25),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'No completed tasks in history.',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
                   ),
                 ],
               ),
@@ -61,15 +61,15 @@ class WorkerHistoryScreen extends ConsumerWidget {
                   contentPadding: const EdgeInsets.all(16),
                   title: Text(
                     'Flat ${complaint.flatId} — ${complaint.category[0].toUpperCase()}${complaint.category.substring(1)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(complaint.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
-                      Text('Completed: $dateStr', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      SizedBox(height: 8),
+                      Text('Completed: $dateStr', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                   trailing: Container(

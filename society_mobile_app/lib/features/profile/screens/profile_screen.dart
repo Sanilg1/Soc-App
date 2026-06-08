@@ -91,16 +91,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a Photo'),
+                leading: Icon(Icons.camera_alt),
+                title: Text('Take a Photo'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndUploadImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
+                leading: Icon(Icons.photo_library),
+                title: Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndUploadImage(ImageSource.gallery);
@@ -151,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('My Profile'),
+        title: Text('My Profile'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -159,29 +159,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             children: [
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               // Profile Avatar with Camera Overlay
               Center(
                 child: Stack(
                   children: [
                     CircleAvatar(
                       radius: 56,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                       backgroundImage: authState.profilePictureUrl != null
                           ? NetworkImage(authState.profilePictureUrl!)
                           : null,
                       child: authState.profilePictureUrl == null
-                          ? const Icon(Icons.person, size: 56, color: Colors.grey)
+                          ? Icon(Icons.person, size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant)
                           : null,
                     ),
                     if (_isUploading)
                       Positioned.fill(
                         child: Container(
                           decoration: const BoxDecoration(
-                            color: Colors.black45,
+                            color: Color(0x73000000),
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
+                          child: Center(
                             child: CircularProgressIndicator(
                               color: Colors.white,
                             ),
@@ -196,7 +196,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: CircleAvatar(
                           radius: 18,
                           backgroundColor: theme.colorScheme.primary,
-                          child: const Icon(
+                          child: Icon(
                             Icons.camera_alt,
                             size: 16,
                             color: Colors.white,
@@ -207,7 +207,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Name Display & Inline Editor
               _isEditingName
@@ -228,11 +228,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.check, color: Colors.green),
+                          icon: Icon(Icons.check, color: Colors.green),
                           onPressed: _saveName,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: Colors.red),
+                          icon: Icon(Icons.close, color: Colors.red),
                           onPressed: () {
                             setState(() {
                               _isEditingName = false;
@@ -244,16 +244,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(width: 40), // Spacer to offset pencil icon
+                        SizedBox(width: 40), // Spacer to offset pencil icon
                         Text(
                           displayName,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                          icon: Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           onPressed: () {
                             setState(() {
                               _isEditingName = true;
@@ -267,11 +267,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 isResident 
                     ? 'Flat ${authState.flatId ?? "Unknown"} • Resident' 
                     : 'Assigned Category: ${authState.category ?? "None"} • Worker', 
-                style: const TextStyle(color: Colors.grey)
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               const Divider(),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
 
               // Links list
               _buildMenuItem(
@@ -290,7 +290,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.push('/privacy-policy'),
               ),
               
-              const SizedBox(height: 48),
+              SizedBox(height: 48),
               
               SizedBox(
                 width: double.infinity,
@@ -306,13 +306,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   onPressed: () {
                     ref.read(authProvider.notifier).logout();
                   },
-                  child: const Text(
+                  child: Text(
                     'Sign Out',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
           ),
         ),
@@ -329,16 +329,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         leading: Icon(icon, color: const Color(0xFF64748B)),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          style: TextStyle(fontWeight: FontWeight.w500),
         ),
-        trailing: const Icon(Icons.chevron_right, size: 20),
+        trailing: Icon(Icons.chevron_right, size: 20),
         onTap: onTap,
       ),
     );

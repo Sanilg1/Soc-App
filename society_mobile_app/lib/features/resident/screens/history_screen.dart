@@ -30,7 +30,7 @@ class HistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complaint History'),
+        title: Text('Complaint History'),
       ),
       body: complaintsAsync.when(
         data: (complaints) {
@@ -47,17 +47,17 @@ class HistoryScreen extends ConsumerWidget {
                     size: 64,
                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'No completed complaints yet',
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Your resolved issues will show up here.',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -78,7 +78,7 @@ class HistoryScreen extends ConsumerWidget {
                     children: [
                       Text(
                         complaint.category.toUpperCase(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -86,7 +86,7 @@ class HistoryScreen extends ConsumerWidget {
                           color: AppTheme.lowPriorityColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
+                        child: Text(
                           'RESOLVED',
                           style: TextStyle(
                             fontSize: 10,
@@ -100,33 +100,33 @@ class HistoryScreen extends ConsumerWidget {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         complaint.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, size: 14, color: AppTheme.lowPriorityColor),
-                          const SizedBox(width: 6),
+                          Icon(Icons.check_circle_outline, size: 14, color: AppTheme.lowPriorityColor),
+                          SizedBox(width: 6),
                           Text(
                             'Closed: ${_formatDateTime(complaint.updatedAt)}',
-                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(Icons.chevron_right),
                 ),
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );

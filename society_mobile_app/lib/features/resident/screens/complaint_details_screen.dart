@@ -31,12 +31,12 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Reopen Complaint'),
+          title: Text('Reopen Complaint'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Explain what is still unresolved or if the issue has returned:'),
-              const SizedBox(height: 12),
+              Text('Explain what is still unresolved or if the issue has returned:'),
+              SizedBox(height: 12),
               TextField(
                 controller: _reopenNoteController,
                 maxLines: 3,
@@ -53,7 +53,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                 _reopenNoteController.clear();
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -72,7 +72,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                 await ref.read(complaintServiceProvider).reopenComplaint(complaint.id, note);
                 _reopenNoteController.clear();
               },
-              child: const Text('Reopen'),
+              child: Text('Reopen'),
             ),
           ],
         );
@@ -151,7 +151,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
       case 'escalated':
         return AppTheme.emergencyColor;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -177,8 +177,8 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
           });
         } else {
           return Scaffold(
-            appBar: AppBar(title: const Text('Complaint Details')),
-            body: const Center(child: Text('Complaint details not found.')),
+            appBar: AppBar(title: Text('Complaint Details')),
+            body: Center(child: Text('Complaint details not found.')),
           );
         }
         
@@ -187,11 +187,11 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Complaint Details'),
+            title: Text('Complaint Details'),
             actions: [
               if (canEdit)
                 IconButton(
-                  icon: const Icon(Icons.edit),
+                  icon: Icon(Icons.edit),
                   tooltip: 'Edit Complaint',
                   onPressed: () {
                     // Navigate to edit screen
@@ -221,8 +221,8 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Current Status', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            const SizedBox(height: 4),
+                            Text('Current Status', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                            SizedBox(height: 4),
                             Text(
                               complaint.status.replaceAll('_', ' ').toUpperCase(),
                               style: TextStyle(
@@ -242,7 +242,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                             ),
                             child: Text(
                               'REOPENED x${complaint.reopenCount}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.emergencyColor,
                                 fontWeight: FontWeight.bold,
@@ -252,11 +252,11 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Info Card
                   Text('Details', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -268,13 +268,13 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                             children: [
                               Text(
                                 complaint.category.toUpperCase(),
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                               ),
                               if (complaint.category != 'housekeeping' && complaint.category != 'ironing')
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: (complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey).withValues(alpha: 0.15),
+                                    color: (complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Theme.of(context).colorScheme.onSurfaceVariant).withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
@@ -282,37 +282,37 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Colors.grey[700],
+                                      color: complaint.urgency == 'emergency' ? AppTheme.emergencyColor : Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           const Divider(),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           Text(complaint.description, style: theme.textTheme.bodyLarge),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                           Row(
                             children: [
-                              const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                              const SizedBox(width: 8),
+                              Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              SizedBox(width: 8),
                               Text(
                                 'Logged: ${_formatDateTime(complaint.createdAt)}',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
                           if (complaint.slaDeadline != null && complaint.status != 'closed') ...[
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Row(
                               children: [
-                                const Icon(Icons.timer_outlined, size: 16, color: AppTheme.highPriorityColor),
-                                const SizedBox(width: 8),
+                                Icon(Icons.timer_outlined, size: 16, color: AppTheme.highPriorityColor),
+                                SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'SLA Target: ${_formatDateTime(complaint.slaDeadline!)} (${_getSlaCountdownText(complaint.slaDeadline!)})',
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.highPriorityColor, fontWeight: FontWeight.w500),
+                                    style: TextStyle(fontSize: 12, color: AppTheme.highPriorityColor, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ],
@@ -322,12 +322,12 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
 
                   // Ironing Details Section
                   if (complaint.category == 'ironing' && complaint.ironingDetails != null) ...[
                     Text('Ironing Details & Payment', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -341,39 +341,39 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total Bill:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              Text('₹${complaint.ironingDetails!['totalCost']?.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
+                              Text('Total Bill:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text('₹${complaint.ironingDetails!['totalCost']?.toInt()}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           if (complaint.ironingDetails!['clothesReturned'] == true)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('Clothes Returned! Bill added to Ledger.', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text('Clothes Returned! Bill added to Ledger.', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
                             )
                           else if (complaint.ironingDetails!['countConfirmedByWorker'] == false)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: Colors.orange.shade100, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('Pending Worker Pickup & Confirmation', style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text('Pending Worker Pickup & Confirmation', style: TextStyle(color: Colors.deepOrange, fontSize: 12, fontWeight: FontWeight.bold)),
                             )
                           else
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('Ironing in Progress...', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text('Ironing in Progress...', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
                             ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
 
                   // Actions Section (Only visible when awaiting confirmation)
                   if (complaint.status == 'awaiting_confirmation') ...[
                     Text('Resolution Awaiting Confirmation', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -383,10 +383,10 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () => _showReopenDialog(context, complaint),
-                            child: const Text('Reopen Issue'),
+                            child: Text('Reopen Issue'),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -394,18 +394,18 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                               foregroundColor: Colors.white,
                             ),
                             onPressed: () => _confirmCompleted(complaint),
-                            child: const Text('Confirm Done'),
+                            child: Text('Confirm Done'),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
 
                   // Actions Section (Need Tools)
                   if (complaint.status == 'need_tools' && complaint.toolsResponsibility != null) ...[
                     Text('Tools / Parts Needed', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -418,32 +418,32 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.handyman, color: Colors.orange),
-                              const SizedBox(width: 8),
+                              Icon(Icons.handyman, color: Colors.orange),
+                              SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   complaint.toolsDescription ?? 'Tools requested',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           if (complaint.toolsResponsibility == 'worker')
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('Worker is procuring the parts', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text('Worker is procuring the parts', style: TextStyle(color: Colors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
                             )
                           else
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('You need to procure these parts', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
+                              child: Text('You need to procure these parts', style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold)),
                             ),
                           
                           if (complaint.toolsResponsibility == 'resident' && !complaint.toolsProcured) ...[
-                            const SizedBox(height: 16),
+                            SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
@@ -451,8 +451,8 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                   backgroundColor: Colors.orange,
                                   foregroundColor: Colors.white,
                                 ),
-                                icon: const Icon(Icons.shopping_bag),
-                                label: const Text('I Have Procured The Tools'),
+                                icon: Icon(Icons.shopping_bag),
+                                label: Text('I Have Procured The Tools'),
                                 onPressed: () async {
                                   await ref.read(complaintServiceProvider).markToolsProcured(
                                     complaint.id,
@@ -473,13 +473,13 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
 
                   // Actions Section (Revisit Scheduled)
                   if (complaint.status == 'revisit_scheduled') ...[
                     Text('Revisit Scheduled', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -488,16 +488,16 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _confirmRevisit(complaint),
-                        child: const Text('Confirm Visit Time'),
+                        child: Text('Confirm Visit Time'),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
 
                   // Assigned Worker Profile Card
                   if (complaint.assignedWorker != null || complaint.status == 'accepted' || complaint.status == 'visited' || complaint.status == 'need_tools' || complaint.status == 'revisit_scheduled' || complaint.eta != null) ...[
                     Text('Assigned Worker', style: theme.textTheme.titleLarge),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Card(
                       elevation: 2,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -508,24 +508,24 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                             CircleAvatar(
                               radius: 30,
                               backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                              child: const Icon(Icons.person, size: 30, color: AppTheme.primaryColor),
+                              child: Icon(Icons.person, size: 30, color: AppTheme.primaryColor),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     complaint.assignedWorker ?? 'Worker Assigned',
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   Text(
                                     complaint.category.toUpperCase(),
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                                   ),
                                   if (complaint.eta != null && (complaint.status == 'accepted' || complaint.status == 'queued' || complaint.status == 'submitted')) ...[
-                                    const SizedBox(height: 8),
+                                    SizedBox(height: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
@@ -535,11 +535,11 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(Icons.timer, size: 14, color: Colors.blue),
-                                          const SizedBox(width: 4),
+                                          Icon(Icons.timer, size: 14, color: Colors.blue),
+                                          SizedBox(width: 4),
                                           Text(
                                             'ETA: ${complaint.eta}',
-                                            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
+                                            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 12),
                                           ),
                                         ],
                                       ),
@@ -556,7 +556,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                   SnackBar(content: Text('Copied $number to clipboard')),
                                 );
                               },
-                              icon: const Icon(Icons.call),
+                              icon: Icon(Icons.call),
                               color: Colors.green,
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.green.shade50,
@@ -566,11 +566,11 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                   ],
 
                   // Timeline Step Stepper
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -588,7 +588,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                       width: 16,
                                       height: 16,
                                       decoration: BoxDecoration(
-                                        color: isLast ? _getStatusColor(complaint.status) : Colors.grey[400],
+                                        color: isLast ? _getStatusColor(complaint.status) : Theme.of(context).colorScheme.surfaceContainerHighest,
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -596,12 +596,12 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                       Expanded(
                                         child: Container(
                                           width: 2,
-                                          color: Colors.grey[300],
+                                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                         ),
                                       ),
                                   ],
                                 ),
-                                const SizedBox(width: 16),
+                                SizedBox(width: 16),
                                 Expanded(
                                   child: Padding(
                                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -610,15 +610,15 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                       children: [
                                         Text(
                                           event.action,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                                         ),
-                                        const SizedBox(height: 2),
+                                        SizedBox(height: 2),
                                         Text(
                                           'By ${event.performedBy} (${event.role.toUpperCase()}) • ${_formatDateTime(event.timestamp)}',
-                                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                         ),
                                         if (event.note != null && event.note!.isNotEmpty) ...[
-                                          const SizedBox(height: 6),
+                                          SizedBox(height: 6),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                             decoration: BoxDecoration(
@@ -642,16 +642,15 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                 ],
               ),
             ),
           ),
-          ),
         );
       },
-      loading: () => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: const Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(appBar: AppBar(title: const Text('Complaint Details')), body: Center(child: Text('Error: $err'))),
+      loading: () => Scaffold(appBar: AppBar(title: Text('Complaint Details')), body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) => Scaffold(appBar: AppBar(title: Text('Complaint Details')), body: Center(child: Text('Error: $err'))),
     );
   }
 }

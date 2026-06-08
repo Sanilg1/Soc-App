@@ -62,11 +62,11 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Welcome to SOC APP'),
+        title: Text('Welcome to SOC APP'),
         actions: [
           TextButton(
             onPressed: () => context.go('/login'),
-            child: const Text('Worker Login'),
+            child: Text('Worker Login'),
           ),
         ],
       ),
@@ -78,17 +78,17 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Text(
                   'Join Your Society',
                   style: theme.textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Enter the invite details provided by your society administrator to activate your account.',
                   style: theme.textTheme.bodyMedium,
                 ),
-                const SizedBox(height: 28),
+                SizedBox(height: 28),
                 
                 // Resident Name
                 TextFormField(
@@ -98,7 +98,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   decoration: InputDecoration(
                     labelText: 'Full Name',
                     hintText: 'e.g., Sanil Grover',
-                    prefixIcon: const Icon(Icons.person_outline_rounded),
+                    prefixIcon: Icon(Icons.person_outline_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -110,7 +110,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 TextFormField(
                   controller: _flatController,
@@ -119,7 +119,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   decoration: InputDecoration(
                     labelText: 'Flat Number',
                     hintText: 'e.g., 1302',
-                    prefixIcon: const Icon(Icons.apartment_rounded),
+                    prefixIcon: Icon(Icons.apartment_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -144,7 +144,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Phone Number
                 TextFormField(
@@ -154,7 +154,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   decoration: InputDecoration(
                     labelText: 'Registered Phone Number',
                     hintText: 'e.g., +1 555-010-0001',
-                    prefixIcon: const Icon(Icons.phone_rounded),
+                    prefixIcon: Icon(Icons.phone_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -166,7 +166,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Invite Code
                 TextFormField(
@@ -176,7 +176,7 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   decoration: InputDecoration(
                     labelText: 'Invite Code',
                     hintText: 'Enter 6-digit code',
-                    prefixIcon: const Icon(Icons.key_rounded),
+                    prefixIcon: Icon(Icons.key_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -188,12 +188,12 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 ElevatedButton(
                   onPressed: isLoading ? null : _onSubmit,
                   child: isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -201,9 +201,9 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Verify Invite'),
+                      : Text('Verify Invite'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
               ],
             ),
           ),

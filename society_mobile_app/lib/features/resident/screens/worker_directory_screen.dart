@@ -44,14 +44,14 @@ class WorkerDirectoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Worker Directory'),
+        title: Text('Worker Directory'),
       ),
       body: workersAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (workers) {
           if (workers.isEmpty) {
-            return const Center(
+            return Center(
               child: Text('No workers found in the directory.'),
             );
           }
@@ -88,34 +88,34 @@ class WorkerDirectoryScreen extends ConsumerWidget {
                           color: theme.colorScheme.primary,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               category.toUpperCase(),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 letterSpacing: 1.1,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               phone,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey.shade800,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -123,7 +123,7 @@ class WorkerDirectoryScreen extends ConsumerWidget {
                       ),
                       IconButton(
                         onPressed: () => _makePhoneCall(context, phone),
-                        icon: const Icon(Icons.call),
+                        icon: Icon(Icons.call),
                         color: Colors.green,
                         iconSize: 28,
                         style: IconButton.styleFrom(

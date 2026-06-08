@@ -67,7 +67,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
       case 'escalation':
         return AppTheme.emergencyColor;
       default:
-        return Colors.grey;
+        return const Color(0xFF9E9E9E);
     }
   }
 
@@ -190,10 +190,10 @@ class ResidentNotificationsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text('Notifications'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.done_all),
+            icon: Icon(Icons.done_all),
             tooltip: 'Mark all as read',
             onPressed: () {
               if (complaintsAsync.hasValue) {
@@ -226,12 +226,12 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                     size: 72,
                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'No Notifications Yet',
                     style: theme.textTheme.titleLarge,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'You\'ll see updates about your complaints here.',
                     style: theme.textTheme.bodyMedium,
@@ -291,22 +291,22 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 2),
+                    SizedBox(height: 2),
                     Text(
                       notif.message,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: const Color(0xFF9E9E9E),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       _formatTimestamp(notif.timestamp),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[400],
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       ),
                     ),
                   ],
@@ -323,7 +323,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );

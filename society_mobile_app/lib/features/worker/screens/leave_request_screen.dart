@@ -112,7 +112,7 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Apply for Leave'),
+        title: Text('Apply for Leave'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -123,7 +123,7 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Select Leave Period', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -132,36 +132,36 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
+                            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Start Date', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Text(startStr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('Start Date', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              SizedBox(height: 6),
+                              Text(startStr, style: TextStyle(fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: InkWell(
                         onTap: () => _selectEndDate(context),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade400),
+                            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('End Date', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              const SizedBox(height: 6),
-                              Text(endStr, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('End Date', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                              SizedBox(height: 6),
+                              Text(endStr, style: TextStyle(fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -169,10 +169,10 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 
                 Text('Reason for Leave', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _reasonController,
                   decoration: InputDecoration(
@@ -187,10 +187,10 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 Text('Additional Note', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 TextFormField(
                   controller: _noteController,
                   maxLines: 3,
@@ -200,17 +200,17 @@ class _LeaveRequestScreenState extends ConsumerState<LeaveRequestScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
 
                 ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation(Colors.white)),
                         )
-                      : const Text('Apply & Approve'),
+                      : Text('Apply & Approve'),
                 ),
               ],
             ),

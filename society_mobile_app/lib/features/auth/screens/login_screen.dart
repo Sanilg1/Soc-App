@@ -55,9 +55,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Worker Login'),
+        title: Text('Worker Login'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => context.go('/invite'),
         ),
       ),
@@ -69,17 +69,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Text(
                   'Access the Workboard',
                   style: theme.textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   'Enter your registered phone number and the Worker Passcode provided by the admin.',
                   style: theme.textTheme.bodyMedium,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
                 TextFormField(
                   controller: _phoneController,
                   enabled: !isLoading,
@@ -87,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     hintText: 'e.g., +91 9999999902',
-                    prefixIcon: const Icon(Icons.phone_rounded),
+                    prefixIcon: Icon(Icons.phone_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -99,7 +99,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextFormField(
                   controller: _codeController,
                   enabled: !isLoading,
@@ -108,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Worker Passcode',
                     hintText: 'e.g., 123456',
-                    prefixIcon: const Icon(Icons.lock_rounded),
+                    prefixIcon: Icon(Icons.lock_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -124,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ElevatedButton(
                   onPressed: isLoading ? null : _onSubmit,
                   child: isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -132,9 +132,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Login'),
+                      : Text('Login'),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
               ],
             ),
           ),

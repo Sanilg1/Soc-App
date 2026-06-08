@@ -50,7 +50,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
       case 'escalated':
         return AppTheme.emergencyColor;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -85,7 +85,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined),
+                icon: Icon(Icons.notifications_outlined),
                 onPressed: () => context.push('/worker-notifications'),
               ),
               Positioned(
@@ -101,7 +101,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     minWidth: 16,
                     minHeight: 16,
                   ),
-                  child: const Text(
+                  child: Text(
                     '3',
                     style: TextStyle(
                       color: Colors.white,
@@ -118,7 +118,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
       ),
       drawer: _buildDrawer(context, category, workerPhone),
       body: complaintsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
         data: (complaints) {
           // Categorize data
@@ -172,22 +172,22 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeaderProfile(theme, category, isPaused),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         Text('Quick Stats', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         _buildStatsGrid(theme, critical.length, pending.length, scheduled.length, revisits.length),
-                        const SizedBox(height: 16),
+                        SizedBox(height: 16),
                         if (category == 'ironing')
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade50, foregroundColor: Colors.red.shade900),
-                              icon: const Icon(Icons.currency_rupee),
-                              label: const Text('Resident Dues (Ledger)'),
+                              icon: Icon(Icons.currency_rupee),
+                              label: Text('Resident Dues (Ledger)'),
                               onPressed: () => context.push('/worker-dues'),
                             ),
                           ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -198,11 +198,11 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                             if (_currentFilter != TaskFilter.all)
                               TextButton(
                                 onPressed: () => setState(() => _currentFilter = TaskFilter.all),
-                                child: const Text('View All'),
+                                child: Text('View All'),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -214,9 +214,9 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.check_circle_outline, size: 64, color: Colors.grey.shade400),
-                              const SizedBox(height: 16),
-                              Text('No ${_getFilterTitle().toLowerCase()} found.', style: const TextStyle(color: Colors.grey)),
+                              Icon(Icons.check_circle_outline, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                              SizedBox(height: 16),
+                              Text('No ${_getFilterTitle().toLowerCase()} found.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                             ],
                           ),
                         ),
@@ -295,7 +295,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
               size: 28,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +312,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                           : category == 'ironing' 
                               ? 'Ironing Pro' 
                               : 'Housekeeping Pro',
-                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 if (isPaused)
                   Container(
@@ -323,7 +323,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.orangeAccent, width: 1),
                     ),
-                    child: const Text('WORKBOARD PAUSED', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: Text('WORKBOARD PAUSED', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
@@ -390,7 +390,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
         decoration: BoxDecoration(
           color: isSelected ? color : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? color : Colors.grey.withValues(alpha: 0.2), width: 1.5),
+          border: Border.all(color: isSelected ? color : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.2), width: 1.5),
           boxShadow: isSelected ? [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
         ),
         child: Column(
@@ -411,13 +411,13 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white.withValues(alpha: 0.9) : Colors.grey.shade600,
+                color: isSelected ? Colors.white.withValues(alpha: 0.9) : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -440,7 +440,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -507,12 +507,12 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     Text(
                       complaint.category.toUpperCase(),
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1.2),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.2),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       complaint.description,
                       maxLines: 2,
@@ -522,16 +522,16 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                         height: 1.3,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     // Action Footer
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.access_time_rounded, size: 14, color: Colors.grey.shade400),
-                            const SizedBox(width: 4),
-                            Text(formattedDate, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                            Icon(Icons.access_time_rounded, size: 14, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                            SizedBox(width: 4),
+                            Text(formattedDate, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                           ],
                         ),
                         Row(
@@ -544,7 +544,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                                 color: theme.colorScheme.primary,
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Icon(Icons.arrow_forward_rounded, size: 16, color: theme.colorScheme.primary),
                           ],
                         ),
@@ -587,7 +587,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
                     size: 28,
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   category == 'electrical' 
                       ? 'Electrician Specialist' 
@@ -603,37 +603,37 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.dashboard_outlined),
-            title: const Text('Workboard'),
+            leading: Icon(Icons.dashboard_outlined),
+            title: Text('Workboard'),
             onTap: () => context.pop(),
           ),
           ListTile(
-            leading: const Icon(Icons.pause_circle_outline),
-            title: const Text('Request Pause'),
+            leading: Icon(Icons.pause_circle_outline),
+            title: Text('Request Pause'),
             onTap: () {
               context.pop();
               context.push('/worker-pause-request');
             },
           ),
           ListTile(
-            leading: const Icon(Icons.date_range_outlined),
-            title: const Text('Apply for Leave'),
+            leading: Icon(Icons.date_range_outlined),
+            title: Text('Apply for Leave'),
             onTap: () {
               context.pop();
               context.push('/worker-leave-request');
             },
           ),
           ListTile(
-            leading: const Icon(Icons.history_toggle_off_outlined),
-            title: const Text('Leave History'),
+            leading: Icon(Icons.history_toggle_off_outlined),
+            title: Text('Leave History'),
             onTap: () {
               context.pop();
               context.push('/worker-leave-history');
             },
           ),
           ListTile(
-            leading: const Icon(Icons.history_outlined),
-            title: const Text('Task History'),
+            leading: Icon(Icons.history_outlined),
+            title: Text('Task History'),
             onTap: () {
               context.pop();
               context.push('/worker-history');
