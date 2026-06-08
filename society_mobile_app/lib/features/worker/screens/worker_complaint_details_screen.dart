@@ -267,7 +267,9 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
               ),
               
               // Bottom Action Bar
-              _buildBottomActionBar(context, ref, complaint, workerName),
+              SafeArea(
+                child: _buildBottomActionBar(context, ref, complaint, workerName),
+              ),
             ],
           ),
         );
@@ -329,12 +331,12 @@ class WorkerComplaintDetailsScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         'Note: ${event.note}',
-                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: theme.textTheme.bodyMedium?.color),
                       ),
                     ),
                   ],

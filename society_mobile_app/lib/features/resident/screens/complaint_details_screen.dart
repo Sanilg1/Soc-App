@@ -622,12 +622,12 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                             decoration: BoxDecoration(
-                                              color: Colors.grey[100],
+                                              color: theme.colorScheme.surfaceContainerHighest,
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               'Note: ${event.note}',
-                                              style: TextStyle(fontSize: 12, color: Colors.grey[800], fontStyle: FontStyle.italic),
+                                              style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color, fontStyle: FontStyle.italic),
                                             ),
                                           ),
                                         ],
@@ -646,6 +646,7 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                 ],
               ),
             ),
+          ),
           ),
         );
       },

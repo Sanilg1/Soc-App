@@ -60,27 +60,31 @@ class HelpSupportScreen extends StatelessWidget {
                 'Frequently Asked Questions',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 12),
               _buildFaqTile(
+                theme,
                 'My notifications are not appearing when the screen is off',
                 'Please ensure you have granted background activity permissions for the app. '
                 'Go to Android Settings -> Apps -> Society App -> Battery -> set to "Unrestricted". '
                 'Also turn on "Allow notifications" and check that "Importance" is set to Urgent/Max.',
               ),
               _buildFaqTile(
+                theme,
                 'How can I update my flat phone numbers?',
                 'Only the society administrator can register or update default phone numbers for flats. '
                 'Please contact the main office desk using the email or phone listed below to add new members.',
               ),
               _buildFaqTile(
+                theme,
                 'How long does a hall booking approval take?',
                 'Community hall requests are reviewed by the resident welfare committee within 24 to 48 hours. '
                 'You will receive an update in the app once approved or rejected.',
               ),
               _buildFaqTile(
+                theme,
                 'A worker hasn\'t acknowledged my urgent complaint',
                 'Emergency complaints have a 15-minute acknowledgment window. '
                 'If a worker does not accept it within 15 minutes, the system auto-escalates it to the admin committee and alerts them directly.',
@@ -90,7 +94,7 @@ class HelpSupportScreen extends StatelessWidget {
                 'Contact Admin Office',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 12),
@@ -101,24 +105,46 @@ class HelpSupportScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      ListTile(
-                        leading: Icon(Icons.phone_outlined, color: theme.colorScheme.primary),
-                        title: const Text('+91 98765 43210'),
-                        subtitle: const Text('Monday to Saturday • 9 AM - 6 PM'),
-                        trailing: ElevatedButton(
-                          onPressed: () => _makeCall('+919876543210'),
-                          child: const Text('Call'),
-                        ),
+                      Row(
+                        children: [
+                          Icon(Icons.phone_outlined, color: theme.colorScheme.primary),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('+91 98765 43210', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Monday to Saturday • 9 AM - 6 PM', style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7))),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _makeCall('+919876543210'),
+                            child: const Text('Call'),
+                          ),
+                        ],
                       ),
-                      const Divider(),
-                      ListTile(
-                        leading: Icon(Icons.email_outlined, color: theme.colorScheme.primary),
-                        title: const Text('admin@society.app'),
-                        subtitle: const Text('Typically replies within 4 hours'),
-                        trailing: ElevatedButton(
-                          onPressed: () => _sendEmail('admin@society.app'),
-                          child: const Text('Email'),
-                        ),
+                      const Divider(height: 32),
+                      Row(
+                        children: [
+                          Icon(Icons.email_outlined, color: theme.colorScheme.primary),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('admin@society.app', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text('Typically replies within 4 hours', style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7))),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () => _sendEmail('admin@society.app'),
+                            child: const Text('Email'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -132,21 +158,21 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqTile(String question, String answer) {
+  Widget _buildFaqTile(ThemeData theme, String question, String answer) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ExpansionTile(
         title: Text(
           question,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 14,
-            color: Colors.black87,
+            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -154,9 +180,9 @@ class HelpSupportScreen extends StatelessWidget {
         children: [
           Text(
             answer,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Colors.black54,
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
               height: 1.4,
             ),
           ),
