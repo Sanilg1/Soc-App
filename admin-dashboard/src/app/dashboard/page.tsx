@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import Header from '@/components/Header';
 import KpiCard from '@/components/KpiCard';
 import StatusBadge from '@/components/StatusBadge';
@@ -61,11 +63,7 @@ export default function DashboardPage() {
     low: 1,
   };
 
-  const sortedComplaints = [...complaints].sort((a, b) => {
-    const diff = (urgencyWeight[b.urgency] || 0) - (urgencyWeight[a.urgency] || 0);
-    if (diff !== 0) return diff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const { sortedData: sortedComplaints, sortField, sortDirection, handleSort } = useTableSort(complaints, 'createdAt', 'desc');
   
   return (
     <>
@@ -164,11 +162,11 @@ export default function DashboardPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Flat</th>
-                    <th>Issue</th>
-                    <th>Urgency</th>
-                    <th>Status</th>
-                    <th>Time</th>
+                    <SortableHeader label="Flat" field="flatId" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Issue" field="description" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Urgency" field="urgency" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Status" field="status" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Time" field="createdAt" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
                   </tr>
                 </thead>
                 <tbody>

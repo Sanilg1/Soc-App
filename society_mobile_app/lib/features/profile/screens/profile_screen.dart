@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:society_mobile_app/features/auth/providers/auth_provider.dart';
 import 'package:society_mobile_app/core/services/storage_service.dart';
+import 'package:society_mobile_app/core/theme/theme_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -290,7 +291,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 onTap: () => context.push('/privacy-policy'),
               ),
               
-              SizedBox(height: 48),
+              SizedBox(height: 12),
+              _buildThemeToggle(),
+              
+              SizedBox(height: 32),
               
               SizedBox(
                 width: double.infinity,
@@ -315,6 +319,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               SizedBox(height: 24),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeToggle() {
+    final themeMode = ref.watch(themeProvider);
+    
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 24),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.brightness_6_outlined, color: const Color(0xFF64748B)),
+                SizedBox(width: 16),
+                Text('App Theme', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+              ],
+            ),
+            SegmentedButton<ThemeMode>(
+              segments: const [
+                ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
+                ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto)),
+                ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
+              ],
+              selected: {themeMode},
+              onSelectionChanged: (Set<ThemeMode> newSelection) {
+                ref.read(themeProvider.notifier).setTheme(newSelection.first);
+              },
+              style: SegmentedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              showSelectedIcon: false,
+            ),
+          ],
         ),
       ),
     );

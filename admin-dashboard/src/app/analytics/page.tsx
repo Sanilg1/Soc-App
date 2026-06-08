@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import Header from '@/components/Header';
 import KpiCard from '@/components/KpiCard';
 import { useApp } from '@/context/AppContext';
@@ -25,6 +27,8 @@ export default function AnalyticsPage() {
   
   const electricalPct = totalComplaints > 0 ? Math.round((electricalCount / totalComplaints) * 100) : 0;
   const plumbingPct = totalComplaints > 0 ? Math.round((plumbingCount / totalComplaints) * 100) : 0;
+
+  const { sortedData: sortedWorkers, sortField, sortDirection, handleSort } = useTableSort(workers, 'completedThisWeek', 'desc');
 
   const urgencyCounts = {
     emergency: complaints.filter(c => c.urgency === 'emergency').length,
@@ -243,16 +247,16 @@ export default function AnalyticsPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Worker</th>
-                  <th>Category</th>
-                  <th>Total Resolved</th>
-                  <th>Avg Resolution Time</th>
-                  <th>SLA Compliance</th>
-                  <th>Status</th>
+                  <SortableHeader label="Worker" field="name" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Category" field="category" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Total Resolved" field="completedThisWeek" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Avg Resolution Time" field="avgResolutionHours" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="SLA Compliance" field="slaCompliance" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                  <SortableHeader label="Status" field="active" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
                 </tr>
               </thead>
               <tbody>
-                {workers.map(worker => (
+                {sortedWorkers.map(worker => (
                   <tr key={worker.id}>
                     <td className="table-cell-primary">{worker.name}</td>
                     <td>

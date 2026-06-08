@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
@@ -32,7 +34,8 @@ export default function EscalationsPage() {
   const { escalations, resolveEscalation } = useApp();
 
   const active = escalations.filter(e => !e.resolved);
-  const resolved = escalations.filter(e => e.resolved);
+  const resolvedEscalations = escalations.filter(e => e.resolved);
+  const { sortedData: resolved, sortField, sortDirection, handleSort } = useTableSort(resolvedEscalations, 'complaintId', 'asc');
 
   function handleResolve(id: string) {
     resolveEscalation(id);
@@ -122,12 +125,12 @@ export default function EscalationsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Type</th>
-                    <th>Complaint</th>
-                    <th>Flat</th>
-                    <th>Worker</th>
-                    <th>Duration</th>
-                    <th>Resolved By</th>
+                    <SortableHeader label="Type" field="type" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Complaint" field="complaintId" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Flat" field="flatId" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Worker" field="worker" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Duration" field="timeElapsed" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Resolved By" field="resolvedBy" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
                     <th>Status</th>
                   </tr>
                 </thead>

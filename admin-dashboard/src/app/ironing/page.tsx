@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import Modal from '@/components/Modal';
@@ -26,6 +28,7 @@ export default function IroningLedgerPage() {
 
   // Get active ledger details
   const activeLedger = selectedFlatId ? ledgers.find(l => l.flatId === selectedFlatId) : null;
+  const { sortedData: sortedLedgers, sortField: ledgerSortField, sortDirection: ledgerSortDirection, handleSort: handleLedgerSort } = useTableSort(ledgers, 'flatId', 'asc');
 
   // Handlers
   function openPaymentModal(ledger: FlatLedger) {
@@ -113,6 +116,8 @@ export default function IroningLedgerPage() {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 10);
 
+  const { sortedData: sortedTransactions, sortField: txSortField, sortDirection: txSortDirection, handleSort: handleTxSort } = useTableSort(recentTransactions, 'timestamp', 'desc');
+
   const handleExportCSV = () => {
     if (ledgers.length === 0) {
       alert('No data to export');
@@ -182,21 +187,21 @@ export default function IroningLedgerPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Flat ID</th>
-                    <th>Outstanding Dues</th>
+                    <SortableHeader label="Flat ID" field="flatId" currentSortField={ledgerSortField as string} sortDirection={ledgerSortDirection} onSort={handleLedgerSort} />
+                    <SortableHeader label="Outstanding Dues" field="outstandingBalance" currentSortField={ledgerSortField as string} sortDirection={ledgerSortDirection} onSort={handleLedgerSort} />
                     <th>Last Transaction</th>
                     <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ledgers.length === 0 ? (
+                  {sortedLedgers.length === 0 ? (
                     <tr>
                       <td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--color-neutral-500)' }}>
                         No ledgers found.
                       </td>
                     </tr>
                   ) : (
-                    ledgers.map((ledger) => {
+                    sortedLedgers.map((ledger) => {
                       const lastTx = ledger.transactions[0];
                       const lastTxDesc = lastTx 
                         ? `${lastTx.type === 'charge' ? 'Charged' : 'Paid'} ₹${lastTx.amount} (${formatDate(lastTx.timestamp)})`
@@ -266,22 +271,22 @@ export default function IroningLedgerPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>Flat</th>
-                  <th>Description</th>
-                  <th>Type</th>
-                  <th style={{ textAlign: 'right' }}>Amount</th>
+                  <SortableHeader label="Time" field="timestamp" currentSortField={txSortField as string} sortDirection={txSortDirection} onSort={handleTxSort} />
+                  <SortableHeader label="Flat" field="flatId" currentSortField={txSortField as string} sortDirection={txSortDirection} onSort={handleTxSort} />
+                  <SortableHeader label="Description" field="description" currentSortField={txSortField as string} sortDirection={txSortDirection} onSort={handleTxSort} />
+                  <SortableHeader label="Type" field="type" currentSortField={txSortField as string} sortDirection={txSortDirection} onSort={handleTxSort} />
+                  <SortableHeader label="Amount" field="amount" currentSortField={txSortField as string} sortDirection={txSortDirection} onSort={handleTxSort} className="text-right" />
                 </tr>
               </thead>
               <tbody>
-                {recentTransactions.length === 0 ? (
+                {sortedTransactions.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--color-neutral-500)' }}>
                       No transactions recorded.
                     </td>
                   </tr>
                 ) : (
-                  recentTransactions.map((tx) => (
+                  sortedTransactions.map((tx) => (
                     <tr key={tx.id}>
                       <td className="table-cell-secondary">{formatDate(tx.timestamp)}</td>
                       <td className="table-cell-primary">Flat {tx.flatId}</td>

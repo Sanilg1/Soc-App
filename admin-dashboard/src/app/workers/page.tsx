@@ -7,6 +7,8 @@ import StatusBadge from '@/components/StatusBadge';
 import { useApp } from '@/context/AppContext';
 import Modal from '@/components/Modal';
 import { useState } from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 
 function getCategorySvg(category: string) {
   switch (category) {
@@ -51,6 +53,7 @@ const CATEGORY_ICONS: Record<string, { gradient: string }> = {
 
 export default function WorkersPage() {
   const { workers, leaveRequests, toggleWorkerActive, updateLeaveStatus, addWorker, updateWorker } = useApp();
+  const { sortedData: sortedLeaveRequests, sortField, sortDirection, handleSort } = useTableSort(leaveRequests, 'startDate', 'desc');
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [newWorker, setNewWorker] = useState({ name: '', category: 'electrical', phone: '' });
@@ -229,14 +232,14 @@ export default function WorkersPage() {
                 </tr>
               </thead>
               <tbody>
-                {leaveRequests.length === 0 ? (
+                {sortedLeaveRequests.length === 0 ? (
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--color-neutral-500)' }}>
                       No leave requests at the moment.
                     </td>
                   </tr>
                 ) : (
-                  leaveRequests.map((req) => (
+                  sortedLeaveRequests.map((req) => (
                     <tr key={req.id}>
                       <td className="table-cell-primary">{req.workerName}</td>
                       <td>Leave</td>

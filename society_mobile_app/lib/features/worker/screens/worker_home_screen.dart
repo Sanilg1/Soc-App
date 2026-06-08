@@ -382,7 +382,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
     final isSelected = _currentFilter == filter;
     
     return InkWell(
-      onTap: () => setState(() => _currentFilter = filter),
+      onTap: () => setState(() => _currentFilter = isSelected ? TaskFilter.all : filter),
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -435,6 +435,7 @@ class _WorkerHomeScreenState extends ConsumerState<WorkerHomeScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),

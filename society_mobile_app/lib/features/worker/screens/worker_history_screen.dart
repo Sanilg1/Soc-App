@@ -17,7 +17,6 @@ class WorkerHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         title: Text('Task History'),
       ),
       body: complaintsAsync.when(

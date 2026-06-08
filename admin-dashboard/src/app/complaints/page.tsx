@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
@@ -91,11 +93,7 @@ function ComplaintsPageContent() {
     low: 1,
   };
 
-  const sortedAndFiltered = [...filtered].sort((a, b) => {
-    const diff = urgencyWeight[b.urgency] - urgencyWeight[a.urgency];
-    if (diff !== 0) return diff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+  const { sortedData: sortedAndFiltered, sortField, sortDirection, handleSort } = useTableSort(filtered, 'createdAt', 'desc');
 
   // Keep selectedComplaint in sync with context data
   const liveSelected = selectedComplaint ? complaints.find(c => c.id === selectedComplaint.id) || null : null;

@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import Header from '@/components/Header';
 import { useApp } from '@/context/AppContext';
 import { formatDate } from '@/lib/mock-data';
@@ -24,6 +26,8 @@ export default function ActivityLogsPage() {
     }
     return true;
   });
+  const { sortedData: sortedFilteredLogs, sortField, sortDirection, handleSort } = useTableSort(filteredLogs, 'createdAt', 'desc');
+
 
   function getActionBadgeClass(action: ActivityLogAction) {
     switch (action) {
@@ -86,16 +90,16 @@ export default function ActivityLogsPage() {
           <table className="table">
             <thead>
               <tr>
-                <th style={{ width: '180px' }}>Timestamp</th>
-                <th style={{ width: '120px' }}>Complaint ID</th>
-                <th style={{ width: '150px' }}>Action</th>
-                <th style={{ width: '180px' }}>Performed By</th>
+                <SortableHeader label="Timestamp" field="createdAt" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} className="w-180" />
+                <SortableHeader label="Complaint ID" field="complaintId" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} className="w-120" />
+                <SortableHeader label="Action" field="action" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} className="w-150" />
+                <SortableHeader label="Performed By" field="performedBy" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} className="w-180" />
                 <th>Changes</th>
-                <th>Note / Details</th>
+                <SortableHeader label="Note / Details" field="note" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.length === 0 ? (
+              {sortedFilteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-12)' }}>
                     <div className="empty-state">
@@ -110,7 +114,7 @@ export default function ActivityLogsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => (
+                sortedFilteredLogs.map((log) => (
                   <tr key={log.id}>
                     <td className="table-cell-secondary">{formatDate(log.createdAt)}</td>
                     <td className="table-cell-primary">

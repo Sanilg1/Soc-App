@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTableSort } from '../../hooks/useTableSort';
+import { SortableHeader } from '../../components/SortableHeader';
 import toast from 'react-hot-toast';
 import Header from '@/components/Header';
 import StatusBadge from '@/components/StatusBadge';
@@ -14,7 +16,8 @@ export default function SocietyIssuesPage() {
   const { societyIssues, addSocietyIssue, updateIssueStatus, addIssueUpdate } = useApp();
 
   const active = societyIssues.filter(i => i.status !== 'resolved');
-  const resolved = societyIssues.filter(i => i.status === 'resolved');
+  const resolvedIssuesList = societyIssues.filter(i => i.status === 'resolved');
+  const { sortedData: resolved, sortField, sortDirection, handleSort } = useTableSort(resolvedIssuesList, 'createdAt', 'desc');
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -205,9 +208,9 @@ export default function SocietyIssuesPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Issue</th>
-                    <th>Reported By</th>
-                    <th>Created</th>
+                    <SortableHeader label="Issue" field="title" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Reported By" field="reportedBy" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
+                    <SortableHeader label="Created" field="createdAt" currentSortField={sortField as string} sortDirection={sortDirection} onSort={handleSort} />
                     <th>Status</th>
                   </tr>
                 </thead>
