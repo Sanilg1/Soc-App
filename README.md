@@ -48,6 +48,7 @@ SocietySync is divided into two primary parts:
 
 ## 📖 Documentation
 Detailed guides can be found in the `docs` folder:
+- [iOS Setup Guide](./docs/ios_setup_guide.md) (Read this if building for iPhone/iPad)
 - [User Guide](./docs/user_guide.md)
 - [Frequently Asked Questions (FAQ)](./docs/faq.md)
 - [Privacy Policy](./docs/privacy_policy.md)
@@ -66,6 +67,7 @@ cd society_mobile_app
 flutter pub get
 flutter run
 ```
+> **Note:** If you are building for a physical iOS device, please follow the [iOS Setup Guide](./docs/ios_setup_guide.md) to configure your Apple Developer Certificate and Firebase integration in Xcode.
 
 ### Running the Admin Dashboard
 ```bash
