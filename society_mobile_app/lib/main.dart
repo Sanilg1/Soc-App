@@ -45,10 +45,24 @@ void main() async {
     // Initialize Local Notifications
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
+    );
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
     );
     await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
+
+    // Request permissions for iOS and Web via Firebase
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // Request permissions for Android 13+ (POST_NOTIFICATIONS)
     await flutterLocalNotificationsPlugin
