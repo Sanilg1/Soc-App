@@ -63,5 +63,17 @@ Starting with iOS 16, iPhones require Developer Mode to be turned on to run apps
 4. On your iPhone, go to **Settings > General > VPN & Device Management** (or just Device Management).
 5. Tap your Apple ID email under "Developer App" and tap **Trust**.
 
-## Step 7: Run the App
-You are all set! You can now launch the app from your iPhone's home screen, or run `flutter run` in your terminal to see the live debug logs.
+## Step 7: Enable Push Notifications (Optional but Recommended)
+To receive Firebase push notifications on iOS, you must add specific capabilities and link your Apple Developer account:
+1. In Xcode, select **Runner** under TARGETS.
+2. Go to the **Signing & Capabilities** tab.
+3. Click the **+ Capability** button (top left).
+4. Double-click **Push Notifications** to add it.
+5. Click **+ Capability** again and add **Background Modes**.
+6. Under Background Modes, check the box for **Remote notifications**.
+7. In your [Apple Developer Account](https://developer.apple.com/account), create a new Key with **Apple Push Notifications service (APNs)** enabled, and download the `.p8` file.
+8. Go to your **Firebase Console** > **Project Settings** > **Cloud Messaging**.
+9. Under the **Apple app configuration** section, upload your `.p8` file in the **APNs Authentication Key** section (you will need your Apple Team ID and Key ID).
+
+## Step 8: Run the App
+You are all set! You can now launch the app from your iPhone's home screen, or run `flutter run` in your terminal to see the live debug logs. For a standalone version that runs without the terminal, use `flutter run --release`.
