@@ -18,7 +18,7 @@ import {
   setPersistence,
   browserSessionPersistence
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 interface AdminProfile {
@@ -84,13 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               id: currentUser.uid,
             });
           } else {
-            // Check admins collection too
-            const adminRef = doc(db, 'admins', currentUser.uid);
-            const adminSnap = await getDoc(adminRef);
-            if (adminSnap.exists()) {
+            // Check admins collection by phone
+            const adminsRef = collection(db, 'admins');
+            const q = query(adminsRef, where('phone', '==', currentUser.phoneNumber));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
               setUser(currentUser);
               setAdminProfile({
-                name: adminSnap.data().name || 'Admin',
+                name: querySnapshot.docs[0].data().name || 'Admin',
                 role: 'admin',
                 phone: currentUser.phoneNumber || '',
                 id: currentUser.uid,
@@ -170,10 +171,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (docSnap.exists() && docSnap.data().role === 'admin') {
             return true;
           } else {
-            // Check admins collection too
-            const adminRef = doc(db, 'admins', cred.user.uid);
-            const adminSnap = await getDoc(adminRef);
-            if (adminSnap.exists()) {
+            // Check admins collection by phone
+            const adminsRef = collection(db, 'admins');
+            const q = query(adminsRef, where('phone', '==', cred.user.phoneNumber));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
               return true;
             } else {
               throw new Error('You are not authorized as an administrator.');
