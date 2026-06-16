@@ -122,7 +122,7 @@ export default function LoginPage() {
                   className="login-input"
                 />
               </div>
-              <span className="input-helper">Use simulation mock: +1 555-010-0003</span>
+              <span className="input-helper">Use your registered admin number</span>
             </div>
 
             <button
@@ -150,7 +150,7 @@ export default function LoginPage() {
                   id="otp"
                   type="text"
                   maxLength={6}
-                  placeholder="Enter 123456"
+                  placeholder="Enter 6-digit code"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
                   onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleVerifyOtp(e); } }}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useTableSort } from '../../hooks/useTableSort';
 import { SortableHeader } from '../../components/SortableHeader';
 import toast from 'react-hot-toast';
@@ -103,9 +104,9 @@ export default function EscalationsPage() {
                         <button className="btn btn--primary btn--sm" onClick={() => handleResolve(esc.id)}>
                           Mark Resolved
                         </button>
-                        <a href={`/complaints`} className="btn btn--secondary btn--sm">
+                        <Link href={`/complaints`} className="btn btn--secondary btn--sm">
                           View Complaint
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>

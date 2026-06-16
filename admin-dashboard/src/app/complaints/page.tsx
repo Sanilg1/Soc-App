@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useTableSort } from '../../hooks/useTableSort';
 import { SortableHeader } from '../../components/SortableHeader';
 import { useSearchParams } from 'next/navigation';
@@ -206,9 +207,9 @@ function ComplaintsPageContent() {
                     ₹{matchedLedger ? matchedLedger.outstandingBalance : 0}
                   </p>
                   {matchedLedger && (
-                    <a href="/ironing" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-600)', textDecoration: 'underline', fontWeight: 500 }}>
+                    <Link href="/ironing" style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-primary-600)', textDecoration: 'underline', fontWeight: 500 }}>
                       View Ledger Dues
-                    </a>
+                    </Link>
                   )}
                 </div>
                 <div style={{ textAlign: 'right', borderLeft: '1px solid var(--color-neutral-200)', paddingLeft: 'var(--space-6)' }}>

@@ -1,183 +1,211 @@
 rules_version = '2';
- 
+
 service cloud.firestore {
   match /databases/{database}/documents {
- 
+
     // ──────────────────────────────────────
     // Helper Functions
     // ──────────────────────────────────────
- 
+
     function isAuthenticated() {
       return request.auth != null;
     }
- 
+
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
- 
+
     function getUserFlatId() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.flatId;
     }
- 
+
     function isResident() {
       return isAuthenticated() && getUserRole() == 'resident';
     }
- 
+
     function isWorker() {
       return isAuthenticated() && getUserRole() == 'worker';
     }
- 
+
     function isAdmin() {
-      // Allow write if user is authenticated AND exists in 'users' collection with role 'admin'
-      // OR exists in 'admins' collection
-      return request.auth != null && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
- 
+
     function isGuard() {
       return isAuthenticated() && getUserRole() == 'guard';
     }
- 
+
     function getWorkerCategory() {
       return get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.category;
     }
- 
+
     // ──────────────────────────────────────
     // Users Collection
     // ──────────────────────────────────────
     match /users/{userId} {
-      allow read: if true;
-      allow write: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin() || request.auth.uid == userId;
     }
- 
+
     // ──────────────────────────────────────
     // Flats Collection
     // ──────────────────────────────────────
     match /flats/{flatId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && (getUserFlatId() == flatId || isAdmin());
       allow write: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Complaints Collection
     // ──────────────────────────────────────
     match /complaints/{complaintId} {
-      // Allow reads for admin dashboard (simulated auth)
-      // and authenticated residents/workers
-      allow read: if true;
- 
+      // Residents can read only their own flat's complaints
+      // Workers can read complaints in their assigned category
+      // Admins can read all complaints
+      allow read: if isAuthenticated() && (
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        (isWorker() && resource.data.category == getWorkerCategory()) ||
+        isAdmin()
+      );
+
       // Residents can create complaints for their own flat
       allow create: if isResident() && request.resource.data.flatId == getUserFlatId();
- 
-      // Workers, residents, admins can update
-      allow update: if isAuthenticated();
- 
+
+      // Workers can update complaints in their category
+      // Residents can update their own flat's complaints (reopen, confirm)
+      // Admins can update any complaint
+      allow update: if isAuthenticated() && (
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        (isWorker() && resource.data.category == getWorkerCategory()) ||
+        isAdmin()
+      );
+
       // Only admins can delete complaints
       allow delete: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Society Issues Collection
     // ──────────────────────────────────────
     match /society_issues/{issueId} {
-      allow read: if true;
-      allow create: if isAuthenticated();
+      // All authenticated users can read society issues (public)
+      allow read: if isAuthenticated();
+
+      // Residents can create society issues
+      allow create: if isResident();
+
+      // Only admins can update/delete society issues
       allow update, delete: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Workers Collection
     // ──────────────────────────────────────
     match /workers/{workerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || request.auth.uid == workerId;
     }
- 
+
     // ──────────────────────────────────────
     // Admins Collection
     // ──────────────────────────────────────
     match /admins/{adminId} {
-      allow read: if true;
-      allow create: if request.resource.data.secret == '123456';
-      allow update, delete: if isAdmin();
+      allow read: if isAuthenticated() && (request.auth.uid == adminId || isAdmin());
+      allow write: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Guards Collection
     // ──────────────────────────────────────
     match /guards/{guardId} {
-      allow read: if true;
+      allow read: if isAuthenticated() && (request.auth.uid == guardId || isAdmin());
       allow write: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Notifications Collection
     // ──────────────────────────────────────
     match /notifications/{notificationId} {
-      allow read: if true;
-      allow update: if true;
-      allow create, delete: if true;
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.targetUserId == request.auth.uid;
+
+      // Only Cloud Functions (admin SDK) should create notifications
+      // Allow update for marking as read
+      allow update: if isAuthenticated() && resource.data.targetUserId == request.auth.uid;
+
+      allow create, delete: if false; // Only via Cloud Functions (admin SDK)
     }
- 
+
     // ──────────────────────────────────────
     // Leave Requests Collection
     // ──────────────────────────────────────
     match /leave_requests/{requestId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if true;
-      allow delete: if true;
+      allow read: if isAuthenticated() && (
+        (isWorker() && resource.data.workerId == request.auth.uid) ||
+        isAdmin()
+      );
+
+      // Workers can create their own leave requests
+      allow create: if isWorker() && request.resource.data.workerId == request.auth.uid;
+
+      // Admins can update (approve/reject), workers can update their pending requests
+      allow update: if isAdmin() || (isWorker() && resource.data.workerId == request.auth.uid && resource.data.status == 'pending');
+
+      allow delete: if isAdmin();
     }
- 
+
     // ──────────────────────────────────────
     // Escalations Collection
     // ──────────────────────────────────────
     match /escalations/{escalationId} {
-      allow read: if true;
-      allow create, update, delete: if true;
+      // Admins and guards (for emergency) can read escalations
+      allow read: if isAdmin() || (isGuard() && resource.data.type == 'emergency');
+
+      // Only Cloud Functions should create/update escalations
+      allow create, update, delete: if false; // Only via Cloud Functions (admin SDK)
     }
- 
+
     // ──────────────────────────────────────
     // Activity Logs Collection
     // ──────────────────────────────────────
     match /activity_logs/{logId} {
-      allow read: if true;
-      allow create, update, delete: if true;
+      // Admins can read all logs
+      // Residents can read logs for their flat's complaints
+      // Workers can read logs for their category's complaints
+      allow read: if isAdmin();
+
+      // Only Cloud Functions should create activity logs
+      allow create, update, delete: if false; // Only via Cloud Functions (admin SDK)
     }
- 
+
     // ──────────────────────────────────────
     // Flat Ledgers Collection
     // ──────────────────────────────────────
     match /flat_ledgers/{flatId} {
-      allow read: if true;
-      allow write: if true;
+      // Residents can only read their own ledger
+      // Workers (e.g. Iron Lady) and Admins can read all ledgers
+      allow read: if isAuthenticated() && (
+        (isResident() && getUserFlatId() == flatId) ||
+        isWorker() ||
+        isAdmin()
+      );
+      
+      // Workers and Admins can write/update ledgers
+      allow write: if isAdmin() || isWorker();
     }
- 
+
     // ──────────────────────────────────────
     // Notices Collection
     // ──────────────────────────────────────
     match /notices/{noticeId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // ──────────────────────────────────────
-    // Visitors Collection
-    // ──────────────────────────────────────
-    match /visitors/{visitorId} {
-      allow read: if true;
-      allow write: if true;
-    }
-
-    // ──────────────────────────────────────
-    // Hall Bookings Collection
-    // ──────────────────────────────────────
-    match /hall_bookings/{bookingId} {
-      allow read: if true;
-      allow write: if true;
+      // All authenticated users can read notices
+      allow read: if isAuthenticated();
+      
+      // Only admins can write notices
+      allow write: if isAdmin();
     }
   }
 }

@@ -42,7 +42,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const USE_SIMULATION = true;
+const USE_SIMULATION = false;
 const MOCK_ADMIN_PHONE = '+15550100003';
 
 const MOCK_ADMIN_PROFILE: AdminProfile = {
@@ -160,45 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const confirmOtp = async (code: string): Promise<boolean> => {
     setError(null);
     try {
-      const isMockAdmin = (mockVerificationPhone || '').replace('+91', '').startsWith('981') || (mockVerificationPhone || '').startsWith('981');
-      // Simulation successful ONLY for mock code AND mock phone number starting with 981
-      if (USE_SIMULATION && isMockAdmin && code === '123456') {
-        // Authenticate anonymously so we get a REAL Firebase Auth session
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.setItem('auth_in_progress', 'true');
-        }
-        
-        await setPersistence(auth, browserSessionPersistence);
-        const cred = await signInAnonymously(auth);
-        
-        // Write to admins collection using the secret backdoor rule
-        await setDoc(doc(db, 'admins', cred.user.uid), {
-          role: 'admin',
-          name: 'Administrator',
-          phone: mockVerificationPhone || MOCK_ADMIN_PHONE,
-          secret: '123456'
-        });
-
-        if (typeof window !== 'undefined') {
-          window.sessionStorage.removeItem('auth_in_progress');
-        }
-
-        setUser(cred.user);
-        setAdminProfile({
-          id: 'admin_seeded_1',
-          name: 'Administrator',
-          role: 'admin',
-          phone: mockVerificationPhone || '',
-        });
-        setIsSimulated(true);
-        
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('sim_admin_session', 'true');
-        }
-        
-        return true;
-      }
-
       if (confirmationResult) {
         const cred = await confirmationResult.confirm(code);
         if (cred.user) {

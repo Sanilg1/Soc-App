@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useTableSort } from '../../hooks/useTableSort';
 import { SortableHeader } from '../../components/SortableHeader';
 import Header from '@/components/Header';
@@ -118,9 +119,9 @@ export default function ActivityLogsPage() {
                   <tr key={log.id}>
                     <td className="table-cell-secondary">{formatDate(log.createdAt)}</td>
                     <td className="table-cell-primary">
-                      <a href={`/complaints/${log.complaintId}`} style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>
+                      <Link href={`/complaints/${log.complaintId}`} style={{ color: 'var(--color-primary-600)', fontWeight: 600 }}>
                         {log.complaintId}
-                      </a>
+                      </Link>
                     </td>
                     <td>
                       <span className={getActionBadgeClass(log.action)}>

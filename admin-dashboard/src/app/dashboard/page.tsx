@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useTableSort } from '../../hooks/useTableSort';
 import { SortableHeader } from '../../components/SortableHeader';
 import Header from '@/components/Header';
@@ -156,7 +157,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Recent Complaints</h2>
-              <a href="/complaints" className="btn btn--ghost btn--sm">View All →</a>
+              <Link href="/complaints" className="btn btn--ghost btn--sm">View All →</Link>
             </div>
             <div className="table-container" style={{ border: 'none' }}>
               <table className="table">
@@ -202,7 +203,7 @@ export default function DashboardPage() {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Escalation Alerts</h2>
-              <a href="/escalations" className="btn btn--ghost btn--sm">View All →</a>
+              <Link href="/escalations" className="btn btn--ghost btn--sm">View All →</Link>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
               {activeEscalations.length === 0 ? (
@@ -235,7 +236,7 @@ export default function DashboardPage() {
                       </p>
                       <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                         <StatusBadge status={esc.severity} />
-                        <a href={`/escalations`} className="btn btn--secondary btn--sm" style={{ padding: '2px 8px', fontSize: '10px', height: 'auto' }}>Resolve</a>
+                        <Link href={`/escalations`} className="btn btn--secondary btn--sm" style={{ padding: '2px 8px', fontSize: '10px', height: 'auto' }}>Resolve</Link>
                       </div>
                     </div>
                   );
@@ -249,7 +250,7 @@ export default function DashboardPage() {
         <div className="card">
           <div className="card-header">
             <h2 className="card-title">Worker Status</h2>
-            <a href="/workers" className="btn btn--ghost btn--sm">Manage →</a>
+            <Link href="/workers" className="btn btn--ghost btn--sm">Manage →</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)' }}>
             {workers.map(worker => {
