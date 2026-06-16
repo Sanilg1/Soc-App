@@ -71,42 +71,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
         if (currentUser) {
-          // Verify if user is admin
-          const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
+          const HARDCODED_ADMIN_PHONE = '+919818557372';
           
-          if (docSnap.exists() && docSnap.data().role === 'admin') {
+          // Hardcoded super admin — bypass all Firestore checks
+          if (currentUser.phoneNumber === HARDCODED_ADMIN_PHONE) {
             setUser(currentUser);
             setAdminProfile({
-              name: docSnap.data().name || 'Admin',
-              role: docSnap.data().role,
-              phone: currentUser.phoneNumber || '',
+              name: 'Sanil (Admin)',
+              role: 'admin',
+              phone: currentUser.phoneNumber,
               id: currentUser.uid,
             });
           } else {
-            // Check admins collection by phone
-            const adminsRef = collection(db, 'admins');
-            const q = query(adminsRef, where('phone', '==', currentUser.phoneNumber));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
+            // Verify if user is admin via Firestore
+            const docRef = doc(db, 'users', currentUser.uid);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists() && docSnap.data().role === 'admin') {
               setUser(currentUser);
               setAdminProfile({
-                name: querySnapshot.docs[0].data().name || 'Admin',
-                role: 'admin',
+                name: docSnap.data().name || 'Admin',
+                role: docSnap.data().role,
                 phone: currentUser.phoneNumber || '',
                 id: currentUser.uid,
               });
             } else {
-              // Check if we are currently mid-login (simulated auth)
-              if (typeof window !== 'undefined' && window.sessionStorage.getItem('auth_in_progress') === 'true') {
-                return;
-              }
+              // Check admins collection by phone
+              const adminsRef = collection(db, 'admins');
+              const q = query(adminsRef, where('phone', '==', currentUser.phoneNumber));
+              const querySnapshot = await getDocs(q);
+              if (!querySnapshot.empty) {
+                setUser(currentUser);
+                setAdminProfile({
+                  name: querySnapshot.docs[0].data().name || 'Admin',
+                  role: 'admin',
+                  phone: currentUser.phoneNumber || '',
+                  id: currentUser.uid,
+                });
+              } else {
+                // Check if we are currently mid-login (simulated auth)
+                if (typeof window !== 'undefined' && window.sessionStorage.getItem('auth_in_progress') === 'true') {
+                  return;
+                }
 
-              // Not an admin, kick out
-              setError('Access denied: You are not authorized as an administrator.');
-              await fbSignOut(auth);
-              setUser(null);
-              setAdminProfile(null);
+                // Not an admin, kick out
+                setError('Access denied: You are not authorized as an administrator.');
+                await fbSignOut(auth);
+                setUser(null);
+                setAdminProfile(null);
+              }
             }
           }
         } else {
@@ -140,6 +153,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Real firebase auth verification
+      if (process.env.NODE_ENV === 'development') {
+        auth.settings.appVerificationDisabledForTesting = true;
+      }
+      
       if (!(window as any).recaptchaVerifier) {
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
@@ -153,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMockVerificationPhone(cleanPhone);
       return true;
     } catch (err: any) {
+      console.error("FIREBASE SMS ERROR:", err);
       setError(err.message || 'Failed to send OTP code.');
       return false;
     }

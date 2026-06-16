@@ -72,12 +72,9 @@ class AuthService {
       return InviteVerificationResult(isValid: true);
     } catch (e) {
       debugPrint('Error verifying invite code: $e');
-      if (inviteCode == '123456') {
-        return InviteVerificationResult(isValid: true);
-      }
       return InviteVerificationResult(
         isValid: false,
-        errorMessage: 'Database connection error: $e',
+        errorMessage: 'Unable to verify invite. Please check your connection and try again.',
       );
     }
   }
@@ -140,27 +137,6 @@ class AuthService {
         password: code,
       );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-        // If it's a worker logging in for the first time with a default code (e.g., 123456)
-        // we can dynamically create their account here.
-        if (code == '123456') {
-          try {
-            final credential = await _auth.createUserWithEmailAndPassword(
-              email: email,
-              password: code,
-            );
-            await _db.collection('users').doc(credential.user!.uid).set({
-              'phone': phone,
-              'role': 'worker', // Fallback role
-              'createdAt': FieldValue.serverTimestamp(),
-              'status': 'active',
-            });
-            return credential;
-          } catch (createErr) {
-            throw Exception('Invalid phone or code');
-          }
-        }
-      }
       throw Exception(e.message ?? 'Login failed. Check your phone number and code.');
     }
   }

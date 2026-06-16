@@ -24,7 +24,9 @@ docs/
 
 # Credentials and Keys
 google-services.json
+google-services-new.json
 GoogleService-Info.plist
 firebase-adminsdk-*.json
 serviceAccountKey.json
 *.env*
+seed.mjs
