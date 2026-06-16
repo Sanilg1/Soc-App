@@ -51,9 +51,31 @@ class ComplaintService {
     }
 
     try {
-      final docId = complaint.id.isEmpty ? _db.collection('complaints').doc().id : complaint.id;
-      await _db.collection('complaints').doc(docId).set(complaint.copyWith(id: docId).toMap());
-      return docId;
+      if (complaint.id.isEmpty) {
+        // Generate Sequential ID using a Firestore Transaction
+        final counterRef = _db.collection('metadata').doc('counters');
+        return await _db.runTransaction((transaction) async {
+          final snapshot = await transaction.get(counterRef);
+          int newCount = 1;
+          if (snapshot.exists) {
+            newCount = (snapshot.data()?['complaints'] ?? 0) + 1;
+          }
+          
+          transaction.set(counterRef, {'complaints': newCount}, SetOptions(merge: true));
+          
+          final docId = 'CMP-${newCount.toString().padLeft(4, '0')}';
+          final newComplaint = complaint.copyWith(id: docId);
+          
+          final docRef = _db.collection('complaints').doc(docId);
+          transaction.set(docRef, newComplaint.toMap());
+          
+          return docId;
+        });
+      } else {
+        // If an ID is already provided (e.g., retries)
+        await _db.collection('complaints').doc(complaint.id).set(complaint.toMap());
+        return complaint.id;
+      }
     } catch (e) {
       debugPrint('Firestore submitComplaint failed, falling back to simulation: $e');
       final mockId = complaint.id.isEmpty ? 'mock_complaint_${DateTime.now().millisecondsSinceEpoch}' : complaint.id;

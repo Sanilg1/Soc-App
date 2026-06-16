@@ -207,5 +207,14 @@ service cloud.firestore {
       // Only admins can write notices
       allow write: if isAdmin();
     }
+
+    // ──────────────────────────────────────
+    // Metadata / Counters
+    // ──────────────────────────────────────
+    match /metadata/{document} {
+      // Allow authenticated users to read and update counters
+      // Used for generating sequential IDs like CMP-0001
+      allow read, write: if isAuthenticated();
+    }
   }
 }
