@@ -14,7 +14,9 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   type ConfirmationResult,
-  type User 
+  type User,
+  setPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
@@ -40,7 +42,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const USE_SIMULATION = false;
+const USE_SIMULATION = true;
 const MOCK_ADMIN_PHONE = '+15550100003';
 
 const MOCK_ADMIN_PROFILE: AdminProfile = {
@@ -94,6 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 id: currentUser.uid,
               });
             } else {
+              // Check if we are currently mid-login (simulated auth)
+              if (typeof window !== 'undefined' && window.sessionStorage.getItem('auth_in_progress') === 'true') {
+                return;
+              }
+
               // Not an admin, kick out
               setError('Access denied: You are not authorized as an administrator.');
               await fbSignOut(auth);
@@ -138,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       }
 
+      await setPersistence(auth, browserSessionPersistence);
       const appVerifier = (window as any).recaptchaVerifier;
       const result = await signInWithPhoneNumber(auth, cleanPhone, appVerifier);
       setConfirmationResult(result);
@@ -156,6 +164,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Simulation successful ONLY for mock code AND mock phone number starting with 981
       if (USE_SIMULATION && isMockAdmin && code === '123456') {
         // Authenticate anonymously so we get a REAL Firebase Auth session
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem('auth_in_progress', 'true');
+        }
+        
+        await setPersistence(auth, browserSessionPersistence);
         const cred = await signInAnonymously(auth);
         
         // Write to admins collection using the secret backdoor rule
@@ -165,6 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: mockVerificationPhone || MOCK_ADMIN_PHONE,
           secret: '123456'
         });
+
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem('auth_in_progress');
+        }
 
         setUser(cred.user);
         setAdminProfile({

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/firebase/config';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import type { Notice } from '@/types';
@@ -56,33 +56,15 @@ export default function NoticesPage() {
     
     try {
       if (editId) {
-        if (isSimulated) {
-          contextUpdateNotice(editId, { title, topic, content });
-        } else {
-          // If we had a contextUpdateNotice it's fine, but wait we didn't export db update to context properly if we bypassed it here.
-          // In the current code, the context has addNotice/updateNotice/deleteNotice. 
-          // We can just use contextUpdateNotice for both simulated and real if it handles it, but currently the page uses addDoc directly.
-          // Let's use contextUpdateNotice. Wait, the page does addDoc directly for real mode.
-          // Let's keep the pattern.
-          await contextUpdateNotice(editId, { title, topic, content });
-        }
+        await updateDoc(doc(db, 'notices', editId), { title, topic, content });
       } else {
-        if (isSimulated) {
-          contextAddNotice({
-            title,
-            topic,
-            content,
-            author: 'Admin Team',
-          });
-        } else {
-          await addDoc(collection(db, 'notices'), {
-            title,
-            topic,
-            content,
-            author: 'Admin Team',
-            createdAt: serverTimestamp(),
-          });
-        }
+        await addDoc(collection(db, 'notices'), {
+          title,
+          topic,
+          content,
+          author: 'Admin Team',
+          createdAt: serverTimestamp(),
+        });
       }
       setIsModalOpen(false);
       setTitle('');
