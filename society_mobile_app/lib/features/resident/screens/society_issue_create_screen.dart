@@ -25,7 +25,7 @@ class _SocietyIssueCreateScreenState extends ConsumerState<SocietyIssueCreateScr
   bool _isSubmitting = false;
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _imagePicker.pickImage(source: source, imageQuality: 70);
+    final pickedFile = await _imagePicker.pickImage(source: source, imageQuality: 70, maxWidth: 1024, maxHeight: 1024);
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
