@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'core/theme/app_theme.dart';
 import 'routes/app_router.dart';
@@ -34,7 +35,9 @@ void main() async {
   // Try initializing Firebase, but catch errors to allow running and testing the app
   // with stubs even when google-services.json or GoogleService-Info.plist are not yet added.
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     // Enable offline persistence explicitly
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
