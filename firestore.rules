@@ -228,8 +228,8 @@ service cloud.firestore {
     match /metadata/{document} {
       // Authenticated users can read counters (e.g. for displaying IDs)
       allow read: if isAuthenticated();
-      // Only admins (or Cloud Functions via Admin SDK) can write/update counters
-      allow write: if isAdmin();
+      // Allow authenticated users to update counters (needed for transaction to generate sequential IDs)
+      allow write: if isAuthenticated();
     }
 
     // ──────────────────────────────────────
