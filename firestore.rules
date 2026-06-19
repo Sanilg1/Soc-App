@@ -63,7 +63,7 @@ service cloud.firestore {
     // ──────────────────────────────────────
     match /flats/{flatId} {
       // Any authenticated user can read flats (needed for invite verification during registration)
-      allow read: if isAuthenticated();
+      allow read: if true; // Changed to true to allow unauthenticated invite verification
       allow write: if isAdmin();
     }
 
@@ -114,7 +114,7 @@ service cloud.firestore {
     // Workers Collection
     // ──────────────────────────────────────
     match /workers/{workerId} {
-      allow read: if isAuthenticated();
+      allow read: if true; // Changed to true to allow unauthenticated worker login verification
       // Admins have full write access
       allow write: if isAdmin();
       // Workers can update their own doc but CANNOT change category, active, or pauseStatus
