@@ -263,18 +263,17 @@ service cloud.firestore {
     // Hall Bookings Collection
     // ──────────────────────────────────────
     match /hall_bookings/{bookingId} {
-      // Residents can read their own flat's bookings
-      // Admins can read all bookings
-      allow read: if isAuthenticated() && (
-        (isResident() && resource.data.flatId == getUserFlatId()) ||
-        isAdmin()
-      );
+      // All authenticated users can read bookings (needed to check availability across flats)
+      allow read: if isAuthenticated();
 
       // Residents can create bookings for their own flat
       allow create: if isResident() && request.resource.data.flatId == getUserFlatId();
 
-      // Only admins can update (approve/reject) or delete bookings
-      allow update, delete: if isAdmin();
+      // Admins can update/delete any booking
+      // Residents can update their own booking (e.g., to cancel or edit)
+      allow update: if isAdmin() || (isResident() && resource.data.flatId == getUserFlatId());
+      
+      allow delete: if isAdmin();
     }
   }
 }
