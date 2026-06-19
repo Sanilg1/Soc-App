@@ -151,10 +151,13 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   controller: _phoneController,
                   enabled: !isLoading,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
                   decoration: InputDecoration(
                     labelText: 'Registered Phone Number',
-                    hintText: 'e.g., +1 555-010-0001',
+                    hintText: '9876543210',
                     prefixIcon: Icon(Icons.phone_rounded),
+                    prefixText: '+91 ',
+                    counterText: '',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -162,6 +165,10 @@ class _InviteCodeScreenState extends ConsumerState<InviteCodeScreen> {
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your registered phone number';
+                    }
+                    final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+                    if (digits.length != 10) {
+                      return 'Enter exactly 10 digits';
                     }
                     return null;
                   },

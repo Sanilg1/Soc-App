@@ -93,6 +93,7 @@ export interface Worker {
   name: string;
   category: ComplaintCategory;
   phone: string;
+  inviteCode: string;
   active: boolean;
   onLeave: boolean;
   pauseStatus: boolean;

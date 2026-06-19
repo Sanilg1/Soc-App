@@ -21,14 +21,23 @@ export default function ResidentsPage() {
 
   const handleAddPhone = async () => {
     if (!selectedFlat || !newPhone.trim()) return;
+
+    // Normalize phone: strip non-digits, take last 10, prepend +91
+    const digits = newPhone.replace(/\D/g, '');
+    const last10 = digits.slice(-10);
+    if (last10.length !== 10) {
+      toast.error('Phone number must be 10 digits.');
+      return;
+    }
+    const normalizedPhone = `+91${last10}`;
     
     const currentPhones = selectedFlat.phoneNumbers || [];
-    if (currentPhones.includes(newPhone)) {
+    if (currentPhones.includes(normalizedPhone)) {
       toast.error('Phone number already added');
       return;
     }
     
-    const updatedPhones = [...currentPhones, newPhone];
+    const updatedPhones = [...currentPhones, normalizedPhone];
     await updateFlatPhoneNumbers(selectedFlat.id, updatedPhones);
     setNewPhone('');
   };

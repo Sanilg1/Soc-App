@@ -195,18 +195,33 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  /// Step 2: Login for Returning Residents / Workers using Passcode
+  /// Step 2: Login for Workers using Phone + Worker Passcode (invite code)
+  /// Mirrors the resident flow: verify against workers collection first, then Firebase auth.
   Future<bool> loginUser(String phone, String code) async {
     state = state.copyWith(status: AuthStatus.authenticating);
     
     try {
-      final userCred = await _authService.loginWithPhoneAndCode(phone, code);
+      // First verify the worker phone + invite code against the workers collection
+      final result = await _authService.verifyWorkerLogin(phone, code);
+      if (!result.isValid) {
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          errorMessage: result.errorMessage ?? 'Invalid phone number or passcode',
+        );
+        return false;
+      }
+
+      // Verified — now register or login via Firebase Auth
+      final userCred = await _authService.registerWorkerWithInvite(
+        phone: phone,
+        inviteCode: code,
+      );
       final uid = userCred.user?.uid;
       if (uid == null) throw Exception("Failed to get User ID");
 
       final profile = await _authService.getUserProfile(uid) ?? {
-        'role': 'worker', // default fallback for dynamically created mock accounts
-        'phone': phone,
+        'role': 'worker',
+        'phone': _authService.normalizePhone(phone),
       };
 
       _setAuthenticatedState(uid, profile);

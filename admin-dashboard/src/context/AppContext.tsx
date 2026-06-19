@@ -560,12 +560,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addWorker = useCallback(async (data: { name: string; category: string; phone: string }) => {
     try {
+      // Normalize phone: strip non-digits, take last 10, prepend +91
+      const digits = data.phone.replace(/\D/g, '');
+      const last10 = digits.slice(-10);
+      if (last10.length !== 10) {
+        toast.error('Phone number must be 10 digits.');
+        return;
+      }
+      const normalizedPhone = `+91${last10}`;
+
+      // Auto-generate a 6-digit invite code for worker login
+      const inviteCode = Math.floor(100000 + Math.random() * 900000).toString();
+
       const ref = doc(collection(db, 'workers'));
       await setDoc(ref, {
         id: ref.id,
         name: data.name,
         category: data.category,
-        phone: data.phone,
+        phone: normalizedPhone,
+        inviteCode,
         active: true,
         onLeave: false,
         pauseStatus: false,
@@ -577,7 +590,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         activeComplaints: 0,
         createdAt: new Date().toISOString(),
       });
-      toast.success('Worker added successfully.');
+      toast.success(`Worker added. Invite code: ${inviteCode}`);
     } catch (e) {
       console.error('Firestore addWorker error:', e);
       toast.error('Failed to add worker.');

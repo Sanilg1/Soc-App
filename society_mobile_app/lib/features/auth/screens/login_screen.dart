@@ -84,10 +84,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _phoneController,
                   enabled: !isLoading,
                   keyboardType: TextInputType.phone,
+                  maxLength: 10,
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
-                    hintText: 'e.g., +91 9999999902',
+                    hintText: '9876543210',
                     prefixIcon: Icon(Icons.phone_rounded),
+                    prefixText: '+91 ',
+                    counterText: '',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -95,6 +98,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your phone number';
+                    }
+                    final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+                    if (digits.length != 10) {
+                      return 'Enter exactly 10 digits';
                     }
                     return null;
                   },
@@ -107,7 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Worker Passcode',
-                    hintText: 'e.g., 123456',
+                    hintText: '6-digit code from admin',
                     prefixIcon: Icon(Icons.lock_rounded),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),

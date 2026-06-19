@@ -48,7 +48,14 @@ service cloud.firestore {
     // ──────────────────────────────────────
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin() || request.auth.uid == userId;
+      // Admins have full write access
+      allow write: if isAdmin();
+      // Users can update their own profile, but CANNOT change their role
+      allow update: if request.auth.uid == userId
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      // Users can create their own doc during registration (role set by backend)
+      allow create: if request.auth.uid == userId
+        && request.resource.data.role == 'resident';
     }
 
     // ──────────────────────────────────────
@@ -108,14 +115,19 @@ service cloud.firestore {
     // ──────────────────────────────────────
     match /workers/{workerId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin() || request.auth.uid == workerId;
+      // Admins have full write access
+      allow write: if isAdmin();
+      // Workers can update their own doc but CANNOT change category, active, or pauseStatus
+      allow update: if request.auth.uid == workerId
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['category', 'active', 'pauseStatus']));
     }
 
     // ──────────────────────────────────────
     // Admins Collection
     // ──────────────────────────────────────
     match /admins/{adminId} {
-      allow read: if isAuthenticated();
+      // Only admins can read admin records (prevents identity/phone leaks)
+      allow read: if isAdmin();
       allow write: if isAdmin();
     }
 
@@ -188,15 +200,15 @@ service cloud.firestore {
     // ──────────────────────────────────────
     match /flat_ledgers/{flatId} {
       // Residents can only read their own ledger
-      // Workers (e.g. Iron Lady) and Admins can read all ledgers
+      // Only housekeeping workers (ironing) and Admins can read all ledgers
       allow read: if isAuthenticated() && (
         (isResident() && getUserFlatId() == flatId) ||
-        isWorker() ||
+        (isWorker() && getWorkerCategory() == 'housekeeping') ||
         isAdmin()
       );
       
-      // Workers and Admins can write/update ledgers
-      allow write: if isAdmin() || isWorker();
+      // Only housekeeping workers and Admins can write/update ledgers
+      allow write: if isAdmin() || (isWorker() && getWorkerCategory() == 'housekeeping');
     }
 
     // ──────────────────────────────────────
@@ -214,9 +226,55 @@ service cloud.firestore {
     // Metadata / Counters
     // ──────────────────────────────────────
     match /metadata/{document} {
-      // Allow authenticated users to read and update counters
-      // Used for generating sequential IDs like CMP-0001
-      allow read, write: if isAuthenticated();
+      // Authenticated users can read counters (e.g. for displaying IDs)
+      allow read: if isAuthenticated();
+      // Only admins (or Cloud Functions via Admin SDK) can write/update counters
+      allow write: if isAdmin();
+    }
+
+    // ──────────────────────────────────────
+    // Visitors Collection
+    // ──────────────────────────────────────
+    match /visitors/{visitorId} {
+      // Residents can read visitors for their own flat
+      // Guards and admins can read all visitors
+      allow read: if isAuthenticated() && (
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        isGuard() ||
+        isAdmin()
+      );
+
+      // Guards can create visitor entries
+      allow create: if isGuard();
+
+      // Residents can update (approve/deny) their own flat's visitors
+      // Guards and admins can update any visitor
+      allow update: if isAuthenticated() && (
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        isGuard() ||
+        isAdmin()
+      );
+
+      // Only admins can delete visitor records
+      allow delete: if isAdmin();
+    }
+
+    // ──────────────────────────────────────
+    // Hall Bookings Collection
+    // ──────────────────────────────────────
+    match /hall_bookings/{bookingId} {
+      // Residents can read their own flat's bookings
+      // Admins can read all bookings
+      allow read: if isAuthenticated() && (
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        isAdmin()
+      );
+
+      // Residents can create bookings for their own flat
+      allow create: if isResident() && request.resource.data.flatId == getUserFlatId();
+
+      // Only admins can update (approve/reject) or delete bookings
+      allow update, delete: if isAdmin();
     }
   }
 }

@@ -139,10 +139,20 @@ export default function WorkersPage() {
                       {worker.category.charAt(0).toUpperCase() + worker.category.slice(1)} • {worker.phone}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-1)' }}>
-                    <StatusBadge status={worker.active ? 'approved' : 'rejected'} />
-                    {worker.onLeave && <StatusBadge status="warning" />}
-                    {worker.pauseStatus && <StatusBadge status="pending" />}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-2)' }}>
+                    <div style={{ background: 'var(--color-primary-50)', padding: '4px 8px', borderRadius: '6px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '9px', color: 'var(--color-primary-600)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>
+                        Passcode
+                      </div>
+                      <div style={{ fontSize: 'var(--font-size-md)', fontFamily: 'monospace', fontWeight: 700, color: 'var(--color-primary-900)', letterSpacing: '1px' }}>
+                        {worker.inviteCode || 'N/A'}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <StatusBadge status={worker.active ? 'approved' : 'rejected'} />
+                      {worker.onLeave && <StatusBadge status="warning" />}
+                      {worker.pauseStatus && <StatusBadge status="pending" />}
+                    </div>
                   </div>
                 </div>
 
@@ -184,6 +194,38 @@ export default function WorkersPage() {
                     </div>
                     <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)' }}>SLA</div>
                   </div>
+                </div>
+
+                {/* Contact Number — matches Resident Directory style */}
+                <div style={{ borderTop: '1px solid var(--color-primary-100)', paddingTop: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-700)' }}>Contact Number</h4>
+                  {!worker.phone ? (
+                    <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-400)', fontStyle: 'italic' }}>No phone added</p>
+                  ) : (
+                    <a
+                      href={`tel:${worker.phone}`}
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        fontSize: 'var(--font-size-sm)', 
+                        color: 'var(--color-neutral-700)', 
+                        textDecoration: 'none',
+                        padding: '6px 10px',
+                        background: 'var(--color-neutral-50)',
+                        borderRadius: '8px',
+                        border: '1px solid var(--color-neutral-200)',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = 'var(--color-primary-50)')}
+                      onMouseOut={(e) => (e.currentTarget.style.background = 'var(--color-neutral-50)')}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981', flexShrink: 0 }}>
+                        <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
+                      </svg>
+                      {worker.phone}
+                    </a>
+                  )}
                 </div>
 
                 {/* Actions */}

@@ -15,22 +15,23 @@ class AuthService {
   // Mock data for development when Firebase configurations are not fully wired up
   static const bool _useSimulation = false;
 
-  // Helper: check if phone number is a mock testing number
-  bool _isMockNumber(String phone) {
-    return phone.replaceAll(' ', '').contains('+1555010');
+  /// Normalize any phone input to +91XXXXXXXXXX format.
+  /// Strips all non-digits, takes the last 10, prepends +91.
+  String normalizePhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    final last10 = digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
+    return '+91$last10';
   }
 
-  // Robust phone comparison helper
+  // Robust phone comparison helper — normalizes both before comparing
   bool _comparePhones(String phone1, String phone2) {
-    final clean1 = phone1.replaceAll(RegExp(r'\D'), '');
-    final clean2 = phone2.replaceAll(RegExp(r'\D'), '');
-    if (clean1.length >= 10 && clean2.length >= 10) {
-      return clean1.endsWith(clean2) || clean2.endsWith(clean1);
-    }
-    return clean1 == clean2;
+    final norm1 = normalizePhone(phone1);
+    final norm2 = normalizePhone(phone2);
+    return norm1 == norm2;
   }
 
   /// Verifies if the invite code matches the registered flat number in Firestore
+  /// AND that the phone number is in the flat's authorized phoneNumbers list.
   Future<InviteVerificationResult> verifyInviteCode(String flatNumber, String inviteCode, String phone) async {
     if (_useSimulation && inviteCode == '123456') {
       return InviteVerificationResult(isValid: true);
@@ -65,7 +66,7 @@ class AuthService {
       if (!hasMatchingPhone) {
         return InviteVerificationResult(
           isValid: false,
-          errorMessage: 'Phone number $phone is not registered for Flat $flatNumber by the administrator.',
+          errorMessage: 'Phone number is not registered for Flat $flatNumber by the administrator.',
         );
       }
 
@@ -79,6 +80,58 @@ class AuthService {
     }
   }
 
+  /// Verifies worker login: checks phone + inviteCode against the workers collection.
+  /// Similar to how resident login checks flat + inviteCode + phone.
+  Future<InviteVerificationResult> verifyWorkerLogin(String phone, String inviteCode) async {
+    if (_useSimulation && inviteCode == '123456') {
+      return InviteVerificationResult(isValid: true);
+    }
+
+    try {
+      final normalizedPhone = normalizePhone(phone);
+
+      // Query workers by normalized phone
+      final querySnapshot = await _db
+          .collection('workers')
+          .where('phone', isEqualTo: normalizedPhone)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'No worker registered with this phone number. Contact your administrator.',
+        );
+      }
+
+      final workerData = querySnapshot.docs.first.data();
+
+      // Check invite code
+      if (workerData['inviteCode'] != inviteCode) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'Incorrect worker passcode. Please check with your administrator.',
+        );
+      }
+
+      // Check if the worker is active
+      if (workerData['active'] != true) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'Your worker account has been deactivated. Contact the administrator.',
+        );
+      }
+
+      return InviteVerificationResult(isValid: true);
+    } catch (e) {
+      debugPrint('Error verifying worker login: $e');
+      return InviteVerificationResult(
+        isValid: false,
+        errorMessage: 'Unable to verify. Please check your connection and try again.',
+      );
+    }
+  }
+
   /// Registers a new user via Invite Code (using Email/Password under the hood)
   Future<UserCredential> registerWithInvite({
     required String name,
@@ -86,7 +139,8 @@ class AuthService {
     required String phone,
     required String inviteCode,
   }) async {
-    final email = '${phone.replaceAll(' ', '').replaceAll('+', '')}@society.app';
+    final normalizedPhone = normalizePhone(phone);
+    final email = '${normalizedPhone.replaceAll('+', '')}@society.app';
     
     try {
       // 1. Create account using Phone as Email, and Invite Code as Password
@@ -99,7 +153,7 @@ class AuthService {
       if (credential.user != null) {
         await _db.collection('users').doc(credential.user!.uid).set({
           'name': name,
-          'phone': phone,
+          'phone': normalizedPhone,
           'flatId': flatNumber,
           'role': 'resident',
           'createdAt': FieldValue.serverTimestamp(),
@@ -111,11 +165,11 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
         // If they already registered, just log them in instead and update flatId
-        final credential = await loginWithPhoneAndCode(phone, inviteCode);
+        final credential = await loginWithPhoneAndCode(normalizedPhone, inviteCode);
         if (credential.user != null) {
           await _db.collection('users').doc(credential.user!.uid).set({
             'name': name,
-            'phone': phone,
+            'phone': normalizedPhone,
             'flatId': flatNumber,
             'role': 'resident',
             'status': 'active',
@@ -127,9 +181,68 @@ class AuthService {
     }
   }
 
+  /// Registers or logs in a worker using phone + invite code.
+  /// Creates a Firebase Auth account and Firestore user doc with role=worker.
+  Future<UserCredential> registerWorkerWithInvite({
+    required String phone,
+    required String inviteCode,
+  }) async {
+    final normalizedPhone = normalizePhone(phone);
+    final email = '${normalizedPhone.replaceAll('+', '')}@society.app';
+
+    // Fetch worker data to get name and category
+    final querySnapshot = await _db
+        .collection('workers')
+        .where('phone', isEqualTo: normalizedPhone)
+        .limit(1)
+        .get();
+
+    final workerData = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first.data() : null;
+    final workerName = workerData?['name'] ?? 'Worker';
+    final workerCategory = workerData?['category'] ?? '';
+
+    try {
+      // Try to create a new account
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: inviteCode,
+      );
+
+      if (credential.user != null) {
+        await _db.collection('users').doc(credential.user!.uid).set({
+          'name': workerName,
+          'phone': normalizedPhone,
+          'role': 'worker',
+          'category': workerCategory,
+          'createdAt': FieldValue.serverTimestamp(),
+          'status': 'active',
+        });
+      }
+
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        // Already registered — just log in and sync data
+        final credential = await loginWithPhoneAndCode(normalizedPhone, inviteCode);
+        if (credential.user != null) {
+          await _db.collection('users').doc(credential.user!.uid).set({
+            'name': workerName,
+            'phone': normalizedPhone,
+            'role': 'worker',
+            'category': workerCategory,
+            'status': 'active',
+          }, SetOptions(merge: true));
+        }
+        return credential;
+      }
+      throw Exception(e.message ?? 'Worker login failed');
+    }
+  }
+
   /// Logs in an existing user or worker using their Phone and Passcode/Invite Code
   Future<UserCredential> loginWithPhoneAndCode(String phone, String code) async {
-    final email = '${phone.replaceAll(' ', '').replaceAll('+', '')}@society.app';
+    final normalizedPhone = normalizePhone(phone);
+    final email = '${normalizedPhone.replaceAll('+', '')}@society.app';
     
     try {
       return await _auth.signInWithEmailAndPassword(
