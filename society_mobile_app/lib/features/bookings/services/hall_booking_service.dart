@@ -26,13 +26,17 @@ class HallBookingService {
     await _firestore.collection(_collection).doc(booking.id).update(booking.toMap());
   }
 
-  Future<bool> isSlotAvailable(String startDateStr, String endDateStr, String timeSlot) async {
+  Future<String?> checkSlotConflict(String startDateStr, String endDateStr, String timeSlot, {String? excludeBookingId}) async {
     final snapshot = await _firestore
         .collection(_collection)
         .where('status', isEqualTo: 'approved')
         .get();
 
     for (var doc in snapshot.docs) {
+      if (excludeBookingId != null && doc.id == excludeBookingId) {
+        continue;
+      }
+      
       final data = doc.data();
       final existingStartStr = data['date'] as String;
       final existingEndStr = (data['endDate'] ?? data['date']) as String;
@@ -44,11 +48,14 @@ class HallBookingService {
 
       if (datesOverlap) {
         if (existingSlot == 'Full Day' || timeSlot == 'Full Day' || existingSlot == timeSlot) {
-          return false; // Conflicting slot found
+          final String conflictDate = existingStartStr == existingEndStr 
+              ? existingStartStr 
+              : '$existingStartStr to $existingEndStr';
+          return 'Conflicts with an approved booking on $conflictDate ($existingSlot)';
         }
       }
     }
-    return true;
+    return null; // No conflict
   }
 
   Future<void> updateBookingStatus(String bookingId, String status) async {

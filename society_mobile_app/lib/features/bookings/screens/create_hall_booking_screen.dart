@@ -76,21 +76,25 @@ class _CreateHallBookingScreenState extends ConsumerState<CreateHallBookingScree
         final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate!);
         final endDateStr = DateFormat('yyyy-MM-dd').format(_endDate!);
         
-        // Check availability (exclude current booking from conflict check if it's the same date/time)
-        if (widget.existingBooking == null || 
-            widget.existingBooking!.date != startDateStr || 
-            widget.existingBooking!.endDate != endDateStr ||
-            widget.existingBooking!.timeSlot != _selectedTimeSlot) {
-          final isAvailable = await ref.read(hallBookingServiceProvider).isSlotAvailable(startDateStr, endDateStr, _selectedTimeSlot!);
-          if (!isAvailable) {
-            setState(() { _isLoading = false; });
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('The selected date range or time slot has conflicting approved bookings.')),
-              );
-            }
-            return;
+        // Check availability (always check, but exclude current booking from conflict check)
+        final conflictMsg = await ref.read(hallBookingServiceProvider).checkSlotConflict(
+          startDateStr, 
+          endDateStr, 
+          _selectedTimeSlot!,
+          excludeBookingId: widget.existingBooking?.id,
+        );
+        
+        if (conflictMsg != null) {
+          setState(() { _isLoading = false; });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(conflictMsg),
+                duration: const Duration(seconds: 4),
+              ),
+            );
           }
+          return;
         }
 
         final flatId = ref.read(authProvider).flatId ?? '';

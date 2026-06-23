@@ -143,12 +143,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendOtp = async (phone: string): Promise<boolean> => {
     setError(null);
     try {
-      const cleanPhone = phone.replace(/\s+/g, '');
-      const isMockAdmin = cleanPhone.replace('+91', '').startsWith('981') || cleanPhone.startsWith('981');
+      const digits = phone.replace(/\D/g, '');
+      const last10 = digits.slice(-10);
+      const normalizedPhone = `+91${last10}`;
+      
+      const isMockAdmin = normalizedPhone.replace('+91', '').startsWith('981');
       if (USE_SIMULATION && isMockAdmin) {
         // Simulation path
         await new Promise((res) => setTimeout(res, 800));
-        setMockVerificationPhone(cleanPhone);
+        setMockVerificationPhone(normalizedPhone);
         return true;
       }
       
@@ -165,9 +168,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await setPersistence(auth, browserSessionPersistence);
       const appVerifier = (window as any).recaptchaVerifier;
-      const result = await signInWithPhoneNumber(auth, cleanPhone, appVerifier);
+      const result = await signInWithPhoneNumber(auth, normalizedPhone, appVerifier);
       setConfirmationResult(result);
-      setMockVerificationPhone(cleanPhone);
+      setMockVerificationPhone(normalizedPhone);
       return true;
     } catch (err: any) {
       console.error("FIREBASE SMS ERROR:", err);

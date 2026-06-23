@@ -4,28 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../complaints/providers/complaints_provider.dart';
-
-/// Notification item model for the resident inbox
-class ResidentNotification {
-  final String id;
-  final String type; // complaint_submitted, worker_update, revisit_scheduled, completion_request, resident_unavailable, complaint_reopened, escalation
-  final String title;
-  final String message;
-  final String timestamp;
-  final bool read;
-  final String? complaintId;
-
-  ResidentNotification({
-    required this.id,
-    required this.type,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    this.read = false,
-    this.complaintId,
-  });
-}
+import '../../common/models/app_notification.dart';
+import '../../common/providers/notifications_provider.dart';
 
 class ResidentNotificationsScreen extends ConsumerWidget {
   const ResidentNotificationsScreen({super.key});
@@ -45,7 +25,15 @@ class ResidentNotificationsScreen extends ConsumerWidget {
       case 'complaint_reopened':
         return Icons.replay;
       case 'escalation':
+      case 'sla_breach':
+      case 'emergency_alert':
         return Icons.warning_amber_rounded;
+      case 'visitor_approval':
+        return Icons.person_pin_circle_outlined;
+      case 'hall_booking':
+        return Icons.event_available_outlined;
+      case 'complaint_update':
+        return Icons.update_outlined;
       default:
         return Icons.notifications_outlined;
     }
@@ -54,6 +42,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
   Color _getNotificationColor(String type) {
     switch (type) {
       case 'complaint_submitted':
+      case 'complaint_update':
         return Colors.blue;
       case 'worker_update':
         return Colors.purple;
@@ -64,9 +53,14 @@ class ResidentNotificationsScreen extends ConsumerWidget {
       case 'resident_unavailable':
         return AppTheme.highPriorityColor;
       case 'complaint_reopened':
-        return AppTheme.emergencyColor;
       case 'escalation':
+      case 'sla_breach':
+      case 'emergency_alert':
         return AppTheme.emergencyColor;
+      case 'visitor_approval':
+        return Colors.teal;
+      case 'hall_booking':
+        return Colors.indigo;
       default:
         return const Color(0xFF9E9E9E);
     }
@@ -92,102 +86,12 @@ class ResidentNotificationsScreen extends ConsumerWidget {
     }
   }
 
-  /// Generates notifications from complaint timeline events for this flat
-  List<ResidentNotification> _buildNotificationsFromComplaints(
-    List complaints,
-    String flatId,
-    List<String> readNotificationIds,
-  ) {
-    final notifications = <ResidentNotification>[];
-
-    for (final complaint in complaints) {
-      // Generate a notification for each timeline event
-      for (int i = 0; i < complaint.timeline.length; i++) {
-        final event = complaint.timeline[i];
-        String type;
-        String title;
-        String message;
-
-        // Determine notification type from timeline event
-        final action = event.action.toLowerCase();
-        if (action.contains('created')) {
-          type = 'complaint_submitted';
-          title = 'Complaint Submitted';
-          message =
-              'Your ${complaint.category} complaint has been submitted successfully.';
-        } else if (action.contains('visited') ||
-            action.contains('inspected')) {
-          type = 'worker_update';
-          title = 'Worker Visited';
-          message =
-              '${event.performedBy} has inspected your ${complaint.category} issue.';
-        } else if (action.contains('need tools') ||
-            action.contains('need_tools')) {
-          type = 'worker_update';
-          title = 'Parts Required';
-          message =
-              '${event.performedBy} needs additional tools/parts for your ${complaint.category} complaint.';
-        } else if (action.contains('revisit') ||
-            action.contains('scheduled')) {
-          type = 'revisit_scheduled';
-          title = 'Revisit Scheduled';
-          message =
-              '${event.performedBy} has scheduled a revisit for your ${complaint.category} issue.';
-        } else if (action.contains('unavailable')) {
-          type = 'resident_unavailable';
-          title = 'Resident Unavailable';
-          message =
-              'Worker visited but you were unavailable. Please update your availability.';
-        } else if (action.contains('completed') ||
-            action.contains('marked completed')) {
-          type = 'completion_request';
-          title = 'Resolution Complete';
-          message =
-              '${event.performedBy} has marked your ${complaint.category} complaint as completed. Please confirm.';
-        } else if (action.contains('confirmed')) {
-          type = 'completion_request';
-          title = 'Issue Resolved';
-          message = 'You confirmed the ${complaint.category} issue is resolved.';
-        } else if (action.contains('reopened')) {
-          type = 'complaint_reopened';
-          title = 'Complaint Reopened';
-          message = 'Your ${complaint.category} complaint has been reopened.';
-        } else if (action.contains('escalat')) {
-          type = 'escalation';
-          title = 'Complaint Escalated';
-          message =
-              'Your ${complaint.category} complaint has been escalated to the admin team.';
-        } else {
-          type = 'worker_update';
-          title = 'Update';
-          message = event.action;
-        }
-
-        final notifId = '${complaint.id}_$i';
-
-        notifications.add(ResidentNotification(
-          id: notifId,
-          type: type,
-          title: title,
-          message: message,
-          timestamp: event.timestamp,
-          read: readNotificationIds.contains(notifId),
-          complaintId: complaint.id,
-        ));
-      }
-    }
-
-    // Sort by timestamp descending (newest first)
-    notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    return notifications;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
     final flatId = authState.flatId ?? '';
-    final complaintsAsync = ref.watch(complaintsStreamProvider(flatId));
+    final notificationsAsync = ref.watch(notificationsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -197,26 +101,16 @@ class ResidentNotificationsScreen extends ConsumerWidget {
             icon: Icon(Icons.done_all),
             tooltip: 'Mark all as read',
             onPressed: () {
-              if (complaintsAsync.hasValue) {
-                final notifications = _buildNotificationsFromComplaints(
-                  complaintsAsync.value!, 
-                  flatId, 
-                  authState.readNotifications
-                );
-                final allIds = notifications.map((n) => n.id).toList();
-                ref.read(authProvider.notifier).markAllNotificationsAsRead(allIds);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('All notifications marked as read')),
-                );
-              }
+              NotificationActions.markAllAsRead(flatId);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All notifications marked as read')),
+              );
             },
           ),
         ],
       ),
-      body: complaintsAsync.when(
-        data: (complaints) {
-          final notifications = _buildNotificationsFromComplaints(complaints, flatId, authState.readNotifications);
-
+      body: notificationsAsync.when(
+        data: (notifications) {
           if (notifications.isEmpty) {
             return Center(
               child: Column(
@@ -234,7 +128,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'You\'ll see updates about your complaints here.',
+                    'You\'ll see updates about your complaints and requests here.',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -304,7 +198,7 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      _formatTimestamp(notif.timestamp),
+                      _formatTimestamp(notif.createdAt),
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -313,9 +207,14 @@ class ResidentNotificationsScreen extends ConsumerWidget {
                   ],
                 ),
                 onTap: () {
-                  ref.read(authProvider.notifier).markNotificationAsRead(notif.id);
+                  if (!notif.read) {
+                    NotificationActions.markAsRead(notif.id);
+                  }
+                  
                   if (notif.complaintId != null) {
                     context.push('/complaint-details/${notif.complaintId}');
+                  } else if (notif.bookingId != null) {
+                    context.push('/hall-bookings');
                   }
                 },
               );

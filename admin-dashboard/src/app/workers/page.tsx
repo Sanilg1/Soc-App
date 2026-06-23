@@ -56,10 +56,10 @@ export default function WorkersPage() {
   const { sortedData: sortedLeaveRequests, sortField, sortDirection, handleSort } = useTableSort(leaveRequests, 'startDate', 'desc');
   
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newWorker, setNewWorker] = useState({ name: '', category: 'electrical', phone: '' });
+  const [newWorker, setNewWorker] = useState({ name: '', category: 'electrical', phone: '', inviteCode: '' });
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingWorker, setEditingWorker] = useState<{ id: string; name: string; category: string; phone: string; oldPhone: string } | null>(null);
+  const [editingWorker, setEditingWorker] = useState<{ id: string; name: string; category: string; phone: string; oldPhone: string; inviteCode: string } | null>(null);
 
   function handleToggleActive(id: string, currentlyActive: boolean) {
     toggleWorkerActive(id);
@@ -77,9 +77,14 @@ export default function WorkersPage() {
       toast.error('Please fill all required fields');
       return;
     }
-    await addWorker(newWorker);
+    await addWorker({
+      name: newWorker.name,
+      category: newWorker.category,
+      phone: newWorker.phone,
+      inviteCode: newWorker.inviteCode
+    });
     setShowAddModal(false);
-    setNewWorker({ name: '', category: 'electrical', phone: '' });
+    setNewWorker({ name: '', category: 'electrical', phone: '', inviteCode: '' });
   }
 
   async function handleEditWorker(e: React.FormEvent) {
@@ -90,7 +95,7 @@ export default function WorkersPage() {
     }
     await updateWorker(
       editingWorker.id, 
-      { name: editingWorker.name, category: editingWorker.category, phone: editingWorker.phone },
+      { name: editingWorker.name, category: editingWorker.category, phone: editingWorker.phone, inviteCode: editingWorker.inviteCode },
       editingWorker.oldPhone
     );
     setShowEditModal(false);
@@ -239,7 +244,8 @@ export default function WorkersPage() {
                         name: worker.name,
                         category: worker.category,
                         phone: worker.phone,
-                        oldPhone: worker.phone
+                        oldPhone: worker.phone,
+                        inviteCode: worker.inviteCode || ''
                       });
                       setShowEditModal(true);
                     }}
@@ -361,6 +367,17 @@ export default function WorkersPage() {
               </select>
             </div>
 
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Custom Passcode (Optional)</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Leave blank to auto-generate"
+                value={newWorker.inviteCode}
+                onChange={(e) => setNewWorker({ ...newWorker, inviteCode: e.target.value })}
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
               <button type="submit" className="btn btn--primary" style={{ flex: 1 }}>
                 Register Worker
@@ -424,6 +441,17 @@ export default function WorkersPage() {
                 <option value="housekeeping">Housekeeping</option>
                 <option value="ironing">Ironing</option>
               </select>
+            </div>
+
+            <div className="form-group" style={{ marginTop: 'var(--space-4)' }}>
+              <label className="form-label">Update Passcode (Optional)</label>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Enter new 6-digit code"
+                value={editingWorker.inviteCode}
+                onChange={(e) => setEditingWorker({ ...editingWorker, inviteCode: e.target.value })}
+              />
             </div>
 
             <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>

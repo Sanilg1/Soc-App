@@ -93,8 +93,8 @@ interface AppContextType {
 
   // Worker Actions
   toggleWorkerActive: (id: string) => Promise<void>;
-  addWorker: (data: { name: string; category: string; phone: string }) => Promise<void>;
-  updateWorker: (id: string, data: { name: string; category: string; phone: string }, oldPhone?: string) => Promise<void>;
+  addWorker: (data: { name: string; category: string; phone: string; inviteCode?: string }) => Promise<void>;
+  updateWorker: (id: string, data: { name: string; category: string; phone: string; inviteCode?: string }, oldPhone?: string) => Promise<void>;
 
   // Leave Request Actions
   updateLeaveStatus: (id: string, status: LeaveRequestStatus) => Promise<void>;
@@ -558,7 +558,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [rawWorkers]);
 
-  const addWorker = useCallback(async (data: { name: string; category: string; phone: string }) => {
+  const addWorker = useCallback(async (data: { name: string; category: string; phone: string; inviteCode?: string }) => {
     try {
       // Normalize phone: strip non-digits, take last 10, prepend +91
       const digits = data.phone.replace(/\D/g, '');
@@ -569,8 +569,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       const normalizedPhone = `+91${last10}`;
 
-      // Auto-generate a 6-digit invite code for worker login
-      const inviteCode = Math.floor(100000 + Math.random() * 900000).toString();
+      // Auto-generate a 6-digit invite code if not provided
+      const inviteCode = data.inviteCode?.trim() || Math.floor(100000 + Math.random() * 900000).toString();
 
       const ref = doc(collection(db, 'workers'));
       await setDoc(ref, {
@@ -597,14 +597,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const updateWorker = useCallback(async (id: string, data: { name: string; category: string; phone: string }, oldPhone?: string) => {
+  const updateWorker = useCallback(async (id: string, data: { name: string; category: string; phone: string; inviteCode?: string }, oldPhone?: string) => {
     try {
+      // Normalize phone for update too
+      const digits = data.phone.replace(/\D/g, '');
+      const last10 = digits.slice(-10);
+      const normalizedPhone = last10.length === 10 ? `+91${last10}` : data.phone;
+
       const ref = doc(db, 'workers', id);
-      await updateDoc(ref, {
+      const updateData: any = {
         name: data.name,
         category: data.category,
-        phone: data.phone,
-      });
+        phone: normalizedPhone,
+      };
+      if (data.inviteCode?.trim()) {
+        updateData.inviteCode = data.inviteCode.trim();
+      }
+
+      await updateDoc(ref, updateData);
 
       // Try to sync with users collection if a user document exists for this worker
       if (oldPhone) {
@@ -616,7 +626,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           return updateDoc(doc(db, 'users', userDoc.id), {
             name: data.name,
             category: data.category,
-            phone: data.phone,
+            phone: normalizedPhone,
           });
         });
         await Promise.all(updatePromises);

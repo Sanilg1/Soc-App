@@ -724,7 +724,22 @@ export const onHallBookingUpdated = onDocumentUpdated("hall_bookings/{bookingId}
   if (!before || !after) return;
   if (before.status === after.status) return;
 
-  // Notify the resident who booked it
+  const now = new Date().toISOString();
+
+  // Create an in-app notification document for the resident
+  const notifRef = getFirestore().collection("notifications").doc();
+  await notifRef.set({
+    id: notifRef.id,
+    targetUserId: `resident_${after.flatId}`,
+    type: "hall_booking",
+    title: `Hall Booking ${after.status.toUpperCase()}`,
+    message: `Your booking for ${after.eventName} on ${after.date} has been ${after.status}.`,
+    read: false,
+    bookingId: event.params.bookingId,
+    createdAt: now,
+  });
+
+  // Also send push notification
   const usersSnapshot = await getFirestore()
     .collection("users")
     .where("flatId", "==", after.flatId)

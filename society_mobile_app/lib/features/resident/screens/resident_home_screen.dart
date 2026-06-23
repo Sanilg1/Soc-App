@@ -9,6 +9,7 @@ import '../../notices/models/notice_model.dart';
 import '../../../core/providers/network_provider.dart';
 import '../../visitors/providers/visitor_provider.dart';
 import '../../../core/services/messaging_service.dart';
+import '../../common/providers/notifications_provider.dart';
 
 class ResidentHomeScreen extends ConsumerStatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -71,6 +72,9 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
     // Watch network status
     final networkStatus = ref.watch(networkProvider);
 
+    // Watch notifications
+    final notificationsAsync = ref.watch(notificationsProvider);
+
     // Push notification mock listener
     ref.listen<AsyncValue<List<Notice>>>(noticesStreamProvider, (previous, next) {
       if (next.hasValue && next.value != null) {
@@ -93,18 +97,11 @@ class _ResidentHomeScreenState extends ConsumerState<ResidentHomeScreen> {
       }
     });
 
-    // Calculate unread notifications count from complaints timeline
+    // Calculate unread notifications count from Firestore stream
     int unreadNotificationsCount = 0;
-    complaintsAsync.whenData((complaintsList) {
-      for (final complaint in complaintsList) {
-        for (int i = 0; i < complaint.timeline.length; i++) {
-          final notifId = '${complaint.id}_$i';
-          if (!authState.readNotifications.contains(notifId)) {
-            unreadNotificationsCount++;
-          }
-        }
-      }
-    });
+    if (notificationsAsync.hasValue) {
+      unreadNotificationsCount = notificationsAsync.value!.where((n) => !n.read).length;
+    }
 
     return Scaffold(
       appBar: AppBar(
