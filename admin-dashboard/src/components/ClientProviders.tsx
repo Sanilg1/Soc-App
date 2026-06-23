@@ -20,7 +20,24 @@ function LayoutManager({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, isLoginPage, router]);
 
+  const [isClient, setIsClient] = React.useState(false);
+  useEffect(() => setIsClient(true), []);
+
   if (loading) {
+    const hasAuthToken = isClient && typeof window !== 'undefined' && 
+      Object.keys(window.sessionStorage).some(k => k.startsWith('firebase:authUser:'));
+
+    if (hasAuthToken && !isLoginPage) {
+      return (
+        <div className="dashboard-layout" style={{ opacity: 0.6, pointerEvents: 'none' }}>
+          <Sidebar />
+          <main className="dashboard-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner-large" style={{ width: '32px', height: '32px', borderTopColor: '#4f46e5' }}></div>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="loading-screen">
         <div className="spinner-large"></div>
