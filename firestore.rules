@@ -81,7 +81,7 @@ service cloud.firestore {
       );
 
       // Residents can create complaints for their own flat
-      allow create: if isResident() && request.resource.data.flatId == getUserFlatId();
+      allow create: if (isResident() && request.resource.data.flatId == getUserFlatId()) || isAdmin();
 
       // Workers can update complaints in their category
       // Residents can update their own flat's complaints (reopen, confirm)
@@ -103,8 +103,8 @@ service cloud.firestore {
       // All authenticated users can read society issues (public)
       allow read: if isAuthenticated();
 
-      // Residents can create society issues
-      allow create: if isResident();
+      // Residents and admins can create society issues
+      allow create: if isResident() || isAdmin();
 
       // Only admins can update/delete society issues
       allow update, delete: if isAdmin();
@@ -266,8 +266,8 @@ service cloud.firestore {
       // All authenticated users can read bookings (needed to check availability across flats)
       allow read: if isAuthenticated();
 
-      // Residents can create bookings for their own flat
-      allow create: if isResident() && request.resource.data.flatId == getUserFlatId();
+      // Residents can create bookings for their own flat. Admins can create them too (for testing/admin usage).
+      allow create: if (isResident() && request.resource.data.flatId == getUserFlatId()) || isAdmin();
 
       // Admins can update/delete any booking
       // Residents can update their own booking (e.g., to cancel or edit)
