@@ -178,8 +178,10 @@ service cloud.firestore {
       // Admins and guards (for emergency) can read escalations
       allow read: if isAdmin() || (isGuard() && resource.data.type == 'emergency');
 
-      // Only Cloud Functions should create/update escalations
-      allow create, update, delete: if false; // Only via Cloud Functions (admin SDK)
+      // Admins can create and update (resolve) escalations
+      allow create, update: if isAdmin();
+
+      allow delete: if false; // Only via Cloud Functions (admin SDK)
     }
 
     // ──────────────────────────────────────
