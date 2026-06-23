@@ -19,10 +19,12 @@ class ComplaintDetailsScreen extends ConsumerStatefulWidget {
 
 class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen> {
   final _reopenNoteController = TextEditingController();
+  final _closeReasonController = TextEditingController();
 
   @override
   void dispose() {
     _reopenNoteController.dispose();
+    _closeReasonController.dispose();
     super.dispose();
   }
 
@@ -73,6 +75,59 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                 _reopenNoteController.clear();
               },
               child: Text('Reopen'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCloseDialog(BuildContext context, Complaint complaint) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Close Complaint'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Are you sure you want to close this complaint? You can provide a reason (optional):'),
+              SizedBox(height: 12),
+              TextField(
+                controller: _closeReasonController,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  hintText: 'Reason for closing...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _closeReasonController.clear();
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final reason = _closeReasonController.text.trim();
+                Navigator.of(context).pop();
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Closing complaint...')),
+                );
+
+                await ref.read(complaintServiceProvider).closeComplaintManually(complaint.id, reason);
+                _closeReasonController.clear();
+              },
+              child: Text('Close Complaint'),
             ),
           ],
         );
@@ -643,6 +698,23 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                     ),
                   ),
                   SizedBox(height: 12),
+
+                  if (complaint.status != 'closed') ...[
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: BorderSide(color: Colors.red),
+                        ),
+                        icon: Icon(Icons.cancel_outlined),
+                        label: Text('Close Complaint'),
+                        onPressed: () => _showCloseDialog(context, complaint),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                  ],
                 ],
               ),
             ),

@@ -381,6 +381,62 @@ class ComplaintService {
     }
   }
 
+  /// Resident manually closes the complaint
+  Future<void> closeComplaintManually(String complaintId, String reason) async {
+    final now = DateTime.now().toIso8601String();
+    final timelineEvent = TimelineEvent(
+      action: 'Resident closed the complaint',
+      performedBy: 'Resident',
+      role: 'resident',
+      note: reason.isNotEmpty ? reason : null,
+      timestamp: now,
+    );
+
+    if (_useSimulation) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      final index = _mockComplaints.indexWhere((c) => c.id == complaintId);
+      if (index != -1) {
+        final existing = _mockComplaints[index];
+        _mockComplaints[index] = existing.copyWith(
+          status: 'closed',
+          timeline: [...existing.timeline, timelineEvent],
+          updatedAt: now,
+        );
+      }
+      return;
+    }
+
+    try {
+      final docRef = _db.collection('complaints').doc(complaintId);
+      await _db.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
+        if (!snapshot.exists) return;
+        
+        final data = snapshot.data()!;
+        final currentTimeline = List<Map<String, dynamic>>.from(data['timeline'] ?? []);
+        
+        currentTimeline.add(timelineEvent.toMap());
+        
+        transaction.update(docRef, {
+          'status': 'closed',
+          'timeline': currentTimeline,
+          'updatedAt': now,
+        });
+      });
+    } catch (e) {
+      debugPrint('Firestore closeComplaintManually failed, fallback to simulation: $e');
+      final index = _mockComplaints.indexWhere((c) => c.id == complaintId);
+      if (index != -1) {
+        final existing = _mockComplaints[index];
+        _mockComplaints[index] = existing.copyWith(
+          status: 'closed',
+          timeline: [...existing.timeline, timelineEvent],
+          updatedAt: now,
+        );
+      }
+    }
+  }
+
   /// Helper to update a complaint's state in simulation or Firestore
   Future<void> _updateComplaintState({
     required String complaintId,

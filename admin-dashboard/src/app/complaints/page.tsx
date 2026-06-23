@@ -460,6 +460,17 @@ function ComplaintsPageContent() {
                 Escalate
               </button>
               <button className="btn btn--ghost btn--sm" onClick={() => setSelectedComplaint(null)}>Close</button>
+              {liveSelected.status !== 'closed' && (
+                <button 
+                  className="btn btn--sm" 
+                  style={{ background: 'var(--color-success-600)', color: 'white', marginLeft: 'auto' }} 
+                  onClick={async () => {
+                    await handleStatusChange(liveSelected.id, 'closed');
+                  }}
+                >
+                  Mark as Closed
+                </button>
+              )}
             </div>
           </Modal>
         )}
