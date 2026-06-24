@@ -65,6 +65,24 @@ class UserGuideScreen extends StatelessWidget {
             'To report generic society issues (like street light failure or parking problems), use the plus (+) button and select "Add Society Issue". '
             'This allows all residents to view, discuss, and track common area issues.',
           ),
+          _buildGuideCard(
+            context,
+            theme,
+            '5',
+            'Payments & Ledgers',
+            Icons.receipt_long_outlined,
+            'You can view your flat\'s financial ledger to keep track of maintenance payments, fines, or other society charges. '
+            'Only assigned housekeeping workers (like Ironing/Laundry) and Admins can update this ledger. You will receive notifications when new entries are added.',
+          ),
+          _buildGuideCard(
+            context,
+            theme,
+            '6',
+            'Profile & App Settings',
+            Icons.person_outline,
+            'Navigate to the Profile tab to update your display name and upload a profile picture using your camera or gallery. '
+            'You can also change the app theme (Light, Dark, or System Default) and access support chat from the Help & Support menu.',
+          ),
           SizedBox(height: 30),
         ],
       ),

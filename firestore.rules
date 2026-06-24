@@ -40,7 +40,7 @@ service cloud.firestore {
     }
 
     function getWorkerCategory() {
-      return get(/databases/$(database)/documents/workers/$(request.auth.uid)).data.category;
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.category;
     }
 
     // ──────────────────────────────────────
@@ -53,9 +53,9 @@ service cloud.firestore {
       // Users can update their own profile, but CANNOT change their role
       allow update: if request.auth.uid == userId
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
-      // Users can create their own doc during registration (role set by backend)
+      // Users can create their own doc during registration (role set by backend or verified client)
       allow create: if request.auth.uid == userId
-        && request.resource.data.role == 'resident';
+        && (request.resource.data.role == 'resident' || request.resource.data.role == 'worker');
     }
 
     // ──────────────────────────────────────
@@ -276,6 +276,20 @@ service cloud.firestore {
       allow update: if isAdmin() || (isResident() && resource.data.flatId == getUserFlatId());
       
       allow delete: if isAdmin();
+    }
+
+    // ──────────────────────────────────────
+    // Support Chats Collection
+    // ──────────────────────────────────────
+    match /support_chats/{chatId} {
+      // Residents can read/write their own chat. Admins have full access.
+      allow read: if isAuthenticated() && (isAdmin() || (isResident() && getUserFlatId() == chatId));
+      allow write: if isAuthenticated() && (isAdmin() || (isResident() && getUserFlatId() == chatId));
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (isAdmin() || (isResident() && getUserFlatId() == chatId));
+        allow write: if isAuthenticated() && (isAdmin() || (isResident() && getUserFlatId() == chatId));
+      }
     }
   }
 }

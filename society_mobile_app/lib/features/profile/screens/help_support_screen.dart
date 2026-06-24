@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'support_chat_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -41,7 +42,7 @@ class HelpSupportScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'How can we help you?',
@@ -49,19 +50,37 @@ class HelpSupportScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
                 ),
+                textAlign: TextAlign.start,
               ),
               SizedBox(height: 8),
               Text(
                 'Find answers to popular questions or get in touch with our management committee.',
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                textAlign: TextAlign.start,
               ),
               SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // Navigate to support chat
+                  // Assuming using go_router
+                  // context.push('/support-chat'); // We will add this route to go_router later
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportChatScreen()));
+                },
+                icon: Icon(Icons.chat_bubble_outline),
+                label: Text('Chat with Admin'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              SizedBox(height: 32),
               Text(
                 'Frequently Asked Questions',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.textTheme.bodyLarge?.color,
                 ),
+                textAlign: TextAlign.start,
               ),
               SizedBox(height: 12),
               _buildFaqTile(
@@ -89,6 +108,16 @@ class HelpSupportScreen extends StatelessWidget {
                 'Emergency complaints have a 15-minute acknowledgment window. '
                 'If a worker does not accept it within 15 minutes, the system auto-escalates it to the admin committee and alerts them directly.',
               ),
+              _buildFaqTile(
+                theme,
+                'Can I register multiple vehicles?',
+                'Yes, residents can add up to 2 vehicles (cars/bikes) per flat without extra charges. For additional parking slots, please reach out to the admin for availability and pricing.',
+              ),
+              _buildFaqTile(
+                theme,
+                'How are maintenance bills calculated?',
+                'Maintenance bills are based on flat square footage. A standard rate is set during the annual general meeting. Any surplus is transferred to the sinking fund for future renovations.',
+              ),
               SizedBox(height: 32),
               Text(
                 'Contact Admin Office',
@@ -96,6 +125,7 @@ class HelpSupportScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: theme.textTheme.bodyLarge?.color,
                 ),
+                textAlign: TextAlign.start,
               ),
               SizedBox(height: 12),
               Card(
