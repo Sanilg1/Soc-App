@@ -88,31 +88,32 @@ class AuthService {
     }
 
     try {
-      final normalizedPhone = normalizePhone(phone);
-
-      // Query workers by normalized phone
+      // Query workers by inviteCode
       final querySnapshot = await _db
           .collection('workers')
-          .where('phone', isEqualTo: normalizedPhone)
-          .limit(1)
+          .where('inviteCode', isEqualTo: inviteCode)
           .get();
 
       if (querySnapshot.docs.isEmpty) {
         return InviteVerificationResult(
           isValid: false,
-          errorMessage: 'No worker registered with this phone number. Contact your administrator.',
-        );
-      }
-
-      final workerData = querySnapshot.docs.first.data();
-
-      // Check invite code
-      if (workerData['inviteCode'] != inviteCode) {
-        return InviteVerificationResult(
-          isValid: false,
           errorMessage: 'Incorrect worker passcode. Please check with your administrator.',
         );
       }
+
+      // Find the worker with the matching phone
+      final workerDoc = querySnapshot.docs.where((doc) {
+        return _comparePhones(doc.data()['phone']?.toString() ?? '', phone);
+      }).firstOrNull;
+
+      if (workerDoc == null) {
+        return InviteVerificationResult(
+          isValid: false,
+          errorMessage: 'No worker registered with this phone number for the provided passcode.',
+        );
+      }
+
+      final workerData = workerDoc.data();
 
       // Check if the worker is active
       if (workerData['active'] != true) {
@@ -193,11 +194,14 @@ class AuthService {
     // Fetch worker data to get name and category
     final querySnapshot = await _db
         .collection('workers')
-        .where('phone', isEqualTo: normalizedPhone)
-        .limit(1)
+        .where('inviteCode', isEqualTo: inviteCode)
         .get();
 
-    final workerData = querySnapshot.docs.isNotEmpty ? querySnapshot.docs.first.data() : null;
+    final workerDoc = querySnapshot.docs.where((doc) {
+      return _comparePhones(doc.data()['phone']?.toString() ?? '', phone);
+    }).firstOrNull;
+
+    final workerData = workerDoc?.data();
     final workerName = workerData?['name'] ?? 'Worker';
     final workerCategory = workerData?['category'] ?? '';
 

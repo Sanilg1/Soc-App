@@ -11,8 +11,8 @@ class ResidentBillsScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final theme = Theme.of(context);
     
-    // In our mock setup, the phone number represents the flat
-    final flatId = authState.phone ?? 'Unknown';
+    // Use the actual flatId from authState instead of phone number
+    final flatId = authState.flatId ?? 'Unknown';
 
     final ledgerAsync = ref.watch(flatLedgerStreamProvider(flatId));
 

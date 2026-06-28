@@ -150,6 +150,10 @@ class HelpSupportScreen extends StatelessWidget {
                           ),
                           SizedBox(width: 8),
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(80, 40),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
                             onPressed: () => _makeCall('+919876543210'),
                             child: Text('Call'),
                           ),
@@ -171,6 +175,10 @@ class HelpSupportScreen extends StatelessWidget {
                           ),
                           SizedBox(width: 8),
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(80, 40),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                            ),
                             onPressed: () => _sendEmail('admin@society.app'),
                             child: Text('Email'),
                           ),
