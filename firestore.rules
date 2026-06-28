@@ -50,9 +50,10 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       // Admins have full write access
       allow write: if isAdmin();
-      // Users can update their own profile, but CANNOT change their role
+      // Users can update their own profile, but CANNOT change their role value
       allow update: if request.auth.uid == userId
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
+            || request.resource.data.role == resource.data.role);
       // Users can create their own doc during registration (role set by backend or verified client)
       allow create: if request.auth.uid == userId
         && (request.resource.data.role == 'resident' || request.resource.data.role == 'worker');
