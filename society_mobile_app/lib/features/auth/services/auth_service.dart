@@ -226,13 +226,12 @@ class AuthService {
       return credential;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        // Already registered — just log in and sync data
+        // Already registered — just log in and sync non-role data
         final credential = await loginWithPhoneAndCode(normalizedPhone, inviteCode);
         if (credential.user != null) {
           await _db.collection('users').doc(credential.user!.uid).set({
             'name': workerName,
             'phone': normalizedPhone,
-            'role': 'worker',
             'category': workerCategory,
             'status': 'active',
           }, SetOptions(merge: true));
