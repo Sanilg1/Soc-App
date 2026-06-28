@@ -189,7 +189,8 @@ class AuthService {
     required String inviteCode,
   }) async {
     final normalizedPhone = normalizePhone(phone);
-    final email = '${normalizedPhone.replaceAll('+', '')}@society.app';
+    // Use 'worker.' prefix to avoid collision with resident accounts using the same phone
+    final email = 'worker.${normalizedPhone.replaceAll('+', '')}@society.app';
 
     // Fetch worker data to get name and category
     final querySnapshot = await _db
@@ -226,8 +227,8 @@ class AuthService {
       return credential;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'email-already-in-use') {
-        // Already registered — just log in and sync non-role data
-        final credential = await loginWithPhoneAndCode(normalizedPhone, inviteCode);
+        // Already registered — just log in and sync data
+        final credential = await loginWithPhoneAndCode(normalizedPhone, inviteCode, role: 'worker');
         if (credential.user != null) {
           await _db.collection('users').doc(credential.user!.uid).set({
             'name': workerName,
@@ -243,9 +244,11 @@ class AuthService {
   }
 
   /// Logs in an existing user or worker using their Phone and Passcode/Invite Code
-  Future<UserCredential> loginWithPhoneAndCode(String phone, String code) async {
+  Future<UserCredential> loginWithPhoneAndCode(String phone, String code, {String role = 'resident'}) async {
     final normalizedPhone = normalizePhone(phone);
-    final email = '${normalizedPhone.replaceAll('+', '')}@society.app';
+    // Workers use 'worker.' prefix to keep accounts separate from residents
+    final prefix = role == 'worker' ? 'worker.' : '';
+    final email = '$prefix${normalizedPhone.replaceAll('+', '')}@society.app';
     
     try {
       return await _auth.signInWithEmailAndPassword(
