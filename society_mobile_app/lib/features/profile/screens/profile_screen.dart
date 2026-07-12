@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:society_mobile_app/features/auth/providers/auth_provider.dart';
 import 'package:society_mobile_app/core/services/storage_service.dart';
 import 'package:society_mobile_app/core/theme/theme_provider.dart';
-import 'package:society_mobile_app/core/providers/locale_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -142,7 +142,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
-    final locale = ref.watch(localeProvider);
     final isResident = authState.role == 'resident';
 
     // Initialize controller value if name changes or is loaded
@@ -154,7 +153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(t('profile', locale)),
+        title: Text('profile.title'.tr()),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -279,24 +278,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               // Links list
               _buildMenuItem(
                 icon: Icons.menu_book_outlined,
-                title: 'User Guide',
+                title: 'profile.user_guide'.tr(),
                 onTap: () => context.push('/user-guide'),
               ),
               _buildMenuItem(
                 icon: Icons.help_outline,
-                title: 'Help & Support',
+                title: 'profile.support'.tr(),
                 onTap: () => context.push('/help-support'),
               ),
               _buildMenuItem(
                 icon: Icons.security,
-                title: 'Privacy Policy',
+                title: 'profile.privacy'.tr(),
                 onTap: () => context.push('/privacy-policy'),
               ),
               
               SizedBox(height: 12),
-              _buildThemeToggle(),
-              SizedBox(height: 12),
               _buildLanguageToggle(),
+              SizedBox(height: 12),
+              _buildThemeToggle(),
               
               SizedBox(height: 32),
               
@@ -315,7 +314,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ref.read(authProvider.notifier).logout();
                   },
                   child: Text(
-                    t('logout', locale),
+                    'profile.logout'.tr(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -347,7 +346,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Icon(Icons.brightness_6_outlined, color: const Color(0xFF64748B)),
                 SizedBox(width: 16),
-                Text('App Theme', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+                Text('profile.app_theme'.tr(), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
               ],
             ),
             SegmentedButton<ThemeMode>(
@@ -372,7 +371,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildLanguageToggle() {
-    final locale = ref.watch(localeProvider);
+    final locale = context.locale.languageCode;
     
     return Card(
       elevation: 0,
@@ -390,17 +389,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               children: [
                 Icon(Icons.language, color: const Color(0xFF64748B)),
                 SizedBox(width: 16),
-                Text(t('language_settings', locale), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+                Text('profile.language_settings'.tr(), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
               ],
             ),
             SegmentedButton<String>(
-              segments: [
+              segments: const [
                 ButtonSegment(value: 'en', label: Text('EN')),
                 ButtonSegment(value: 'hi', label: Text('HI')),
               ],
               selected: {locale},
               onSelectionChanged: (Set<String> newSelection) {
-                ref.read(localeProvider.notifier).setLocale(newSelection.first);
+                context.setLocale(Locale(newSelection.first));
               },
               style: SegmentedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
