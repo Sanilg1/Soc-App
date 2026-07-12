@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/ledger_provider.dart';
 
 class WorkerDuesScreen extends ConsumerWidget {
@@ -12,6 +13,15 @@ class WorkerDuesScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Resident Dues Tracker'),
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/worker-home');
+            }
+          },
+        ),
       ),
       body: allLedgersAsync.when(
         loading: () => Center(child: CircularProgressIndicator()),

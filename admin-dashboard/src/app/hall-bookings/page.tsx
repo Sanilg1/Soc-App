@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import Header from '@/components/Header';
+import Modal from '@/components/Modal';
 import type { HallBooking } from '@/types';
 import { formatDate } from '@/lib/mock-data';
 
@@ -12,6 +13,9 @@ export default function HallBookingsPage() {
   const { hallBookings, updateHallBookingStatus, deleteHallBooking } = useApp();
   
   const [activeTab, setActiveTab] = useState<'pending' | 'processed'>('pending');
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const pendingBookings = hallBookings.filter(b => b.status === 'pending');
   const processedBookings = hallBookings.filter(b => b.status !== 'pending');
@@ -123,9 +127,9 @@ export default function HallBookingsPage() {
                   </button>
                   <button
                     onClick={() => {
-                      if (window.confirm('Reject this booking request?')) {
-                        updateHallBookingStatus(booking.id, 'rejected');
-                      }
+                      setRejectingBookingId(booking.id);
+                      setRejectionReason('');
+                      setRejectModalOpen(true);
                     }}
                     className="btn btn--outline btn--sm"
                     style={{ flex: 1, color: 'var(--color-emergency-500)', borderColor: 'var(--color-emergency-500)' }}
@@ -144,6 +148,42 @@ export default function HallBookingsPage() {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => setRejectModalOpen(false)}
+        title="Reject Booking Request"
+        subtitle="Please provide a mandatory reason for rejecting this booking."
+      >
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (rejectingBookingId && rejectionReason.trim()) {
+            updateHallBookingStatus(rejectingBookingId, 'rejected', rejectionReason.trim());
+            setRejectModalOpen(false);
+          }
+        }}>
+          <div className="form-group" style={{ marginBottom: 'var(--space-5)' }}>
+            <label className="form-label">Rejection Reason *</label>
+            <textarea
+              className="form-input"
+              required
+              rows={3}
+              placeholder="e.g. Hall is under maintenance"
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              style={{ width: '100%', resize: 'none' }}
+            />
+          </div>
+          <div className="modal-footer" style={{ padding: 0, border: 'none', marginTop: 'var(--space-6)' }}>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setRejectModalOpen(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn--primary btn--sm" style={{ backgroundColor: 'var(--color-emergency-500)', borderColor: 'var(--color-emergency-500)' }}>
+              Confirm Rejection
+            </button>
+          </div>
+        </form>
+      </Modal>
     </>
   );
 }

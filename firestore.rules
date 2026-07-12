@@ -203,15 +203,15 @@ service cloud.firestore {
     // ──────────────────────────────────────
     match /flat_ledgers/{flatId} {
       // Residents can only read their own ledger
-      // Only housekeeping workers (ironing) and Admins can read all ledgers
+      // Only housekeeping/ironing workers and Admins can read all ledgers
       allow read: if isAuthenticated() && (
         (isResident() && getUserFlatId() == flatId) ||
-        (isWorker() && getWorkerCategory() == 'housekeeping') ||
+        (isWorker() && (getWorkerCategory() == 'housekeeping' || getWorkerCategory() == 'ironing')) ||
         isAdmin()
       );
       
-      // Only housekeeping workers and Admins can write/update ledgers
-      allow write: if isAdmin() || (isWorker() && getWorkerCategory() == 'housekeeping');
+      // Only housekeeping/ironing workers and Admins can write/update ledgers
+      allow write: if isAdmin() || (isWorker() && (getWorkerCategory() == 'housekeeping' || getWorkerCategory() == 'ironing'));
     }
 
     // ──────────────────────────────────────

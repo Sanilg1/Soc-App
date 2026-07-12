@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/ledger_provider.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
 
 class ResidentBillsScreen extends ConsumerWidget {
   const ResidentBillsScreen({super.key});
@@ -19,6 +20,15 @@ class ResidentBillsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('My Ironing Bills'),
+        leading: BackButton(
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/resident-home');
+            }
+          },
+        ),
       ),
       body: ledgerAsync.when(
         loading: () => Center(child: CircularProgressIndicator()),

@@ -53,6 +53,10 @@ export default function DashboardPage() {
   const slaBreaches = complaints.filter(c => c.slaStatus === 'breached').length;
   const reopenedCount = complaints.filter(c => c.status === 'reopened').length;
   const activeCount = complaints.filter(c => c.status !== 'closed').length;
+  
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const resolvedThisWeekCount = complaints.filter(c => c.status === 'closed' && new Date(c.updatedAt) > oneWeekAgo).length;
 
   const activeEscalations = escalations.filter(e => !e.resolved);
   const pendingBookings = useApp().hallBookings?.filter(b => b.status === 'pending')?.length || 0;
@@ -131,7 +135,7 @@ export default function DashboardPage() {
               </svg>
             }
             label="Resolved This Week"
-            value={14}
+            value={resolvedThisWeekCount}
             variant="success"
             href="/complaints?status=closed"
           />

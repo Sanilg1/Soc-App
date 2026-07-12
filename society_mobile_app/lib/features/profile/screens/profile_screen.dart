@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:society_mobile_app/features/auth/providers/auth_provider.dart';
 import 'package:society_mobile_app/core/services/storage_service.dart';
 import 'package:society_mobile_app/core/theme/theme_provider.dart';
+import 'package:society_mobile_app/core/providers/locale_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -141,6 +142,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authState = ref.watch(authProvider);
+    final locale = ref.watch(localeProvider);
     final isResident = authState.role == 'resident';
 
     // Initialize controller value if name changes or is loaded
@@ -152,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('My Profile'),
+        title: Text(t('profile', locale)),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -293,6 +295,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               
               SizedBox(height: 12),
               _buildThemeToggle(),
+              SizedBox(height: 12),
+              _buildLanguageToggle(),
               
               SizedBox(height: 32),
               
@@ -311,7 +315,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ref.read(authProvider.notifier).logout();
                   },
                   child: Text(
-                    'Sign Out',
+                    t('logout', locale),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -355,6 +359,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               selected: {themeMode},
               onSelectionChanged: (Set<ThemeMode> newSelection) {
                 ref.read(themeProvider.notifier).setTheme(newSelection.first);
+              },
+              style: SegmentedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              showSelectedIcon: false,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle() {
+    final locale = ref.watch(localeProvider);
+    
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 24),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.language, color: const Color(0xFF64748B)),
+                SizedBox(width: 16),
+                Text(t('language_settings', locale), style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
+              ],
+            ),
+            SegmentedButton<String>(
+              segments: [
+                ButtonSegment(value: 'en', label: Text('EN')),
+                ButtonSegment(value: 'hi', label: Text('HI')),
+              ],
+              selected: {locale},
+              onSelectionChanged: (Set<String> newSelection) {
+                ref.read(localeProvider.notifier).setLocale(newSelection.first);
               },
               style: SegmentedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),

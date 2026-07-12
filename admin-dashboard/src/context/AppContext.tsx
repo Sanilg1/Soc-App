@@ -31,6 +31,7 @@ import {
   type AdminMember,
   initialIroningRates,
 } from '@/lib/mock-data';
+import { useAuth } from './AuthContext';
 import { db } from '../firebase/config';
 import {
   collection,
@@ -115,7 +116,7 @@ interface AppContextType {
   updateIroningRates: (rates: IroningRates) => void;
 
   // Hall Booking Actions
-  updateHallBookingStatus: (id: string, status: HallBookingStatus) => Promise<void>;
+  updateHallBookingStatus: (id: string, status: HallBookingStatus, reason?: string) => Promise<void>;
   deleteHallBooking: (id: string) => Promise<void>;
 }
 
@@ -126,6 +127,8 @@ const AppContext = createContext<AppContextType | null>(null);
 // ──────────────────────────────────────
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+
   // Mobile Sidebar State
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -146,6 +149,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ── Firestore Listeners ──
   useEffect(() => {
+    if (!user) return;
+
     // 1. Complaints
     const unsubComplaints = onSnapshot(
       query(collection(db, 'complaints'), orderBy('createdAt', 'desc')),
@@ -316,7 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubFlats();
       unsubHallBookings();
     };
-  }, []);
+  }, [user]);
 
   // ── Dynamically Calculate Worker Stats ──
   useEffect(() => {
@@ -911,12 +916,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ── Hall Booking Actions ──
 
-  const updateHallBookingStatus = useCallback(async (id: string, status: HallBookingStatus) => {
+  const updateHallBookingStatus = useCallback(async (id: string, status: HallBookingStatus, reason?: string) => {
     try {
-      await updateDoc(doc(db, 'hall_bookings', id), {
+      const data: any = {
         status,
         updatedAt: new Date().toISOString(),
-      });
+      };
+      if (status === 'rejected' && reason) {
+        data.rejectionReason = reason;
+      }
+      await updateDoc(doc(db, 'hall_bookings', id), data);
       toast.success(`Booking ${status}.`);
     } catch (e) {
       console.error('Firestore updateHallBookingStatus error:', e);

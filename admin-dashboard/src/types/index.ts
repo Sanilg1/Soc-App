@@ -327,6 +327,7 @@ export interface HallBooking {
   timeSlot: string;
   guestCount: number;
   status: HallBookingStatus;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
 }

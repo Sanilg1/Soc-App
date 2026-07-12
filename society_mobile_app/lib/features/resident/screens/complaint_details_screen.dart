@@ -531,20 +531,28 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                     SizedBox(height: 24),
                   ],
 
+
+
                   // Actions Section (Revisit Scheduled)
                   if (complaint.status == 'revisit_scheduled') ...[
                     Text('Revisit Scheduled', style: theme.textTheme.titleLarge),
                     SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentColor,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _confirmRevisit(complaint),
-                        child: Text('Confirm Visit Time'),
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final bool alreadyConfirmed = complaint.timeline.isNotEmpty && 
+                            complaint.timeline.last.action == 'Resident confirmed scheduled revisit time';
+                        return SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: alreadyConfirmed ? Colors.grey : AppTheme.accentColor,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: alreadyConfirmed ? null : () => _confirmRevisit(complaint),
+                            child: Text(alreadyConfirmed ? 'Visit Time Confirmed' : 'Confirm Visit Time'),
+                          ),
+                        );
+                      }
                     ),
                     SizedBox(height: 24),
                   ],
@@ -699,6 +707,21 @@ class _ComplaintDetailsScreenState extends ConsumerState<ComplaintDetailsScreen>
                   ),
                   SizedBox(height: 12),
 
+                  if (complaint.status == 'reopened' || complaint.status == 'accepted' || complaint.status == 'queued') ...[
+                    SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.accentColor,
+                          side: BorderSide(color: AppTheme.accentColor),
+                        ),
+                        icon: Icon(Icons.calendar_month),
+                        label: Text('Reschedule Visit'),
+                        onPressed: () => context.push('/edit-complaint/${complaint.id}'),
+                      ),
+                    ),
+                  ],
                   if (complaint.status != 'closed') ...[
                     SizedBox(height: 12),
                     SizedBox(
