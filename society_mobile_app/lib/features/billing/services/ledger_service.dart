@@ -197,4 +197,115 @@ class LedgerService {
       }
     }
   }
+
+  // ──────────────────────────────────────
+  // Weekly Bill Request Methods
+  // ──────────────────────────────────────
+
+  /// Streams the active weekly bill request for this flat (status: pending or resident_paid)
+  Stream<WeeklyBillRequest?> streamActiveBillRequest(String flatId) {
+    try {
+      return _db
+          .collection('weekly_bill_requests')
+          .where('flatId', isEqualTo: flatId)
+          .where('status', whereIn: ['pending', 'resident_paid', 'disputed'])
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .snapshots()
+          .map((snap) {
+            if (snap.docs.isEmpty) return null;
+            final doc = snap.docs.first;
+            return WeeklyBillRequest.fromMap(doc.data(), doc.id);
+          });
+    } catch (e) {
+      debugPrint('streamActiveBillRequest error: $e');
+      return Stream.value(null);
+    }
+  }
+
+  /// Streams all past closed bill requests for a flat (settled / carried_forward)
+  Stream<List<WeeklyBillRequest>> streamBillHistory(String flatId) {
+    try {
+      return _db
+          .collection('weekly_bill_requests')
+          .where('flatId', isEqualTo: flatId)
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map((snap) => snap.docs
+              .map((d) => WeeklyBillRequest.fromMap(d.data(), d.id))
+              .toList());
+    } catch (e) {
+      debugPrint('streamBillHistory error: $e');
+      return Stream.value([]);
+    }
+  }
+
+  /// Streams all active bill requests for worker view
+  Stream<List<WeeklyBillRequest>> streamAllActiveBillRequests() {
+    try {
+      return _db
+          .collection('weekly_bill_requests')
+          .where('status', isEqualTo: 'resident_paid')
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map((snap) => snap.docs
+              .map((d) => WeeklyBillRequest.fromMap(d.data(), d.id))
+              .toList());
+    } catch (e) {
+      debugPrint('streamAllActiveBillRequests error: $e');
+      return Stream.value([]);
+    }
+  }
+
+  /// Resident confirms they paid — triggers Cloud Function to notify worker
+  Future<void> residentConfirmPayment(String requestId) async {
+    try {
+      await _db.collection('weekly_bill_requests').doc(requestId).update({
+        'residentConfirmed': true,
+        'residentConfirmedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('residentConfirmPayment error: $e');
+      rethrow;
+    }
+  }
+
+  /// Resident defers payment to next week
+  Future<void> residentDeferPayment(String requestId) async {
+    try {
+      await _db.collection('weekly_bill_requests').doc(requestId).update({
+        'residentConfirmed': false,
+        'residentConfirmedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('residentDeferPayment error: $e');
+      rethrow;
+    }
+  }
+
+  /// Worker confirms receipt of payment — Cloud Function zeroes the ledger
+  Future<void> workerConfirmReceipt(String requestId) async {
+    try {
+      await _db.collection('weekly_bill_requests').doc(requestId).update({
+        'workerConfirmed': true,
+        'workerConfirmedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('workerConfirmReceipt error: $e');
+      rethrow;
+    }
+  }
+
+  /// Worker denies receipt — triggers dispute flow
+  Future<void> workerDenyReceipt(String requestId) async {
+    try {
+      await _db.collection('weekly_bill_requests').doc(requestId).update({
+        'workerConfirmed': false,
+        'workerConfirmedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('workerDenyReceipt error: $e');
+      rethrow;
+    }
+  }
 }

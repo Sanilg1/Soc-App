@@ -36,6 +36,7 @@ import '../features/guard/screens/guard_main_screen.dart';
 import '../features/bookings/screens/hall_booking_list_screen.dart';
 import '../features/bookings/screens/create_hall_booking_screen.dart';
 import '../features/bookings/models/hall_booking_model.dart';
+import '../features/guard/screens/guard_visitor_log_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
@@ -110,6 +111,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/guard-home',
         builder: (context, state) => const GuardMainScreen(),
+      ),
+      GoRoute(
+        path: '/guard-visitor-log',
+        builder: (context, state) => const GuardVisitorLogScreen(),
       ),
       GoRoute(
         path: '/profile',

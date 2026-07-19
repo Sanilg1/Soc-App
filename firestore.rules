@@ -292,5 +292,31 @@ service cloud.firestore {
         allow write: if isAuthenticated() && (isAdmin() || (isResident() && getUserFlatId() == chatId));
       }
     }
+
+    // ──────────────────────────────────────
+    // Weekly Bill Requests Collection
+    // ──────────────────────────────────────
+    match /weekly_bill_requests/{requestId} {
+      // Residents can read their own flat's bill requests
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        (isWorker() && (getWorkerCategory() == 'ironing' || getWorkerCategory() == 'housekeeping'))
+      );
+
+      // Only admins can create bill requests (via "Close Week" action)
+      allow create: if isAdmin();
+
+      // Residents can update to confirm payment (residentConfirmed field only)
+      // Workers can update to confirm receipt (workerConfirmed field only)
+      // Admins can update anything (dispute resolution)
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isResident() && resource.data.flatId == getUserFlatId()) ||
+        (isWorker() && (getWorkerCategory() == 'ironing' || getWorkerCategory() == 'housekeeping'))
+      );
+
+      allow delete: if isAdmin();
+    }
   }
 }

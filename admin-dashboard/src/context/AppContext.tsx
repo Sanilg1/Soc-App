@@ -23,6 +23,8 @@ import type {
   Flat,
   HallBooking,
   HallBookingStatus,
+  WeeklyBillRequest,
+  WeeklyBillStatus,
 } from '@/types';
 import {
   WORKER_FOR_CATEGORY,
@@ -115,6 +117,12 @@ interface AppContextType {
   addIroningCharge: (flatId: string, itemCounts: Record<string, number>) => Promise<void>;
   updateIroningRates: (rates: IroningRates) => void;
 
+  // Weekly Bill Closing Actions
+  weeklyBillRequests: WeeklyBillRequest[];
+  closeWeeklyBills: () => Promise<void>;
+  resolveDisputedBill: (requestId: string, settleNow: boolean, adminNote?: string) => Promise<void>;
+  adminOverrideBill: (requestId: string, action: 'settle' | 'carry_forward', adminNote?: string) => Promise<void>;
+
   // Hall Booking Actions
   updateHallBookingStatus: (id: string, status: HallBookingStatus, reason?: string) => Promise<void>;
   deleteHallBooking: (id: string) => Promise<void>;
@@ -146,6 +154,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [flats, setFlats] = useState<Flat[]>([]);
   const [hallBookings, setHallBookings] = useState<HallBooking[]>([]);
+  const [weeklyBillRequests, setWeeklyBillRequests] = useState<WeeklyBillRequest[]>([]);
 
   // ── Firestore Listeners ──
   useEffect(() => {
@@ -307,6 +316,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (error) => console.error('Firestore hall bookings listener error:', error)
     );
 
+    // 12. Weekly Bill Requests
+    const unsubWeeklyBills = onSnapshot(
+      query(collection(db, 'weekly_bill_requests'), orderBy('createdAt', 'desc')),
+      (snapshot) => {
+        const list: WeeklyBillRequest[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as WeeklyBillRequest);
+        });
+        setWeeklyBillRequests(list);
+      },
+      (error) => console.error('Firestore weekly bill requests listener error:', error)
+    );
+
     return () => {
       unsubComplaints();
       unsubWorkers();
@@ -320,6 +342,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unsubNotifs();
       unsubFlats();
       unsubHallBookings();
+      unsubWeeklyBills();
     };
   }, [user]);
 
@@ -914,6 +937,166 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIroningRates(rates);
   }, []);
 
+  // ── Weekly Bill Closing Actions ──
+
+  /**
+   * Admin initiates a weekly bill close.
+   * Creates one weekly_bill_requests doc per flat that has outstanding balance > 0.
+   * Sets the ledger's weeklyBillStatus to 'bill_sent'.
+   * Workers and residents are notified via Firestore triggers / Cloud Function.
+   */
+  const closeWeeklyBills = useCallback(async () => {
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      // ISO week number
+      const startOfYear = new Date(year, 0, 1);
+      const weekNum = Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7);
+      const weekId = `${year}-W${String(weekNum).padStart(2, '0')}`;
+
+      // Build human-readable label for the period (Mon–Sun of current week)
+      const dayOfWeek = now.getDay(); // 0=Sun
+      const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + diffToMon);
+      monday.setHours(0, 0, 0, 0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      const fmt = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const weekLabel = `${fmt(monday)} – ${fmt(sunday)}, ${year}`;
+
+      const flatsWithBalance = ledgers.filter(l => l.outstandingBalance > 0);
+      if (flatsWithBalance.length === 0) {
+        toast('No flats with outstanding balance to close.', { icon: 'ℹ️' });
+        return;
+      }
+
+      // Check if a bill for this weekId is already sent
+      const existing = weeklyBillRequests.find(r => r.weekId === weekId && r.status === 'pending');
+      if (existing) {
+        toast.error(`Bills for ${weekLabel} are already sent and pending.`);
+        return;
+      }
+
+      const batch: Promise<any>[] = [];
+
+      for (const ledger of flatsWithBalance) {
+        const requestId = `${weekId}_${ledger.flatId}`;
+        const requestRef = doc(db, 'weekly_bill_requests', requestId);
+
+        // Calculate charges vs carry-forward split
+        const lastWeekBill = weeklyBillRequests.find(
+          r => r.flatId === ledger.flatId && (r.status === 'carried_forward' || r.status === 'admin_resolved')
+        );
+        const previousCarryForward = lastWeekBill?.billedAmount ?? 0;
+        const chargesThisWeek = Math.max(0, ledger.outstandingBalance - previousCarryForward);
+
+        batch.push(setDoc(requestRef, {
+          id: requestId,
+          weekId,
+          weekLabel,
+          periodFrom: monday.toISOString(),
+          periodTo: sunday.toISOString(),
+          flatId: ledger.flatId,
+          billedAmount: ledger.outstandingBalance,
+          chargesThisWeek,
+          previousCarryForward,
+          residentConfirmed: null,
+          residentConfirmedAt: null,
+          workerConfirmed: null,
+          workerConfirmedAt: null,
+          status: 'pending' as WeeklyBillStatus,
+          resolvedBy: null,
+          adminNote: null,
+          createdAt: now.toISOString(),
+          closedAt: null,
+        }));
+
+        // Mark ledger as bill_sent
+        batch.push(updateDoc(doc(db, 'flat_ledgers', ledger.flatId), {
+          weeklyBillStatus: 'bill_sent',
+          currentWeekId: weekId,
+        }));
+      }
+
+      await Promise.all(batch);
+      toast.success(`Weekly bills sent to ${flatsWithBalance.length} flat(s) for ${weekLabel}`);
+    } catch (e) {
+      console.error('closeWeeklyBills error:', e);
+      toast.error('Failed to close weekly bills.');
+    }
+  }, [ledgers, weeklyBillRequests]);
+
+  /**
+   * Admin resolves a disputed bill.
+   * settleNow=true → records payment, zeroes balance.
+   * settleNow=false → carries balance to next week.
+   */
+  const resolveDisputedBill = useCallback(async (requestId: string, settleNow: boolean, adminNote?: string) => {
+    try {
+      const request = weeklyBillRequests.find(r => r.id === requestId);
+      if (!request) throw new Error('Bill request not found');
+
+      const now = new Date().toISOString();
+      const newStatus: WeeklyBillStatus = settleNow ? 'admin_resolved' : 'carried_forward';
+
+      const updates: Promise<any>[] = [
+        updateDoc(doc(db, 'weekly_bill_requests', requestId), {
+          status: newStatus,
+          resolvedBy: 'admin',
+          adminNote: adminNote ?? null,
+          closedAt: now,
+        }),
+      ];
+
+      if (settleNow) {
+        // Record payment transaction and zero balance
+        const ledgerRef = doc(db, 'flat_ledgers', request.flatId);
+        updates.push(
+          runTransaction(db, async (tx) => {
+            const snap = await tx.get(ledgerRef);
+            if (!snap.exists()) return;
+            const data = snap.data();
+            const history: any[] = Array.isArray(data.transactions) ? data.transactions : [];
+            const newTx = {
+              id: `txn_${Date.now()}`,
+              type: 'payment',
+              amount: request.billedAmount,
+              description: `Admin resolved dispute for ${request.weekLabel} — marked as settled`,
+              timestamp: now,
+            };
+            tx.update(ledgerRef, {
+              outstandingBalance: 0,
+              transactions: [newTx, ...history],
+              weeklyBillStatus: 'settled',
+            });
+          })
+        );
+      } else {
+        updates.push(
+          updateDoc(doc(db, 'flat_ledgers', request.flatId), {
+            weeklyBillStatus: 'carried_forward',
+          })
+        );
+      }
+
+      await Promise.all(updates);
+      toast.success(`Dispute resolved — ${settleNow ? 'Settled' : 'Carried forward'}`);
+    } catch (e) {
+      console.error('resolveDisputedBill error:', e);
+      toast.error('Failed to resolve dispute.');
+    }
+  }, [weeklyBillRequests]);
+
+  /**
+   * Admin force-overrides any bill (bypass normal flow).
+   */
+  const adminOverrideBill = useCallback(async (requestId: string, action: 'settle' | 'carry_forward', adminNote?: string) => {
+    await resolveDisputedBill(requestId, action === 'settle', adminNote);
+  }, [resolveDisputedBill]);
+
   // ── Hall Booking Actions ──
 
   const updateHallBookingStatus = useCallback(async (id: string, status: HallBookingStatus, reason?: string) => {
@@ -958,6 +1141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activityLogs,
     notifications,
     flats,
+    weeklyBillRequests,
     hallBookings,
     isSidebarOpen,
     setSidebarOpen,
@@ -985,6 +1169,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     recordIroningPayment,
     addIroningCharge,
     updateIroningRates,
+    closeWeeklyBills,
+    resolveDisputedBill,
+    adminOverrideBill,
     updateHallBookingStatus,
     deleteHallBooking,
   };

@@ -2,31 +2,50 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/visitor_model.dart';
 
+// ─────────────────────────────────────
+// Streams
+// ─────────────────────────────────────
+
+/// Today's visitors for a specific flat (resident view)
 final visitorStreamProvider = StreamProvider.family<List<Visitor>, String?>((ref, flatId) {
   if (flatId == null || flatId.isEmpty) return const Stream.empty();
-  
+
+  final todayStart = DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0);
+
   return FirebaseFirestore.instance
       .collection('visitors')
       .where('flatId', isEqualTo: flatId)
+      .where('timestamp', isGreaterThanOrEqualTo: todayStart.toIso8601String())
       .orderBy('timestamp', descending: true)
       .snapshots()
-      .map((snapshot) {
-    return snapshot.docs.map((doc) => Visitor.fromMap(doc.data(), doc.id)).toList();
-  });
+      .map((s) => s.docs.map((d) => Visitor.fromMap(d.data(), d.id)).toList());
 });
 
+/// Today's visitors — Guard home view
+final todayVisitorStreamProvider = StreamProvider<List<Visitor>>((ref) {
+  final todayStart = DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0);
+
+  return FirebaseFirestore.instance
+      .collection('visitors')
+      .where('timestamp', isGreaterThanOrEqualTo: todayStart.toIso8601String())
+      .orderBy('timestamp', descending: true)
+      .snapshots()
+      .map((s) => s.docs.map((d) => Visitor.fromMap(d.data(), d.id)).toList());
+});
+
+/// All visitors (last 100) — guard history log
 final allVisitorStreamProvider = StreamProvider<List<Visitor>>((ref) {
-  // Guard sees all visitors to manage today
-  // In a real app we'd filter by today's date
   return FirebaseFirestore.instance
       .collection('visitors')
       .orderBy('timestamp', descending: true)
-      .limit(50)
+      .limit(100)
       .snapshots()
-      .map((snapshot) {
-    return snapshot.docs.map((doc) => Visitor.fromMap(doc.data(), doc.id)).toList();
-  });
+      .map((s) => s.docs.map((d) => Visitor.fromMap(d.data(), d.id)).toList());
 });
+
+// ─────────────────────────────────────
+// Service
+// ─────────────────────────────────────
 
 class VisitorService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -38,6 +57,13 @@ class VisitorService {
   Future<void> updateVisitorStatus(String visitorId, String newStatus) async {
     await _db.collection('visitors').doc(visitorId).update({
       'status': newStatus,
+    });
+  }
+
+  Future<void> markVisitorExited(String visitorId) async {
+    await _db.collection('visitors').doc(visitorId).update({
+      'status': 'exited',
+      'exitTime': DateTime.now().toIso8601String(),
     });
   }
 }

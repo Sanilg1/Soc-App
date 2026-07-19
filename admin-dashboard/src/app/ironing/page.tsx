@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTableSort } from '../../hooks/useTableSort';
 import { SortableHeader } from '../../components/SortableHeader';
 import toast from 'react-hot-toast';
@@ -8,23 +8,65 @@ import Header from '@/components/Header';
 import Modal from '@/components/Modal';
 import { useApp } from '@/context/AppContext';
 import { formatDate } from '@/lib/mock-data';
-import type { FlatLedger, LedgerTransaction, IroningRates } from '@/types';
+import type { FlatLedger, LedgerTransaction, IroningRates, WeeklyBillRequest } from '@/types';
 
 export default function IroningLedgerPage() {
-  const { ledgers, ironingRates, recordIroningPayment, addIroningCharge, updateIroningRates } = useApp();
+  const {
+    ledgers,
+    ironingRates,
+    recordIroningPayment,
+    addIroningCharge,
+    updateIroningRates,
+    weeklyBillRequests,
+    closeWeeklyBills,
+    resolveDisputedBill,
+    adminOverrideBill,
+  } = useApp();
 
   // Modals state
   const [selectedFlatId, setSelectedFlatId] = useState<string | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [showRatesModal, setShowRatesModal] = useState(false);
+  const [showCloseWeekModal, setShowCloseWeekModal] = useState(false);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [selectedBillRequest, setSelectedBillRequest] = useState<WeeklyBillRequest | null>(null);
+  const [disputeNote, setDisputeNote] = useState('');
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideAction, setOverrideAction] = useState<'settle' | 'carry_forward'>('settle');
+  const [overrideNote, setOverrideNote] = useState('');
 
   // Form states
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [itemCounts, setItemCounts] = useState<Record<string, number>>({});
   const [newRates, setNewRates] = useState<IroningRates>({});
-  
   const [newClothType, setNewClothType] = useState('');
+
+  // Weekly Bill summary
+  const flatsWithBalance = ledgers.filter(l => l.outstandingBalance > 0);
+  const totalOutstanding = flatsWithBalance.reduce((s, l) => s + l.outstandingBalance, 0);
+  const totalChargesThisWeek = flatsWithBalance.reduce((s, l) => {
+    const charges = l.transactions
+      .filter(t => t.type === 'charge')
+      .reduce((a, t) => a + t.amount, 0);
+    return s + charges;
+  }, 0);
+
+  // Current active week requests (pending/disputed)
+  const activeWeekRequests = useMemo(() => {
+    const activeStatuses = ['pending', 'resident_paid', 'disputed'];
+    return weeklyBillRequests.filter(r => activeStatuses.includes(r.status));
+  }, [weeklyBillRequests]);
+
+  const disputedRequests = useMemo(
+    () => weeklyBillRequests.filter(r => r.status === 'disputed'),
+    [weeklyBillRequests]
+  );
+
+  const latestWeekId = weeklyBillRequests.length > 0 ? weeklyBillRequests[0].weekId : null;
+  const latestWeekLabel = weeklyBillRequests.length > 0 ? weeklyBillRequests[0].weekLabel : '';
+
+  const hasPendingWeek = activeWeekRequests.length > 0;
 
   // Get active ledger details
   const activeLedger = selectedFlatId ? ledgers.find(l => l.flatId === selectedFlatId) : null;
@@ -167,8 +209,15 @@ export default function IroningLedgerPage() {
               </svg>
               Export to CSV
             </button>
-            <button className="btn btn--primary" onClick={openRatesModal}>
-              Manage Rates
+            <button className="btn btn--secondary" onClick={openRatesModal}>Manage Rates</button>
+            <button
+              className="btn btn--primary"
+              onClick={() => setShowCloseWeekModal(true)}
+              disabled={hasPendingWeek}
+              title={hasPendingWeek ? `Bills for ${latestWeekLabel} already sent — awaiting confirmations` : 'Send weekly bills to all flats with dues'}
+              style={{ opacity: hasPendingWeek ? 0.6 : 1, cursor: hasPendingWeek ? 'not-allowed' : 'pointer' }}
+            >
+              🗓️ Close Week&apos;s Bills
             </button>
           </div>
         }
@@ -310,8 +359,252 @@ export default function IroningLedgerPage() {
             </table>
           </div>
         </div>
-      </div>
 
+      {/* ── Bill Closing Status Section ── */}
+      {(activeWeekRequests.length > 0 || disputedRequests.length > 0) && (
+        <div style={{ marginTop: 'var(--space-8)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)' }}>
+            <div>
+              <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-neutral-900)', margin: 0 }}>
+                Bill Closing Status — {latestWeekLabel}
+              </h2>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)' }}>
+                {activeWeekRequests.filter(r => r.status === 'settled' || r.status === 'admin_resolved').length} settled &nbsp;·&nbsp;
+                {disputedRequests.length} disputed &nbsp;·&nbsp;
+                {activeWeekRequests.filter(r => r.status === 'pending').length} pending
+              </span>
+            </div>
+          </div>
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Flat</th>
+                  <th>Billed</th>
+                  <th>Resident</th>
+                  <th>Worker</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Admin Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeWeekRequests.map((req) => {
+                  const statusColors: Record<string, string> = {
+                    pending: '#f59e0b',
+                    resident_paid: '#3b82f6',
+                    settled: '#10b981',
+                    carried_forward: '#6b7280',
+                    disputed: '#ef4444',
+                    admin_resolved: '#8b5cf6',
+                  };
+                  const statusLabels: Record<string, string> = {
+                    pending: '⏳ Pending',
+                    resident_paid: '🔵 Claimed Paid',
+                    settled: '✅ Settled',
+                    carried_forward: '⏩ Carry Fwd',
+                    disputed: '⚠️ Disputed',
+                    admin_resolved: '🟣 Admin Resolved',
+                  };
+                  return (
+                    <tr key={req.id}>
+                      <td className="table-cell-primary">Flat {req.flatId}</td>
+                      <td style={{ fontWeight: 700 }}>₹{req.billedAmount}</td>
+                      <td>
+                        {req.residentConfirmed === null && <span style={{ color: '#94a3b8' }}>Awaiting…</span>}
+                        {req.residentConfirmed === true && <span style={{ color: '#10b981', fontWeight: 600 }}>✅ Paid</span>}
+                        {req.residentConfirmed === false && <span style={{ color: '#6b7280' }}>⏩ Next week</span>}
+                      </td>
+                      <td>
+                        {req.workerConfirmed === null && req.residentConfirmed === true && <span style={{ color: '#94a3b8' }}>Awaiting…</span>}
+                        {req.workerConfirmed === null && req.residentConfirmed !== true && <span style={{ color: '#cbd5e1' }}>—</span>}
+                        {req.workerConfirmed === true && <span style={{ color: '#10b981', fontWeight: 600 }}>✅ Received</span>}
+                        {req.workerConfirmed === false && <span style={{ color: '#ef4444' }}>❌ Not yet</span>}
+                      </td>
+                      <td>
+                        <span style={{
+                          display: 'inline-block',
+                          padding: '2px 10px',
+                          borderRadius: '999px',
+                          fontSize: 'var(--font-size-xs)',
+                          fontWeight: 600,
+                          background: `${statusColors[req.status]}20`,
+                          color: statusColors[req.status],
+                        }}>
+                          {statusLabels[req.status] ?? req.status}
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          {req.status === 'disputed' && (
+                            <button
+                              className="btn btn--secondary btn--sm"
+                              onClick={() => { setSelectedBillRequest(req); setDisputeNote(''); setShowDisputeModal(true); }}
+                            >
+                              Resolve Dispute
+                            </button>
+                          )}
+                          {(req.status === 'pending' || req.status === 'resident_paid' || req.status === 'carried_forward') && (
+                            <button
+                              className="btn btn--ghost btn--sm"
+                              onClick={() => {
+                                setSelectedBillRequest(req);
+                                setOverrideAction('settle');
+                                setOverrideNote('');
+                                setShowOverrideModal(true);
+                              }}
+                            >
+                              Override
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+
+      {/* ── Close Week Confirmation Modal ── */}
+      <Modal
+        isOpen={showCloseWeekModal}
+        onClose={() => setShowCloseWeekModal(false)}
+        title="Close Week's Bills"
+        subtitle="Send a weekly bill to every flat with outstanding dues"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
+            <div style={{ background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, color: 'var(--color-primary-600)' }}>{flatsWithBalance.length}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)', marginTop: '4px' }}>Flats with dues</div>
+            </div>
+            <div style={{ background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, color: 'var(--color-danger-600)' }}>₹{totalOutstanding}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)', marginTop: '4px' }}>Total outstanding</div>
+            </div>
+            <div style={{ background: 'var(--color-neutral-50)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 800, color: 'var(--color-warning-600)' }}>₹{totalChargesThisWeek}</div>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)', marginTop: '4px' }}>Charges this week</div>
+            </div>
+          </div>
+          <div style={{ background: '#fefce8', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', fontSize: 'var(--font-size-sm)', color: '#92400e' }}>
+            <strong>What happens next:</strong> Each flat with dues will receive a push notification with their bill breakdown. They tap &quot;I&apos;ve Paid&quot; to notify the ironing worker, who then confirms receipt. Unresponded bills auto-carry forward in 48h.
+          </div>
+          {flatsWithBalance.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--color-neutral-500)' }}>No flats with outstanding balance. Nothing to close.</p>
+          )}
+        </div>
+        <div className="modal-footer" style={{ padding: 0, border: 'none' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => setShowCloseWeekModal(false)}>Cancel</button>
+          <button
+            className="btn btn--primary btn--sm"
+            disabled={flatsWithBalance.length === 0}
+            onClick={async () => {
+              setShowCloseWeekModal(false);
+              await closeWeeklyBills();
+            }}
+          >
+            Send Bills &amp; Close Week
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Resolve Dispute Modal ── */}
+      <Modal
+        isOpen={showDisputeModal}
+        onClose={() => { setShowDisputeModal(false); setSelectedBillRequest(null); }}
+        title={`Resolve Dispute — Flat ${selectedBillRequest?.flatId}`}
+        subtitle={`${selectedBillRequest?.weekLabel} · ₹${selectedBillRequest?.billedAmount}`}
+      >
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', marginBottom: 'var(--space-4)', fontSize: 'var(--font-size-sm)', color: '#991b1b' }}>
+            <strong>⚠️ Dispute:</strong> Resident claimed payment but worker has not confirmed receipt.
+          </div>
+          <div className="form-group">
+            <label className="form-label">Admin Note (optional)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="e.g. Resident showed UPI receipt"
+              value={disputeNote}
+              onChange={e => setDisputeNote(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+        <div className="modal-footer" style={{ padding: 0, border: 'none', gap: 'var(--space-2)' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => { setShowDisputeModal(false); setSelectedBillRequest(null); }}>Cancel</button>
+          <button
+            className="btn btn--secondary btn--sm"
+            onClick={async () => {
+              if (!selectedBillRequest) return;
+              await resolveDisputedBill(selectedBillRequest.id, false, disputeNote || undefined);
+              setShowDisputeModal(false); setSelectedBillRequest(null);
+            }}
+          >
+            Carry Forward
+          </button>
+          <button
+            className="btn btn--primary btn--sm"
+            onClick={async () => {
+              if (!selectedBillRequest) return;
+              await resolveDisputedBill(selectedBillRequest.id, true, disputeNote || undefined);
+              setShowDisputeModal(false); setSelectedBillRequest(null);
+            }}
+          >
+            Mark Settled
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Admin Override Modal ── */}
+      <Modal
+        isOpen={showOverrideModal}
+        onClose={() => { setShowOverrideModal(false); setSelectedBillRequest(null); }}
+        title={`Admin Override — Flat ${selectedBillRequest?.flatId}`}
+        subtitle={`${selectedBillRequest?.weekLabel} · ₹${selectedBillRequest?.billedAmount}`}
+      >
+        <div style={{ marginBottom: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, padding: 'var(--space-3)', border: `2px solid ${overrideAction === 'settle' ? 'var(--color-primary-500)' : 'var(--color-neutral-200)'}`, borderRadius: 'var(--radius-md)' }}>
+              <input type="radio" name="override" value="settle" checked={overrideAction === 'settle'} onChange={() => setOverrideAction('settle')} />
+              <div>
+                <div style={{ fontWeight: 600 }}>✅ Mark as Settled</div>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)' }}>Record payment, zero out balance</div>
+              </div>
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, padding: 'var(--space-3)', border: `2px solid ${overrideAction === 'carry_forward' ? 'var(--color-neutral-400)' : 'var(--color-neutral-200)'}`, borderRadius: 'var(--radius-md)' }}>
+              <input type="radio" name="override" value="carry_forward" checked={overrideAction === 'carry_forward'} onChange={() => setOverrideAction('carry_forward')} />
+              <div>
+                <div style={{ fontWeight: 600 }}>⏩ Carry Forward</div>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-500)' }}>Skip this week, add to next</div>
+              </div>
+            </label>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Reason / Note (optional)</label>
+            <input type="text" className="form-input" placeholder="e.g. Direct payment received" value={overrideNote} onChange={e => setOverrideNote(e.target.value)} style={{ width: '100%' }} />
+          </div>
+        </div>
+        <div className="modal-footer" style={{ padding: 0, border: 'none' }}>
+          <button className="btn btn--ghost btn--sm" onClick={() => { setShowOverrideModal(false); setSelectedBillRequest(null); }}>Cancel</button>
+          <button
+            className="btn btn--primary btn--sm"
+            onClick={async () => {
+              if (!selectedBillRequest) return;
+              await adminOverrideBill(selectedBillRequest.id, overrideAction, overrideNote || undefined);
+              setShowOverrideModal(false); setSelectedBillRequest(null);
+            }}
+          >
+            Apply Override
+          </button>
+        </div>
+      </Modal>
+
+      {/* Existing Modals */}
       {/* Record Payment Modal */}
       <Modal 
         isOpen={showPaymentModal} 

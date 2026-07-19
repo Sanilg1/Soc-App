@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'guard_home_screen.dart';
 import '../../profile/screens/profile_screen.dart';
@@ -19,12 +20,6 @@ class _GuardMainScreenState extends ConsumerState<GuardMainScreen> {
     ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,12 +29,12 @@ class _GuardMainScreenState extends ConsumerState<GuardMainScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
+        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.security_outlined),
             selectedIcon: Icon(Icons.security),
-            label: 'Home',
+            label: 'Gate',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

@@ -62,7 +62,39 @@ export type NotificationType =
   | 'escalation'
   | 'admin_action'
   | 'leave_request'
-  | 'pause_request';
+  | 'pause_request'
+  | 'weekly_bill'
+  | 'payment_claim'
+  | 'bill_resolved';
+
+export type WeeklyBillStatus =
+  | 'pending'            // Bill sent, waiting for resident
+  | 'resident_paid'     // Resident claimed payment, waiting for worker
+  | 'settled'           // Worker confirmed receipt → balance zeroed
+  | 'carried_forward'   // Resident said "next week" or timed out
+  | 'disputed'          // Resident claimed paid, worker said no
+  | 'admin_resolved';   // Admin manually resolved a dispute
+
+export interface WeeklyBillRequest {
+  id: string;
+  weekId: string;                    // e.g. '2026-W29'
+  weekLabel: string;                 // e.g. 'Jul 14–20, 2026'
+  periodFrom: string;                // ISO
+  periodTo: string;                  // ISO
+  flatId: string;
+  billedAmount: number;              // Outstanding balance at close time
+  chargesThisWeek: number;          // New charges added this week
+  previousCarryForward: number;     // Carried from last week
+  residentConfirmed: boolean | null; // null=pending, true=paid, false=carry
+  residentConfirmedAt: string | null;
+  workerConfirmed: boolean | null;   // null=pending, true=received, false=not yet
+  workerConfirmedAt: string | null;
+  status: WeeklyBillStatus;
+  resolvedBy: string | null;         // 'resident'|'worker'|'admin'|'system'
+  adminNote: string | null;
+  createdAt: string;
+  closedAt: string | null;
+}
 
 // ──────────────────────────────────────
 // Firestore Document Types
@@ -315,6 +347,9 @@ export interface FlatLedger {
   flatId: string;
   outstandingBalance: number;
   transactions: LedgerTransaction[];
+  weeklyBillStatus?: 'open' | 'bill_sent' | 'settled' | 'carried_forward';
+  currentWeekId?: string;
+  lastReminderSentAt?: string;
 }
 
 export type HallBookingStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';

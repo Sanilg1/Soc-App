@@ -878,3 +878,233 @@ export const onSocietyIssueUpdated = onDocumentUpdated("society_issues/{issueId}
     console.error("Error sending society issue update FCM message:", error);
   }
 });
+
+// ──────────────────────────────────────
+// Weekly Bill Closing Functions
+// ──────────────────────────────────────
+
+/**
+ * Scheduled every Monday at 8am IST (02:30 UTC).
+ * Sends a push notification reminder to all flats with outstanding balance > 0.
+ * Updates lastReminderSentAt on each ledger doc.
+ */
+export const weeklyBillReminder = onSchedule("30 2 * * 1", async (_event) => {
+  const now = new Date().toISOString();
+
+  const ledgersSnapshot = await db
+    .collection("flat_ledgers")
+    .where("outstandingBalance", ">", 0)
+    .get();
+
+  if (ledgersSnapshot.empty) {
+    console.log("No flats with outstanding balance — skipping reminder.");
+    return;
+  }
+
+  const batch = db.batch();
+
+  for (const ledgerDoc of ledgersSnapshot.docs) {
+    const flatId = ledgerDoc.id;
+
+    // Find resident FCM tokens for this flat
+    const usersSnap = await db
+      .collection("users")
+      .where("flatId", "==", flatId)
+      .where("role", "==", "resident")
+      .get();
+
+    const tokens: string[] = [];
+    usersSnap.forEach((u) => {
+      if (u.data().fcmToken) tokens.push(u.data().fcmToken);
+    });
+
+    if (tokens.length > 0) {
+      const balance = ledgerDoc.data().outstandingBalance ?? 0;
+      const msg = {
+        notification: {
+          title: "⚠️ Ironing Bill Reminder",
+          body: `You have an outstanding ironing balance of ₹${balance}. The ironing worker will collect this week.`,
+        },
+        android: {
+          priority: "high" as const,
+          notification: { sound: "default", channelId: "high_importance_channel" },
+        },
+        apns: { payload: { aps: { sound: "default", contentAvailable: true } } },
+        tokens,
+      };
+      try {
+        await getMessaging().sendEachForMulticast(msg);
+      } catch (err) {
+        console.error(`FCM reminder error for flat ${flatId}:`, err);
+      }
+    }
+
+    batch.update(ledgerDoc.ref, { lastReminderSentAt: now });
+  }
+
+  await batch.commit();
+  console.log(`Weekly bill reminders sent to ${ledgersSnapshot.size} flats.`);
+});
+
+/**
+ * Triggered when a weekly_bill_requests document is updated.
+ * Drives the confirmation state machine:
+ *
+ * 1. Resident sets residentConfirmed=true → status=resident_paid, notify worker
+ * 2. Resident sets residentConfirmed=false → status=carried_forward
+ * 3. Worker sets workerConfirmed=true → status=settled, zero ledger balance
+ * 4. Worker sets workerConfirmed=false → status=disputed, notify admin
+ */
+export const onWeeklyBillRequestUpdated = onDocumentUpdated(
+  "weekly_bill_requests/{requestId}",
+  async (event) => {
+    const change = event.data;
+    if (!change) return;
+
+    const before = change.before.data();
+    const after = change.after.data();
+    const requestId = event.params.requestId;
+    const now = new Date().toISOString();
+
+    const requestRef = db.collection("weekly_bill_requests").doc(requestId);
+
+    // ── Case 1: Resident just confirmed payment ──
+    if (before.residentConfirmed !== true && after.residentConfirmed === true) {
+      await requestRef.update({
+        status: "resident_paid",
+        residentConfirmedAt: now,
+      });
+
+      // Notify ironing workers to confirm receipt
+      const workerSnap = await db
+        .collection("users")
+        .where("role", "==", "worker")
+        .where("category", "in", ["ironing", "housekeeping"])
+        .get();
+
+      const tokens: string[] = [];
+      workerSnap.forEach((d) => {
+        if (d.data().fcmToken) tokens.push(d.data().fcmToken);
+      });
+
+      if (tokens.length > 0) {
+        const msg = {
+          notification: {
+            title: `💰 Payment Claim — Flat ${after.flatId}`,
+            body: `Flat ${after.flatId} says they've paid ₹${after.billedAmount}. Please confirm if you received it.`,
+          },
+          android: {
+            priority: "high" as const,
+            notification: { sound: "default", channelId: "high_importance_channel" },
+          },
+          apns: { payload: { aps: { sound: "default", contentAvailable: true } } },
+          tokens,
+        };
+        try {
+          await getMessaging().sendEachForMulticast(msg);
+        } catch (err) {
+          console.error("FCM worker notify error:", err);
+        }
+      }
+
+      // In-app notification for the worker
+      const notifRef = db.collection("notifications").doc();
+      await notifRef.set({
+        id: notifRef.id,
+        targetUserId: "admin_committee_1", // also alert admin
+        type: "payment_claim",
+        title: `Payment Claim — Flat ${after.flatId}`,
+        message: `Flat ${after.flatId} has claimed payment of ₹${after.billedAmount} for ${after.weekLabel}. Awaiting worker confirmation.`,
+        read: false,
+        createdAt: now,
+      });
+    }
+
+    // ── Case 2: Resident chose "Pay Next Week" ──
+    if (before.residentConfirmed !== false && after.residentConfirmed === false) {
+      await requestRef.update({
+        status: "carried_forward",
+        residentConfirmedAt: now,
+        resolvedBy: "resident",
+        closedAt: now,
+      });
+
+      // Mark ledger as carried_forward
+      await db.collection("flat_ledgers").doc(after.flatId).update({
+        weeklyBillStatus: "carried_forward",
+      });
+    }
+
+    // ── Case 3: Worker confirmed receipt → settle ──
+    if (
+      after.status === "resident_paid" &&
+      before.workerConfirmed !== true &&
+      after.workerConfirmed === true
+    ) {
+      await requestRef.update({
+        status: "settled",
+        workerConfirmedAt: now,
+        resolvedBy: "worker",
+        closedAt: now,
+      });
+
+      // Zero out ledger balance
+      const ledgerRef = db.collection("flat_ledgers").doc(after.flatId);
+      await db.runTransaction(async (tx) => {
+        const ledgerSnap = await tx.get(ledgerRef);
+        if (!ledgerSnap.exists) return;
+        const data = ledgerSnap.data()!;
+        const history: any[] = Array.isArray(data.transactions) ? data.transactions : [];
+        const newTx = {
+          id: `txn_${Date.now()}`,
+          type: "payment",
+          amount: after.billedAmount,
+          description: `Weekly bill settled — ${after.weekLabel} (Worker confirmed receipt)`,
+          timestamp: now,
+        };
+        tx.update(ledgerRef, {
+          outstandingBalance: 0,
+          transactions: [newTx, ...history],
+          weeklyBillStatus: "settled",
+        });
+      });
+
+      // Notify resident that payment is confirmed
+      const residentNotifRef = db.collection("notifications").doc();
+      await residentNotifRef.set({
+        id: residentNotifRef.id,
+        targetUserId: `resident_${after.flatId}`,
+        type: "bill_resolved",
+        title: "✅ Bill Settled!",
+        message: `Your ironing bill of ₹${after.billedAmount} for ${after.weekLabel} has been confirmed by the worker. Your balance is now ₹0.`,
+        read: false,
+        createdAt: now,
+      });
+    }
+
+    // ── Case 4: Worker denied receipt → disputed ──
+    if (
+      after.status === "resident_paid" &&
+      before.workerConfirmed !== false &&
+      after.workerConfirmed === false
+    ) {
+      await requestRef.update({
+        status: "disputed",
+        workerConfirmedAt: now,
+      });
+
+      // Notify admin of dispute
+      const adminNotifRef = db.collection("notifications").doc();
+      await adminNotifRef.set({
+        id: adminNotifRef.id,
+        targetUserId: "admin_committee_1",
+        type: "bill_resolved",
+        title: `⚠️ Bill Dispute — Flat ${after.flatId}`,
+        message: `Flat ${after.flatId} claims to have paid ₹${after.billedAmount} for ${after.weekLabel}, but the ironing worker has not confirmed receipt. Please resolve.`,
+        read: false,
+        createdAt: now,
+      });
+    }
+  }
+);
+
